@@ -1,18 +1,28 @@
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Link } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Colors } from '@/constants/colors';
 
 type TabName = 'Home' | 'Donations' | 'Notifications' | 'Profile';
 
+type Tab = {
+  name: TabName;
+  href:
+    | '/restaurant/dashboard'
+    | '/restaurant/donations'
+    | '/restaurant/notifications'
+    | '/restaurant/profile';
+};
+
 type BottomNavigationProps = {
   activeTab: TabName;
 };
 
-const tabs: TabName[] = [
-  'Home',
-  'Donations',
-  'Notifications',
-  'Profile',
+const tabs: Tab[] = [
+  { name: 'Home', href: '/restaurant/dashboard' },
+  { name: 'Donations', href: '/restaurant/donations' },
+  { name: 'Notifications', href: '/restaurant/notifications' },
+  { name: 'Profile', href: '/restaurant/profile' },
 ];
 
 export default function BottomNavigation({
@@ -21,29 +31,33 @@ export default function BottomNavigation({
   return (
     <View style={styles.navigation}>
       {tabs.map((tab) => {
-        const active = tab === activeTab;
+        const active = tab.name === activeTab;
 
         return (
-          <TouchableOpacity
-            key={tab}
-            style={styles.item}
+          <Link
+            key={tab.name}
+            href={tab.href}
+            replace
+            asChild
           >
-            <View
-              style={[
-                styles.icon,
-                active && styles.activeIcon,
-              ]}
-            />
+            <Pressable style={styles.item}>
+              <View
+                style={[
+                  styles.icon,
+                  active && styles.activeIcon,
+                ]}
+              />
 
-            <Text
-              style={[
-                styles.label,
-                active && styles.activeLabel,
-              ]}
-            >
-              {tab}
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={[
+                  styles.label,
+                  active && styles.activeLabel,
+                ]}
+              >
+                {tab.name}
+              </Text>
+            </Pressable>
+          </Link>
         );
       })}
     </View>
