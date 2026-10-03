@@ -1,203 +1,104 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-
-import AppHeader from '@/components/restaurant/AppHeader';
+import { useRestaurantData } from '@/components/restaurant/RestaurantDataProvider';
+import AppHeader from '@/components/shared/AppHeader';
 import DonationTimeline from '@/components/shared/DonationTimeline';
+import EmptyState from '@/components/shared/EmptyState';
+import Screen from '@/components/shared/Screen';
+import Card from '@/components/ui/Card';
+import Icon from '@/components/ui/Icon';
 import PrimaryButton from '@/components/ui/PrimaryButton';
+import StatusBadge from '@/components/ui/StatusBadge';
 import { Colors } from '@/constants/colors';
+import { getDonationStatusLabel, getDonationTimeLabel, getDonationTimeline } from '@/utils/donation';
 
 export default function DonationDetailsScreen() {
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { donations } = useRestaurantData();
+  const donation = donations.find((item) => item.id === id);
 
-  const timeline = [
-    {
-      title: 'Donation Published',
-      time: '12:05 PM',
-      status: 'completed' as const,
-    },
-    {
-      title: 'NGO Accepted',
-      time: '12:18 PM',
-      status: 'completed' as const,
-    },
-    {
-      title: 'Volunteer Assigned',
-      time: '12:32 PM',
-      status: 'current' as const,
-    },
-    {
-      title: 'Pickup in Progress',
-      status: 'pending' as const,
-    },
-    {
-      title: 'Food Collected',
-      status: 'pending' as const,
-    },
-  ];
+  const openDonations = () => router.navigate('/restaurant/donations');
+  const goBack = () => router.canGoBack() ? router.back() : router.replace('/restaurant/donations');
 
   return (
-    <View style={styles.screen}>
-      <AppHeader
-        title="Donation Details"
-        showBack
-        onBackPress={() => router.back()}
-      />
+    <Screen footer={<PrimaryButton title="My Donations" onPress={openDonations} />}>
+      <AppHeader title="Donation Details" showBack onBackPress={goBack} />
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {!donation ? (
+          <EmptyState
+            title="Donation not found"
+            description="This donation is unavailable. Open My Donations to see your current donations."
+          />
+        ) : (
+          <>
+            <Card>
+              <View style={styles.summaryRow}>
+                <View style={styles.foodIcon}><Icon name="leaf" size={30} /></View>
+                <View style={styles.summaryContent}>
+                  <Text accessibilityRole="header" style={styles.foodName}>{donation.foodType}</Text>
+                  <Text style={styles.meta}>{donation.quantity} {donation.unit}</Text>
+                  <StatusBadge label={getDonationStatusLabel(donation.status)} />
+                </View>
+              </View>
+              <View style={styles.deadlineRow}>
+                <Icon name="clock" size={16} />
+                <Text style={styles.deadline}>{getDonationTimeLabel(donation)}</Text>
+              </View>
+              <Text selectable style={styles.id}>Donation ID: #{donation.id}</Text>
+            </Card>
 
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.summaryCard}>
-          <View style={styles.foodPlaceholder} />
+            <Text accessibilityRole="header" style={styles.sectionTitle}>Progress Status</Text>
+            <Card><DonationTimeline items={getDonationTimeline(donation.status)} /></Card>
 
-          <View style={styles.summaryContent}>
-            <Text style={styles.foodName}>
-              Rice & Curry
-            </Text>
-
-            <Text style={styles.meta}>
-              10 portions
-            </Text>
-
-            <Text style={styles.deadline}>
-              Pickup before 3:00 PM
-            </Text>
-
-            <Text style={styles.id}>
-              Donation ID: #{id}
-            </Text>
-          </View>
-        </View>
-
-        <Text style={styles.sectionTitle}>
-          Progress Status
-        </Text>
-
-        <View style={styles.timelineCard}>
-          <DonationTimeline items={timeline} />
-        </View>
-
-        <Text style={styles.sectionTitle}>
-          Collection Details
-        </Text>
-
-        <View style={styles.organizationCard}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>H</Text>
-          </View>
-
-          <View style={styles.organizationInfo}>
-            <Text style={styles.organizationName}>
-              Hope Community NGO
-            </Text>
-
-            <Text style={styles.volunteer}>
-              Volunteer: S. Perera
-            </Text>
-          </View>
-        </View>
-
-        <PrimaryButton
-          title="My Donations"
-          style={styles.button}
-          onPress={() =>
-            router.push('/restaurant/donations')
-          }
-        />
+            <Text accessibilityRole="header" style={styles.sectionTitle}>Collection Details</Text>
+            <Card>
+              <View style={styles.organizationRow}>
+                <View style={styles.avatar}><Icon name="users" size={24} /></View>
+                <View style={styles.organizationInfo}>
+                  <Text style={styles.organizationName}>{donation.ngoName || 'Awaiting NGO acceptance'}</Text>
+                  <Text style={styles.bodyText}>
+                    {donation.volunteerName ? `Volunteer: ${donation.volunteerName}` : 'Volunteer not assigned yet'}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.locationRow}>
+                <Icon name="pin" size={18} color={Colors.textSecondary} />
+                <Text style={styles.location}>{donation.pickupLocation}</Text>
+              </View>
+              {donation.description ? (
+                <View style={styles.notes}>
+                  <Text style={styles.notesLabel}>Notes</Text>
+                  <Text style={styles.bodyText}>{donation.description}</Text>
+                </View>
+              ) : null}
+            </Card>
+          </>
+        )}
       </ScrollView>
-    </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-
-  content: {
-    padding: 16,
-    paddingBottom: 30,
-  },
-
-  summaryCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 14,
-    flexDirection: 'row',
-  },
-
-  foodPlaceholder: {
-    width: 76,
-    height: 76,
-    borderRadius: 12,
-    backgroundColor: '#E7E9E8',
-  },
-
-  summaryContent: {
-    flex: 1,
-    marginLeft: 12,
-  },
-
-  foodName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-
-  meta: {
-    marginTop: 2,
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
-
-  deadline: {
-    marginTop: 7,
-    fontSize: 12,
-    color: Colors.primaryDark,
-    fontWeight: '600',
-  },
-
-  id: {
-    marginTop: 5,
-    fontSize: 10,
-    color: Colors.textMuted,
-  },
-
-  sectionTitle: {
-    marginTop: 22,
-    marginBottom: 10,
-    fontSize: 15,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-
-  timelineCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 16,
-  },
-
-  organizationCard: {
-    backgroundColor: Colors.surface,
+  content: { padding: 16, paddingBottom: 24 },
+  summaryRow: { flexDirection: 'row', gap: 14, alignItems: 'center' },
+  foodIcon: {
+    width: 66,
+    height: 66,
     borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 14,
-    flexDirection: 'row',
+    backgroundColor: Colors.primaryLight,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-
+  summaryContent: { flex: 1, gap: 6 },
+  foodName: { fontSize: 19, lineHeight: 25, fontWeight: '700', color: Colors.textPrimary },
+  meta: { fontSize: 14, color: Colors.textSecondary },
+  deadlineRow: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 16 },
+  deadline: { flex: 1, fontSize: 13, lineHeight: 19, color: Colors.primaryDark, fontWeight: '600' },
+  id: { marginTop: 8, fontSize: 12, lineHeight: 17, color: Colors.textSecondary },
+  sectionTitle: { marginTop: 24, marginBottom: 10, fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
+  organizationRow: { flexDirection: 'row', gap: 12, alignItems: 'center' },
   avatar: {
     width: 44,
     height: 44,
@@ -206,30 +107,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  avatarText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: Colors.primaryDark,
-  },
-
-  organizationInfo: {
-    marginLeft: 12,
-  },
-
-  organizationName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-
-  volunteer: {
-    marginTop: 4,
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
-
-  button: {
-    marginTop: 22,
-  },
+  organizationInfo: { flex: 1 },
+  organizationName: { fontSize: 14, lineHeight: 20, fontWeight: '600', color: Colors.textPrimary },
+  bodyText: { marginTop: 4, fontSize: 13, lineHeight: 20, color: Colors.textSecondary },
+  locationRow: { flexDirection: 'row', gap: 8, marginTop: 16, paddingTop: 14, borderTopWidth: 1, borderTopColor: Colors.border },
+  location: { flex: 1, fontSize: 13, lineHeight: 20, color: Colors.textSecondary },
+  notes: { marginTop: 14 },
+  notesLabel: { fontSize: 12, fontWeight: '600', color: Colors.textPrimary },
 });

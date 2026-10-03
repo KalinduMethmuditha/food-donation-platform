@@ -11,21 +11,25 @@ import { Colors } from '@/constants/colors';
 type FormFieldProps = TextInputProps & {
   label: string;
   error?: string;
+  hint?: string;
 };
 
 export default function FormField({
   label,
   error,
+  hint,
   multiline,
   style,
   ...props
 }: FormFieldProps) {
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.label}>{label}</Text>
+      {label ? <Text style={styles.label}>{label}</Text> : null}
 
       <TextInput
         multiline={multiline}
+        accessibilityLabel={label}
+        accessibilityHint={error || hint}
         placeholderTextColor={Colors.textMuted}
         style={[
           styles.input,
@@ -37,8 +41,8 @@ export default function FormField({
       />
 
       {error ? (
-        <Text style={styles.errorText}>{error}</Text>
-      ) : null}
+        <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={styles.errorText}>{error}</Text>
+      ) : hint ? <Text style={styles.hint}>{hint}</Text> : null}
     </View>
   );
 }
@@ -49,7 +53,7 @@ const styles = StyleSheet.create({
   },
 
   label: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
     color: Colors.textPrimary,
     marginBottom: 7,
@@ -62,6 +66,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: Colors.surface,
     paddingHorizontal: 14,
+    paddingVertical: 12,
     fontSize: 14,
     color: Colors.textPrimary,
   },
@@ -77,8 +82,9 @@ const styles = StyleSheet.create({
   },
 
   errorText: {
-    fontSize: 11,
+    fontSize: 12,
     color: Colors.danger,
     marginTop: 5,
   },
+  hint: { marginTop: 6, fontSize: 12, color: Colors.textSecondary, lineHeight: 18 },
 });

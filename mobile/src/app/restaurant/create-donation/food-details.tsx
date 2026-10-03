@@ -1,266 +1,138 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-
-import AppHeader from '@/components/restaurant/AppHeader';
+import AppHeader from '@/components/shared/AppHeader';
+import Screen from '@/components/shared/Screen';
 import StepProgress from '@/components/shared/StepProgress';
+import Card from '@/components/ui/Card';
 import FormField from '@/components/ui/FormField';
 import PrimaryButton from '@/components/ui/PrimaryButton';
-
 import { Colors } from '@/constants/colors';
+import { donationFormStyles as formStyles } from '@/constants/donationFormStyles';
 import { useDonationDraftStore } from '@/stores/donationDraft.store';
+import { type FoodDetailsErrors, validateFoodDetails } from '@/utils/donationValidation';
 
 export default function FoodDetailsScreen() {
-  // Donation data comes from Zustand
-  const {
-    foodType,
-    quantity,
-    unit,
-    description,
-    updateFoodDetails,
-  } = useDonationDraftStore();
+  const { editing } = useLocalSearchParams<{ editing?: string }>();
+  const isEditing = editing === 'preview';
+  const { foodType, quantity, unit, description, updateFoodDetails } = useDonationDraftStore();
+  const [errors, setErrors] = useState<FoodDetailsErrors>({});
 
-  // Only validation errors stay as local state
-  const [foodTypeError, setFoodTypeError] = useState('');
-  const [quantityError, setQuantityError] = useState('');
+  const handleBack = () => {
+    if (isEditing) {
+      router.dismissTo('/restaurant/create-donation/preview');
+    } else if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/restaurant/dashboard');
+    }
+  };
 
   const handleNext = () => {
-    let valid = true;
+    const nextErrors = validateFoodDetails({ foodType, quantity });
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) return;
 
-    setFoodTypeError('');
-    setQuantityError('');
-
-    if (!foodType.trim()) {
-      setFoodTypeError('Please enter the food type.');
-      valid = false;
+    if (isEditing) {
+      router.dismissTo('/restaurant/create-donation/preview');
+    } else {
+      router.push('/restaurant/create-donation/pickup-details');
     }
-
-    if (!quantity.trim()) {
-      setQuantityError('Please enter the quantity.');
-      valid = false;
-    } else if (
-      Number.isNaN(Number(quantity)) ||
-      Number(quantity) <= 0
-    ) {
-      setQuantityError('Please enter a valid quantity.');
-      valid = false;
-    }
-
-    if (!valid) {
-      return;
-    }
-
-    router.push(
-      '/restaurant/create-donation/pickup-details'
-    );
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.screen}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    <Screen
+      keyboardAvoiding
+      footer={
+        <View style={formStyles.footer}>
+          <PrimaryButton
+            title={isEditing ? 'Return to Preview' : 'Next: Pickup Details'}
+            onPress={handleNext}
+          />
+        </View>
+      }
     >
-      <AppHeader
-        title="Publish Surplus Food"
-        showBack
-        onBackPress={() => router.back()}
-      />
-
+      <AppHeader title="Publish Surplus Food" showBack onBackPress={handleBack} />
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.content}
+        style={formStyles.scroll}
+        contentContainerStyle={formStyles.content}
         keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
       >
         <StepProgress currentStep={1} />
-
-        <Text style={styles.heading}>
-          Food Details
-        </Text>
-
-        <Text style={styles.description}>
+        <Text style={formStyles.heading}>Food Details</Text>
+        <Text style={formStyles.description}>
           Tell us about the surplus food you would like to donate.
         </Text>
 
-        <View style={styles.formCard}>
+        <Card>
           <FormField
-            label="FOOD TYPE"
+            label="Food Type"
             placeholder="e.g. Rice & Curry"
             value={foodType}
-            onChangeText={(value) =>
-              updateFoodDetails({
-                foodType: value,
-              })
-            }
-            error={foodTypeError}
+            onChangeText={(value) => {
+              updateFoodDetails({ foodType: value });
+              setErrors((current) => ({ ...current, foodType: undefined }));
+            }}
+            error={errors.foodType}
+            autoCapitalize="sentences"
+            maxLength={100}
           />
-
-          <Text style={styles.fieldLabel}>
-            QUANTITY
-          </Text>
 
           <View style={styles.quantityRow}>
             <View style={styles.quantityInput}>
               <FormField
-                label=""
+                label="Quantity"
                 placeholder="10"
                 value={quantity}
-                onChangeText={(value) =>
-                  updateFoodDetails({
-                    quantity: value,
-                  })
-                }
-                keyboardType="numeric"
-                error={quantityError}
+                onChangeText={(value) => {
+                  updateFoodDetails({ quantity: value });
+                  setErrors((current) => ({ ...current, quantity: undefined }));
+                }}
+                keyboardType="decimal-pad"
+                error={errors.quantity}
+                maxLength={12}
               />
             </View>
-
-            <TouchableOpacity
-              style={styles.unitButton}
-              activeOpacity={0.8}
-              onPress={() => {
-                // Unit selector can be added later
-              }}
-            >
-              <Text style={styles.unitText}>
-                {unit}
-              </Text>
-
-              <Text style={styles.chevron}>
-                ▾
-              </Text>
-            </TouchableOpacity>
+            <View style={styles.unitContainer}>
+              <Text style={formStyles.fieldLabel}>Unit</Text>
+              <View style={styles.unitValue}>
+                <Text style={styles.unitText}>{unit}</Text>
+              </View>
+            </View>
           </View>
 
           <FormField
-            label="NOTES / DESCRIPTION"
+            label="Notes / Description"
             placeholder="Freshly prepared vegetarian meals. Packed in individual containers."
             value={description}
-            onChangeText={(value) =>
-              updateFoodDetails({
-                description: value,
-              })
-            }
+            onChangeText={(value) => updateFoodDetails({ description: value })}
             multiline
             maxLength={300}
+            hint="Optional — include ingredients or packaging details."
           />
-
-          <Text style={styles.characterCount}>
-            {description.length}/300
-          </Text>
-        </View>
+          <Text style={styles.characterCount}>{description.length}/300</Text>
+        </Card>
       </ScrollView>
-
-      <View style={styles.footer}>
-        <PrimaryButton
-          title="Next: Pickup Details"
-          onPress={handleNext}
-        />
-      </View>
-    </KeyboardAvoidingView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-
-  scrollView: {
-    flex: 1,
-  },
-
-  content: {
-    paddingHorizontal: 16,
-    paddingTop: 20,
-    paddingBottom: 30,
-  },
-
-  heading: {
-    marginTop: 24,
-    fontSize: 21,
-    fontWeight: '800',
-    color: Colors.textPrimary,
-  },
-
-  description: {
-    marginTop: 5,
-    marginBottom: 18,
-    fontSize: 13,
-    lineHeight: 19,
-    color: Colors.textSecondary,
-  },
-
-  formCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 16,
-  },
-
-  fieldLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-    marginBottom: 7,
-  },
-
-  quantityRow: {
-    flexDirection: 'row',
-    gap: 10,
-    alignItems: 'flex-start',
-  },
-
-  quantityInput: {
-    flex: 1,
-  },
-
-  unitButton: {
-    height: 48,
-    minWidth: 115,
+  quantityRow: { flexDirection: 'row', gap: 12, alignItems: 'flex-start' },
+  quantityInput: { flex: 1 },
+  unitContainer: { width: 110 },
+  unitValue: {
+    minHeight: 48,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: Colors.border,
-    backgroundColor: Colors.surface,
-    paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    backgroundColor: Colors.background,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
   },
-
-  unitText: {
-    fontSize: 13,
-    color: Colors.textPrimary,
-  },
-
-  chevron: {
-    color: Colors.textSecondary,
-  },
-
-  characterCount: {
-    marginTop: -10,
-    fontSize: 10,
-    textAlign: 'right',
-    color: Colors.textMuted,
-  },
-
-  footer: {
-    backgroundColor: Colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 18,
-  },
+  unitText: { fontSize: 14, color: Colors.textSecondary },
+  characterCount: { fontSize: 12, textAlign: 'right', color: Colors.textSecondary },
 });

@@ -1,30 +1,18 @@
 import { create } from 'zustand';
 
-type DonationDraftState = {
-  foodType: string;
-  quantity: string;
-  unit: string;
-  description: string;
+import type { DonationDraft } from '@/types/donation';
 
-  pickupLocation: string;
-  pickupDeadline: string;
-
-  updateFoodDetails: (data: {
-    foodType?: string;
-    quantity?: string;
-    unit?: string;
-    description?: string;
-  }) => void;
-
-  updatePickupDetails: (data: {
-    pickupLocation?: string;
-    pickupDeadline?: string;
-  }) => void;
-
+type DonationDraftState = DonationDraft & {
+  updateFoodDetails: (
+    data: Partial<Pick<DonationDraft, 'foodType' | 'quantity' | 'unit' | 'description'>>
+  ) => void;
+  updatePickupDetails: (
+    data: Partial<Pick<DonationDraft, 'pickupLocation' | 'pickupDeadline'>>
+  ) => void;
   resetDraft: () => void;
 };
 
-const initialState = {
+const initialState: DonationDraft = {
   foodType: '',
   quantity: '',
   unit: 'portions',
@@ -33,21 +21,9 @@ const initialState = {
   pickupDeadline: '',
 };
 
-export const useDonationDraftStore =
-  create<DonationDraftState>((set) => ({
-    ...initialState,
-
-    updateFoodDetails: (data) =>
-      set((state) => ({
-        ...state,
-        ...data,
-      })),
-
-    updatePickupDetails: (data) =>
-      set((state) => ({
-        ...state,
-        ...data,
-      })),
-
-    resetDraft: () => set(initialState),
-  }));
+export const useDonationDraftStore = create<DonationDraftState>((set) => ({
+  ...initialState,
+  updateFoodDetails: (data) => set(data),
+  updatePickupDetails: (data) => set(data),
+  resetDraft: () => set(initialState),
+}));
