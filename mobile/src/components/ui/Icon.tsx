@@ -20,6 +20,11 @@ const symbols = {
   users: { ios: 'person.2', android: 'group', web: 'group' },
   info: { ios: 'info.circle', android: 'info', web: 'info' },
   'arrow-up': { ios: 'arrow.up', android: 'arrow_upward', web: 'arrow_upward' },
+  eye: { ios: 'eye', android: 'visibility', web: 'visibility' },
+  'eye-slash': { ios: 'eye.slash', android: 'visibility_off', web: 'visibility_off' },
+  truck: { ios: 'truck.box', android: 'local_shipping', web: 'local_shipping' },
+  heart: { ios: 'heart', android: 'favorite', web: 'favorite' },
+  building: { ios: 'building.2', android: 'apartment', web: 'apartment' },
 } satisfies Record<string, SymbolViewProps['name']>;
 
 export type IconName = keyof typeof symbols;

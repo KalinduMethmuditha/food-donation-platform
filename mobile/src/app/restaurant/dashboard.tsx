@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import AppHeader from '@/components/restaurant/AppHeader';
 import BottomNavigation from '@/components/restaurant/BottomNavigation';
 import { useRestaurantData } from '@/components/restaurant/RestaurantDataProvider';
-import StatCard from '@/components/restaurant/StatCard';
+import StatCard from '@/components/shared/StatCard';
 import ActivityItem from '@/components/shared/ActivityItem';
 import DonationCard from '@/components/shared/DonationCard';
 import Screen from '@/components/shared/Screen';
