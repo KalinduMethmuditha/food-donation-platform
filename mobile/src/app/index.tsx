@@ -5,14 +5,35 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import BrandMark from '@/components/auth/BrandMark';
 import { Colors } from '@/constants/colors';
-
-// Frontend demo delay. Session lookup will replace this when authentication is connected.
-const DEMO_LOADING_DELAY_MS = 1200;
+import { demoRoleDestinations } from '@/constants/demoRoles';
+import { getCurrentUser } from '@/services/auth';
+import { getToken, removeToken } from '@/services/tokenStorage';
+import axios from 'axios';
 
 export default function LoadingScreen() {
   useEffect(() => {
-    const timer = setTimeout(() => router.replace('/welcome'), DEMO_LOADING_DELAY_MS);
-    return () => clearTimeout(timer);
+    let active = true;
+
+    const restoreSession = async () => {
+      try {
+        const token = await getToken();
+        if (!token) {
+          if (active) router.replace('/welcome');
+          return;
+        }
+
+        const user = await getCurrentUser();
+        if (active) router.replace(demoRoleDestinations[user.role]);
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          await removeToken();
+        }
+        if (active) router.replace('/welcome');
+      }
+    };
+
+    void restoreSession();
+    return () => { active = false; };
   }, []);
 
   return <SafeAreaView style={styles.screen}>

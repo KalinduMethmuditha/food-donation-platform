@@ -10,6 +10,8 @@ import PrimaryButton from '@/components/ui/PrimaryButton';
 import { Colors } from '@/constants/colors';
 import { demoRoleDestinations, type DemoRole } from '@/constants/demoRoles';
 import { type RegistrationErrors, validateEmail, validatePassword } from '@/utils/authValidation';
+import { registerUser } from '@/services/auth';
+import { getApiErrorMessage } from '@/services/apiErrors';
 
 export default function RegisterScreen() {
   const [fullName, setFullName] = useState('');
@@ -18,21 +20,58 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<DemoRole | null>(null);
   const [errors, setErrors] = useState<RegistrationErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [authError, setAuthError] = useState('');
 
-  const createAccount = () => {
-    const nextErrors: RegistrationErrors = {
-      fullName: fullName.trim() ? undefined : 'Please enter your full name.',
-      email: validateEmail(email),
-      password: validatePassword(password),
-      confirmPassword: !confirmPassword ? 'Please confirm your password.'
-        : confirmPassword !== password ? 'Passwords do not match.' : undefined,
-      role: role ? undefined : 'Please choose a role.',
-    };
-    setErrors(nextErrors);
-    if (Object.values(nextErrors).some(Boolean) || !role) return;
-    // Frontend demonstration only. No account is created or stored.
-    router.replace(demoRoleDestinations[role]);
+  const createAccount = async () => {
+  if (isSubmitting) return;
+  const nextErrors: RegistrationErrors = {
+    fullName: fullName.trim()
+      ? undefined
+      : 'Please enter your full name.',
+
+    email: validateEmail(email),
+
+    password: validatePassword(password),
+
+    confirmPassword: !confirmPassword
+      ? 'Please confirm your password.'
+      : confirmPassword !== password
+        ? 'Passwords do not match.'
+        : undefined,
+
+    role: role
+      ? undefined
+      : 'Please choose a role.',
   };
+
+  setErrors(nextErrors);
+
+  if (Object.values(nextErrors).some(Boolean) || !role) {
+    return;
+  }
+
+  setIsSubmitting(true);
+  setAuthError('');
+
+  try {
+    const result = await registerUser({
+      name: fullName.trim(),
+      email: email.trim(),
+      password,
+      passwordConfirmation: confirmPassword,
+      role,
+    });
+
+    router.replace(
+      demoRoleDestinations[result.user.role]
+    );
+  } catch (error) {
+    setAuthError(getApiErrorMessage(error, 'register'));
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return <Screen keyboardAvoiding>
     <AppHeader title="Create Account" showBack onBackPress={() => router.replace('/welcome')} />
@@ -53,7 +92,8 @@ export default function RegisterScreen() {
       <RoleSelector value={role} error={errors.role} onChange={(value) => {
         setRole(value); setErrors((current) => ({ ...current, role: undefined }));
       }} />
-      <PrimaryButton title="Create Account" style={styles.submit} onPress={createAccount} />
+      {authError ? <Text accessibilityRole="alert" style={styles.authError}>{authError}</Text> : null}
+      <PrimaryButton title="Create Account" style={styles.submit} onPress={createAccount} loading={isSubmitting} />
       <Text style={styles.footer}>Already have an account?{' '}
         <Text accessibilityRole="link" onPress={() => router.replace('/login')} style={styles.footerLink}>Sign In</Text>
       </Text>
@@ -65,6 +105,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '800', color: Colors.textPrimary, marginTop: 12 },
   subtitle: { fontSize: 14, lineHeight: 21, color: Colors.textSecondary, marginTop: 6, marginBottom: 26 },
   submit: { marginTop: 22 },
+  authError: { marginTop: 12, color: Colors.danger, fontSize: 13 },
   footer: { marginTop: 22, textAlign: 'center', fontSize: 13, color: Colors.textSecondary },
   footerLink: { fontWeight: '700', color: Colors.primaryDark },
 });

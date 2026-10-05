@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useMemo, useRef, useState } fro
 import type { PropsWithChildren } from 'react';
 
 import { mockDonations } from '@/data/mockRestaurantData';
-import { simulatePublishDonation } from '@/services/restaurantDonations';
+import { createDonation } from '@/services/restaurantDonations';
 import type { Donation, DonationDraft } from '@/types/donation';
 
 type RestaurantData = {
@@ -13,7 +13,7 @@ type RestaurantData = {
 
 const RestaurantDataContext = createContext<RestaurantData | null>(null);
 
-/** Session-only demo records; the donation form continues to use its Zustand store. */
+/** Keeps new donations in the local list alongside the existing mock records. */
 export default function RestaurantDataProvider({ children }: PropsWithChildren) {
   const [donations, setDonations] = useState<Donation[]>(mockDonations);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -24,7 +24,7 @@ export default function RestaurantDataProvider({ children }: PropsWithChildren) 
     if (pendingPublish.current) return pendingPublish.current;
 
     setIsPublishing(true);
-    const request = simulatePublishDonation(draft)
+    const request = createDonation(draft)
       .then((donation) => {
         setDonations((current) => [donation, ...current]);
         return donation;

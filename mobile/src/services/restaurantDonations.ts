@@ -1,9 +1,18 @@
+import { api } from '@/services/api';
 import type { Donation, DonationDraft } from '@/types/donation';
 
-let localDonationSequence = 0;
+type ApiDonation = {
+  id: number;
+  food_type: string;
+  quantity: string | number;
+  unit: string;
+  description: string | null;
+  pickup_location: string;
+  pickup_deadline: string;
+  status: 'published';
+};
 
-/** Frontend-only simulation. Replace this function with POST /api/donations later. */
-export async function simulatePublishDonation(draft: DonationDraft): Promise<Donation> {
+export async function createDonation(draft: DonationDraft): Promise<Donation> {
   const quantity = Number(draft.quantity);
 
   if (!draft.foodType.trim() || !Number.isFinite(quantity) || quantity <= 0) {
@@ -14,18 +23,24 @@ export async function simulatePublishDonation(draft: DonationDraft): Promise<Don
     throw new Error('Enter a pickup location and deadline.');
   }
 
-  // Capture the submitted values before the simulated request completes.
-  const donation: Donation = {
-    id: `local-${Date.now()}-${++localDonationSequence}`,
-    foodType: draft.foodType.trim(),
+  const { data } = await api.post<{ donation: ApiDonation }>('/donations', {
+    food_type: draft.foodType.trim(),
     quantity,
     unit: draft.unit.trim() || 'portions',
     description: draft.description.trim(),
-    pickupLocation: draft.pickupLocation.trim(),
-    pickupDeadline: draft.pickupDeadline.trim(),
-    status: 'published',
-  };
+    pickup_location: draft.pickupLocation.trim(),
+    pickup_deadline: draft.pickupDeadline.trim(),
+  });
 
-  await new Promise<void>((resolve) => setTimeout(resolve, 500));
-  return donation;
+  const donation = data.donation;
+  return {
+    id: String(donation.id),
+    foodType: donation.food_type,
+    quantity: Number(donation.quantity),
+    unit: donation.unit,
+    description: donation.description ?? '',
+    pickupLocation: donation.pickup_location,
+    pickupDeadline: donation.pickup_deadline,
+    status: donation.status,
+  };
 }

@@ -12,6 +12,7 @@ import PrimaryButton from '@/components/ui/PrimaryButton';
 import { Colors } from '@/constants/colors';
 import { donationFormStyles as formStyles } from '@/constants/donationFormStyles';
 import { useDonationDraftStore } from '@/stores/donationDraft.store';
+import { getApiErrorMessage } from '@/services/apiErrors';
 import {
   validateFoodDetails,
   validatePickupDetails,
@@ -66,8 +67,8 @@ export default function DonationPreviewScreen() {
         ],
       });
       draft.resetDraft();
-    } catch {
-      setPublishError('Could not publish this donation. Please try again.');
+    } catch (error) {
+      setPublishError(getApiErrorMessage(error, 'donation'));
       submitting.current = false;
     }
   };
