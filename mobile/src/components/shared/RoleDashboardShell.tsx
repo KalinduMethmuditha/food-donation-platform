@@ -19,7 +19,7 @@ export default function RoleDashboardShell({ data }: { data: RoleDashboardData }
     {data.tabs.map((tab, index) => <Pressable key={tab.label} accessibilityRole="tab"
       accessibilityState={{ selected: index === 0 }}
       accessibilityLabel={index === 0 ? tab.label : `${tab.label}, coming soon`}
-      onPress={index === 0 ? undefined : () => setDialog('unavailable')}
+      onPress={index === 0 ? undefined : tab.route ? () => router.push(tab.route as never) : () => setDialog('unavailable')}
       style={styles.tab}>
       <Icon name={tab.icon} size={21} color={index === 0 ? Colors.primaryDark : Colors.textMuted} />
       <Text style={[styles.tabLabel, index === 0 && styles.activeTabLabel]}>{tab.label}</Text>
@@ -50,7 +50,11 @@ export default function RoleDashboardShell({ data }: { data: RoleDashboardData }
         <View style={styles.actionCard}>
           <Text style={styles.actionTitle}>{data.actionTitle}</Text>
           <Text style={styles.actionDescription}>{data.actionDescription}</Text>
-          <PrimaryButton title={data.actionLabel} onPress={() => setDialog('unavailable')} style={styles.actionButton} />
+          <PrimaryButton
+            title={data.actionLabel}
+            onPress={() => data.actionRoute ? router.push(data.actionRoute as never) : setDialog('unavailable')}
+            style={styles.actionButton}
+          />
         </View>
 
         <View style={styles.statsRow}>
