@@ -25,6 +25,22 @@ const symbols = {
   truck: { ios: 'truck.box', android: 'local_shipping', web: 'local_shipping' },
   heart: { ios: 'heart', android: 'favorite', web: 'favorite' },
   building: { ios: 'building.2', android: 'apartment', web: 'apartment' },
+  phone: { ios: 'phone', android: 'call', web: 'call' },
+  message: { ios: 'message', android: 'chat', web: 'chat' },
+  map: { ios: 'map', android: 'map', web: 'map' },
+  route: { ios: 'location.north.line', android: 'near_me', web: 'near_me' },
+  'check-circle': { ios: 'checkmark.circle.fill', android: 'check_circle', web: 'check_circle' },
+  'alert-triangle': { ios: 'exclamationmark.triangle', android: 'warning', web: 'warning' },
+  activity: { ios: 'chart.line.uptrend.xyaxis', android: 'trending_up', web: 'trending_up' },
+  package: { ios: 'shippingbox', android: 'inventory_2', web: 'inventory_2' },
+  'x-circle': { ios: 'xmark.circle', android: 'cancel', web: 'cancel' },
+  navigation: { ios: 'location.fill', android: 'my_location', web: 'my_location' },
+  person: { ios: 'person', android: 'person', web: 'person' },
+  'chevron.right': { ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' },
+  'checkmark.seal.fill': { ios: 'checkmark.seal.fill', android: 'verified', web: 'verified' },
+  settings: { ios: 'gearshape', android: 'settings', web: 'settings' },
+  'questionmark.circle': { ios: 'questionmark.circle', android: 'help_outline', web: 'help_outline' },
+  'arrow.right.square': { ios: 'arrow.right.square', android: 'logout', web: 'logout' },
 } satisfies Record<string, SymbolViewProps['name']>;
 
 export type IconName = keyof typeof symbols;
