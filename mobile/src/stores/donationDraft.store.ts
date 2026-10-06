@@ -7,7 +7,7 @@ type DonationDraftState = DonationDraft & {
     data: Partial<Pick<DonationDraft, 'foodType' | 'quantity' | 'unit' | 'description'>>
   ) => void;
   updatePickupDetails: (
-    data: Partial<Pick<DonationDraft, 'pickupLocation' | 'pickupDeadline'>>
+    data: Partial<Pick<DonationDraft, 'pickupLocation' | 'pickupDeadline' | 'pickupLatitude' | 'pickupLongitude'>>
   ) => void;
   resetDraft: () => void;
 };
@@ -19,6 +19,8 @@ const initialState: DonationDraft = {
   description: '',
   pickupLocation: '',
   pickupDeadline: '',
+  pickupLatitude: undefined,
+  pickupLongitude: undefined,
 };
 
 export const useDonationDraftStore = create<DonationDraftState>((set) => ({

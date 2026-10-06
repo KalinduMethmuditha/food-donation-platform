@@ -3,7 +3,15 @@ export type DonationStatus =
   | 'accepted'
   | 'assigned'
   | 'pickup'
-  | 'collected';
+  | 'collected'
+  | 'cancelled';
+
+export type DonationStatusLog = {
+  id: string;
+  status: DonationStatus;
+  note?: string;
+  createdAt: string;
+};
 
 export type DonationDraft = {
   foodType: string;
@@ -11,6 +19,8 @@ export type DonationDraft = {
   unit: string;
   description: string;
   pickupLocation: string;
+  pickupLatitude?: number;
+  pickupLongitude?: number;
   pickupDeadline: string;
 };
 
@@ -18,6 +28,8 @@ export type Donation = Omit<DonationDraft, 'quantity'> & {
   id: string;
   quantity: number;
   status: DonationStatus;
+  createdAt?: string;
+  statusLogs?: DonationStatusLog[];
   collectedAt?: string;
   ngoName?: string;
   volunteerName?: string;

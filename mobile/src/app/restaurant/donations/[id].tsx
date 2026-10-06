@@ -1,5 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useRestaurantData } from '@/components/restaurant/RestaurantDataProvider';
 import AppHeader from '@/components/shared/AppHeader';
@@ -9,14 +10,37 @@ import Screen from '@/components/shared/Screen';
 import Card from '@/components/ui/Card';
 import Icon from '@/components/ui/Icon';
 import PrimaryButton from '@/components/ui/PrimaryButton';
+import SecondaryButton from '@/components/ui/SecondaryButton';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { Colors } from '@/constants/colors';
+import { getApiErrorMessage } from '@/services/apiErrors';
 import { getDonationStatusLabel, getDonationTimeLabel, getDonationTimeline } from '@/utils/donation';
 
 export default function DonationDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { donations } = useRestaurantData();
+  const { donations, isLoading, getDonationById } = useRestaurantData();
   const donation = donations.find((item) => item.id === id);
+  const [isFetching, setIsFetching] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const requestedId = useRef<string | null>(null);
+
+  const fetchDonation = useCallback(async (donationId: string) => {
+    setIsFetching(true);
+    setFetchError(null);
+    try {
+      await getDonationById(donationId);
+    } catch (error) {
+      setFetchError(getApiErrorMessage(error, 'load'));
+    } finally {
+      setIsFetching(false);
+    }
+  }, [getDonationById]);
+
+  useEffect(() => {
+    if (!id || donation || isLoading || requestedId.current === id) return;
+    requestedId.current = id;
+    void fetchDonation(id);
+  }, [id, donation, isLoading, fetchDonation]);
 
   const openDonations = () => router.navigate('/restaurant/donations');
   const goBack = () => router.canGoBack() ? router.back() : router.replace('/restaurant/donations');
@@ -26,10 +50,11 @@ export default function DonationDetailsScreen() {
       <AppHeader title="Donation Details" showBack onBackPress={goBack} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {!donation ? (
-          <EmptyState
-            title="Donation not found"
-            description="This donation is unavailable. Open My Donations to see your current donations."
-          />
+          isLoading || isFetching ? <ActivityIndicator color={Colors.primary} /> :
+            fetchError ? <View>
+              <EmptyState title="Could not load donation" description={fetchError} />
+              <SecondaryButton title="Retry" onPress={() => id && void fetchDonation(id)} />
+            </View> : null
         ) : (
           <>
             <Card>
@@ -49,7 +74,7 @@ export default function DonationDetailsScreen() {
             </Card>
 
             <Text accessibilityRole="header" style={styles.sectionTitle}>Progress Status</Text>
-            <Card><DonationTimeline items={getDonationTimeline(donation.status)} /></Card>
+            <Card><DonationTimeline items={getDonationTimeline(donation.status, donation.statusLogs)} /></Card>
 
             <Text accessibilityRole="header" style={styles.sectionTitle}>Collection Details</Text>
             <Card>
