@@ -9,6 +9,11 @@ export default function VolunteerLayout() {
       <Stack.Screen name="collection-status" />
       <Stack.Screen name="confirmation" />
       <Stack.Screen name="notifications" />
+<<<<<<< Updated upstream
+=======
+      <Stack.Screen name="activity" />
+      <Stack.Screen name="profile" />
+>>>>>>> Stashed changes
     </Stack>
   );
 }
