@@ -137,7 +137,7 @@ export default function LoginScreen() {
         />
 
         <Text style={styles.footer}>
-          Don't have an account?{' '}
+          Don&apos;t have an account?{' '}
           <Text
             accessibilityRole="link"
             onPress={() =>

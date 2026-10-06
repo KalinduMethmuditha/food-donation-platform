@@ -8,7 +8,7 @@ import { Colors } from '@/constants/colors';
 import { demoRoleDestinations } from '@/constants/demoRoles';
 import { getCurrentUser } from '@/services/auth';
 import { getToken, removeToken } from '@/services/tokenStorage';
-import axios from 'axios';
+import { isAxiosError } from 'axios';
 
 export default function LoadingScreen() {
   useEffect(() => {
@@ -25,7 +25,7 @@ export default function LoadingScreen() {
         const user = await getCurrentUser();
         if (active) router.replace(demoRoleDestinations[user.role]);
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
+        if (isAxiosError(error) && error.response?.status === 401) {
           await removeToken();
         }
         if (active) router.replace('/welcome');

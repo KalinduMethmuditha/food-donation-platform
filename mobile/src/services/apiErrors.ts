@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { isAxiosError } from 'axios';
 
 type ValidationResponse = {
   errors?: Record<string, string[]>;
@@ -6,9 +6,9 @@ type ValidationResponse = {
 
 export function getApiErrorMessage(
   error: unknown,
-  action: 'login' | 'register' | 'donation',
+  action: 'login' | 'register' | 'donation' | 'load',
 ): string {
-  if (!axios.isAxiosError<ValidationResponse>(error)) {
+  if (!isAxiosError<ValidationResponse>(error)) {
     return 'Something went wrong. Please try again.';
   }
 
@@ -25,8 +25,9 @@ export function getApiErrorMessage(
   if (status === 403) {
     return action === 'donation'
       ? 'You do not have permission to publish donations.'
-      : 'You do not have permission to access this account.';
+      : 'You do not have permission to view these donations.';
   }
+  if (status === 404 && action === 'load') return 'Donation not found.';
   if (status === 422) {
     if (action === 'login') return 'Email or password is incorrect.';
     if (action === 'register') {
