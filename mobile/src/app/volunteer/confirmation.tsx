@@ -1,46 +1,23 @@
 import { router } from 'expo-router';
-<<<<<<< Updated upstream
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
-=======
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
->>>>>>> Stashed changes
 import Icon from '@/components/ui/Icon';
 import { Colors } from '@/constants/colors';
 import { mockActivePickup, mockVolunteer } from '@/data/mockVolunteerData';
 import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
-<<<<<<< Updated upstream
-=======
 import { useVolunteerStore } from '@/store/volunteerStore';
->>>>>>> Stashed changes
 
 type SummaryRow = { label: string; value: string };
 
 export default function ConfirmationScreen() {
   const pickup = mockActivePickup;
-<<<<<<< Updated upstream
-  const [activityVisible, setActivityVisible] = useState(false);
-=======
   const { pickupStatus, collectedTime, deliveredTime } = useVolunteerStore();
 
   const isDelivered = pickupStatus === 'DELIVERED';
->>>>>>> Stashed changes
 
   const summaryRows: SummaryRow[] = [
     { label: 'Donor', value: pickup.donor },
     { label: 'Items Collected', value: `${pickup.quantity}` },
-<<<<<<< Updated upstream
-    { label: 'Collected Time', value: pickup.collectedTime },
-    { label: 'Volunteer', value: mockVolunteer.fullName },
-    { label: 'Reference ID', value: pickup.referenceId },
-  ];
-
-  return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <VolunteerScreenHeader title="Pickup Confirmation" onBack={() => router.back()} />
-=======
     { label: 'Collected Time', value: collectedTime || 'Pending...' },
   ];
 
@@ -59,7 +36,6 @@ export default function ConfirmationScreen() {
         title={isDelivered ? 'Delivery Confirmation' : 'Pickup Confirmation'} 
         onBack={() => router.back()} 
       />
->>>>>>> Stashed changes
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
@@ -68,11 +44,6 @@ export default function ConfirmationScreen() {
           <View style={styles.checkCircle}>
             <Icon name="check-circle" size={56} color={Colors.white} />
           </View>
-<<<<<<< Updated upstream
-          <Text style={styles.confirmedTitle}>Pickup Confirmed!</Text>
-          <Text style={styles.confirmedSub}>
-            The donation has been successfully collected and recorded.
-=======
           <Text style={styles.confirmedTitle}>
             {isDelivered ? 'Delivery Completed!' : 'Pickup Confirmed!'}
           </Text>
@@ -80,19 +51,14 @@ export default function ConfirmationScreen() {
             {isDelivered 
               ? 'The donation has been successfully delivered.'
               : 'The donation has been successfully collected and recorded.'}
->>>>>>> Stashed changes
           </Text>
         </View>
 
         {/* ─── COLLECTION SUMMARY ─── */}
         <View style={styles.summaryCard}>
-<<<<<<< Updated upstream
-          <Text style={styles.summaryTitle}>Collection Summary</Text>
-=======
           <Text style={styles.summaryTitle}>
             {isDelivered ? 'Delivery Summary' : 'Collection Summary'}
           </Text>
->>>>>>> Stashed changes
           <View style={styles.divider} />
           {summaryRows.map((row, i) => (
             <View key={row.label}>
@@ -101,10 +67,7 @@ export default function ConfirmationScreen() {
                 <Text style={[
                   styles.summaryValue,
                   row.label === 'Reference ID' && styles.refIdValue,
-<<<<<<< Updated upstream
-=======
                   !row.value.includes(':') && row.label.includes('Time') && { color: Colors.textMuted }
->>>>>>> Stashed changes
                 ]}>
                   {row.value}
                 </Text>
@@ -125,11 +88,7 @@ export default function ConfirmationScreen() {
 
         {/* ─── BUTTONS ─── */}
         <TouchableOpacity
-<<<<<<< Updated upstream
-          onPress={() => setActivityVisible(true)}
-=======
           onPress={() => router.push('/volunteer/activity')}
->>>>>>> Stashed changes
           style={styles.outlineBtn}
           accessibilityRole="button"
           accessibilityLabel="View Activity"
@@ -149,114 +108,10 @@ export default function ConfirmationScreen() {
         </TouchableOpacity>
 
       </ScrollView>
-<<<<<<< Updated upstream
-
-      {/* ─── ACTIVITY MODAL ─── */}
-      <Modal
-        visible={activityVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setActivityVisible(false)}
-      >
-        <View style={modal.overlay}>
-          <View style={modal.sheet}>
-            <View style={modal.handle} />
-            <Text style={modal.title}>Your Activity</Text>
-
-            {[
-              { label: 'PK-2041 · Green Leaf Bakery', detail: 'Collected · 4:42 PM today', status: 'Completed' },
-              { label: 'PK-2037 · City Fresh Market', detail: 'Collected · Yesterday, 3:15 PM', status: 'Completed' },
-              { label: 'PK-2033 · Sunrise Café', detail: 'Collected · 2 days ago', status: 'Completed' },
-            ].map((item) => (
-              <View key={item.label} style={modal.activityRow}>
-                <View style={modal.activityDot}>
-                  <Icon name="check" size={12} color={Colors.white} />
-                </View>
-                <View style={modal.activityInfo}>
-                  <Text style={modal.activityLabel}>{item.label}</Text>
-                  <Text style={modal.activityDetail}>{item.detail}</Text>
-                </View>
-                <View style={modal.statusTag}>
-                  <Text style={modal.statusText}>{item.status}</Text>
-                </View>
-              </View>
-            ))}
-
-            <TouchableOpacity onPress={() => setActivityVisible(false)} style={modal.closeBtn}>
-              <Text style={modal.closeBtnText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-=======
->>>>>>> Stashed changes
     </SafeAreaView>
   );
 }
 
-<<<<<<< Updated upstream
-const modal = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.40)',
-  },
-  sheet: {
-    backgroundColor: Colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    gap: 14,
-    paddingBottom: 40,
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.border,
-    alignSelf: 'center',
-    marginBottom: 8,
-  },
-  title: { fontSize: 18, fontWeight: '800', color: Colors.textPrimary, marginBottom: 4 },
-  activityRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  activityDot: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: Colors.primaryDark,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  activityInfo: { flex: 1 },
-  activityLabel: { fontSize: 13, fontWeight: '600', color: Colors.textPrimary },
-  activityDetail: { fontSize: 12, color: Colors.textSecondary, marginTop: 1 },
-  statusTag: {
-    backgroundColor: Colors.primaryLight,
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  statusText: { fontSize: 11, fontWeight: '600', color: Colors.primaryDark },
-  closeBtn: {
-    marginTop: 8,
-    paddingVertical: 13,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: 'center',
-  },
-  closeBtnText: { fontSize: 14, fontWeight: '600', color: Colors.textSecondary },
-});
-
-=======
->>>>>>> Stashed changes
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
   content: { padding: 20, gap: 16, paddingBottom: 32, alignItems: 'stretch' },
