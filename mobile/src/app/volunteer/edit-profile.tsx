@@ -1,6 +1,10 @@
 import { router } from 'expo-router';
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
+=======
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert, Modal, Image, Platform } from 'react-native';
+>>>>>>> Stashed changes
 =======
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert, Modal, Image, Platform } from 'react-native';
 >>>>>>> Stashed changes
@@ -19,9 +23,12 @@ export default function EditProfileScreen() {
   const [email, setEmail] = useState(profile.email);
   const [location, setLocation] = useState(profile.location);
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
   const getInitials = (n: string) => n.split(' ').map(x => x[0]).join('').substring(0, 2);
 =======
+=======
+>>>>>>> Stashed changes
   const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl);
   
   const [avatarModalVisible, setAvatarModalVisible] = useState(false);
@@ -46,6 +53,9 @@ export default function EditProfileScreen() {
       Alert.alert('Not Supported', 'Please run on web to select local files without native plugins.');
     }
   };
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 
   const handleSave = () => {
@@ -53,6 +63,7 @@ export default function EditProfileScreen() {
       Alert.alert('Validation Error', 'Full Name is required.');
       return;
     }
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
     if (!phone.trim()) {
       Alert.alert('Validation Error', 'Phone Number is required.');
@@ -64,6 +75,8 @@ export default function EditProfileScreen() {
     }
 =======
 >>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
     
     updateProfile({
       fullName: name,
@@ -71,6 +84,10 @@ export default function EditProfileScreen() {
       email,
       location,
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+=======
+      avatarUrl,
+>>>>>>> Stashed changes
 =======
       avatarUrl,
 >>>>>>> Stashed changes
@@ -91,10 +108,13 @@ export default function EditProfileScreen() {
         <View style={styles.photoSection}>
           <View style={styles.avatar}>
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             <Text style={styles.avatarText}>{getInitials(name || 'Volunteer')}</Text>
           </View>
           <TouchableOpacity style={styles.editPhotoBtn}>
 =======
+=======
+>>>>>>> Stashed changes
             {avatarUrl ? (
               <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
             ) : (
@@ -102,6 +122,9 @@ export default function EditProfileScreen() {
             )}
           </View>
           <TouchableOpacity style={styles.editPhotoBtn} onPress={() => setAvatarModalVisible(true)}>
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
             <Icon name="person" size={16} color={Colors.white} />
             <Text style={styles.editPhotoText}>Change Photo</Text>
@@ -174,7 +197,10 @@ export default function EditProfileScreen() {
         </TouchableOpacity>
       </View>
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
 
       {/* Avatar Selection Modal */}
       <Modal visible={avatarModalVisible} transparent animationType="slide" onRequestClose={() => setAvatarModalVisible(false)}>
@@ -209,6 +235,9 @@ export default function EditProfileScreen() {
           </View>
         </View>
       </Modal>
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
     </SafeAreaView>
   );
@@ -231,12 +260,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 16,
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
     overflow: 'hidden',
   },
   avatarImage: {
     width: '100%',
     height: '100%',
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   },
   avatarText: {
@@ -310,8 +345,11 @@ const styles = StyleSheet.create({
   },
   saveBtnText: { fontSize: 15, fontWeight: '700', color: Colors.white },
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 });
 =======
+=======
+>>>>>>> Stashed changes
 
   modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
   modalSheet: { backgroundColor: Colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 },
@@ -324,5 +362,8 @@ const styles = StyleSheet.create({
   modalCloseBtn: { paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: Colors.border, alignItems: 'center', backgroundColor: Colors.background },
   modalCloseBtnText: { fontSize: 15, fontWeight: '600', color: Colors.textPrimary },
 });
+<<<<<<< Updated upstream
 
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
