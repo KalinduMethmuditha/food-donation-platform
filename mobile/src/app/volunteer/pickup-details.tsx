@@ -1,34 +1,47 @@
 import { router } from 'expo-router';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Linking, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '@/components/ui/Icon';
 import { Colors } from '@/constants/colors';
 import { mockActivePickup } from '@/data/mockVolunteerData';
 import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
+import { useVolunteerStore } from '@/store/volunteerStore';
 
 export default function PickupDetailsScreen() {
   const pickup = mockActivePickup;
+  const { setPickupStatus } = useVolunteerStore();
 
-  const handleCallDonor = () => {
-    Alert.alert(
-      'Call Donor',
-      `Call ${pickup.donor}?\n${pickup.phone}`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Call', style: 'default', onPress: () => {} },
-      ]
-    );
+  const handleCallDonor = async () => {
+    const phoneNumber = `tel:${pickup.phone.replace(/[^0-9+]/g, '')}`;
+    try {
+      const supported = await Linking.canOpenURL(phoneNumber);
+      if (supported) {
+        await Linking.openURL(phoneNumber);
+      } else {
+        Alert.alert('Not Supported', 'Calling is not supported on this device.');
+      }
+    } catch (err) {
+      Alert.alert('Error', 'An error occurred while trying to make a call.');
+    }
   };
 
-  const handleMessage = () => {
-    Alert.alert(
-      'Message Donor',
-      `Send a message to ${pickup.donor}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Send Message', style: 'default', onPress: () => {} },
-      ]
-    );
+  const handleMessage = async () => {
+    const phoneNumber = `sms:${pickup.phone.replace(/[^0-9+]/g, '')}`;
+    try {
+      const supported = await Linking.canOpenURL(phoneNumber);
+      if (supported) {
+        await Linking.openURL(phoneNumber);
+      } else {
+        Alert.alert('Not Supported', 'Messaging is not supported on this device.');
+      }
+    } catch (err) {
+      Alert.alert('Error', 'An error occurred while trying to open messages.');
+    }
+  };
+
+  const handleStartRoute = () => {
+    setPickupStatus('ON_WAY');
+    router.push('/volunteer/route');
   };
 
   return (
@@ -135,7 +148,7 @@ export default function PickupDetailsScreen() {
         </View>
 
         <TouchableOpacity
-          onPress={() => router.push('/volunteer/route')}
+          onPress={handleStartRoute}
           style={styles.startRouteBtn}
           accessibilityRole="button"
           accessibilityLabel="Start Route"

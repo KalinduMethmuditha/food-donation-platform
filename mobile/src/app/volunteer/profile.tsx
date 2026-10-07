@@ -122,8 +122,7 @@ export default function VolunteerProfileScreen() {
 
   function handleLogout() {
     setLogoutModalVisible(false);
-    router.replace('/volunteer/dashboard');
-    Alert.alert('Logged out', 'You have been logged out of your volunteer account.');
+    router.replace('/login');
   }
 
   function handleNavPress(tab: string) {
