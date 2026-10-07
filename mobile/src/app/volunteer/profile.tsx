@@ -1,369 +1,949 @@
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View, Switch, TouchableOpacity, Modal, Image } from 'react-native';
+import {
+  Alert,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
+
 import Icon from '@/components/ui/Icon';
 import { Colors } from '@/constants/colors';
-import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
+import VolunteerBottomNav from '@/components/volunteer/VolunteerBottomNav';
 import { useVolunteerStore } from '@/store/volunteerStore';
-import type { IconName } from '@/components/ui/Icon';
 
-export default function ProfileScreen() {
-  const { isAvailable, toggleAvailability, pickupStatus, profile, pickupPreferences, logout } = useVolunteerStore();
-  const [logoutVisible, setLogoutVisible] = useState(false);
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
 
-  const renderAction = (icon: IconName, title: string, route: any, color = Colors.textPrimary) => (
-    <TouchableOpacity style={styles.actionRow} activeOpacity={0.7} onPress={() => router.push(route)}>
-      <View style={styles.actionIcon}>
-        <Icon name={icon} size={20} color={color} />
-      </View>
-      <Text style={[styles.actionTitle, { color }]}>{title}</Text>
-      <Icon name="chevron.right" size={16} color={Colors.border} />
-    </TouchableOpacity>
-  );
+type NavRoute =
+  | '/volunteer/dashboard'
+  | '/volunteer/edit-profile'
+  | '/volunteer/notification-preferences'
+  | '/volunteer/pickup-preferences'
+  | '/volunteer/help-support'
+  | '/volunteer/activity'
+  | '/volunteer/about'
+  | '/volunteer/privacy'
+  | '/volunteer/terms';
 
-  const handleLogout = () => {
-    setLogoutVisible(false);
-    logout();
-    router.replace('/login');
-  };
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
 
-  const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+function getInitials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((n) => n[0]?.toUpperCase() ?? '')
+    .slice(0, 2)
+    .join('');
+}
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Sub-components
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface InfoRowProps {
+  label: string;
+  value: string;
+  isLast?: boolean;
+}
+
+function InfoRow({
+  label,
+  value,
+  isLast = false,
+}: InfoRowProps) {
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <VolunteerScreenHeader title="Profile" onBack={() => router.replace('/volunteer/dashboard')} />
+    <>
+      <View style={styles.infoRow}>
+        <Text style={styles.infoLabel}>{label}</Text>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        
-        {/* Profile Header */}
-        <View style={styles.profileHeader}>
-          <View style={styles.avatar}>
-            {profile.avatarUrl ? (
-              <Image source={{ uri: profile.avatarUrl }} style={styles.avatarImage} />
-            ) : (
-              <Text style={styles.avatarText}>{getInitials(profile.fullName)}</Text>
-            )}
-            <View style={styles.verifiedBadge}>
-              <Icon name="checkmark.seal.fill" size={12} color={Colors.white} />
-            </View>
-          </View>
-          <Text style={styles.name}>{profile.fullName}</Text>
-          <Text style={styles.role}>Volunteer • <Text style={{ color: Colors.primaryDark }}>Active</Text></Text>
-          <Text style={styles.idText}>Volunteer ID: {profile.volunteerId}</Text>
-        </View>
+        <Text
+          style={styles.infoValue}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {value}
+        </Text>
+      </View>
 
-        {/* Personal Information */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Personal Information</Text>
-          <View style={styles.card}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Name</Text>
-              <Text style={styles.infoValue}>{profile.fullName}</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Phone</Text>
-              <Text style={styles.infoValue}>{profile.phone}</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Email</Text>
-              <Text style={styles.infoValue}>{profile.email}</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Location</Text>
-              <Text style={styles.infoValue}>{profile.location}</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Pickup Preferences Info */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Pickup Preferences</Text>
-          <View style={styles.card}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Preferred Area</Text>
-              <Text style={styles.infoValue}>{pickupPreferences.preferredArea}</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Preferred Time</Text>
-              <Text style={styles.infoValue}>{pickupPreferences.preferredStartTime} – {pickupPreferences.preferredEndTime}</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.availabilityRow}>
-              <Text style={styles.infoLabel}>Availability</Text>
-              <View style={styles.switchRow}>
-                <Text style={[styles.infoValue, { marginRight: 8, color: isAvailable ? Colors.primaryDark : Colors.textMuted }]}>
-                  {isAvailable ? 'Available' : 'Unavailable'}
-                </Text>
-                <Switch
-                  value={isAvailable}
-                  onValueChange={toggleAvailability}
-                  trackColor={{ false: Colors.border, true: Colors.primary }}
-                  thumbColor={Colors.white}
-                />
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Volunteer Statistics */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Volunteer Statistics</Text>
-          <View style={styles.card}>
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Completed Pickups</Text>
-              <Text style={styles.infoValue}>{pickupStatus === 'DELIVERED' ? '25' : '24'}</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Food Packs Collected</Text>
-              <Text style={styles.infoValue}>286</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Deliveries</Text>
-              <Text style={styles.infoValue}>21</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>Completion Rate</Text>
-              <Text style={[styles.infoValue, { color: Colors.primaryDark }]}>96%</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Account & Preferences */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account & Preferences</Text>
-          <View style={styles.card}>
-            {renderAction('person', 'Edit Profile', '/volunteer/edit-profile')}
-            <View style={styles.divider} />
-            {renderAction('bell', 'Notification Preferences', '/volunteer/notification-preferences')}
-            <View style={styles.divider} />
-            {renderAction('settings', 'Pickup Preferences', '/volunteer/pickup-preferences')}
-            <View style={styles.divider} />
-            {renderAction('questionmark.circle', 'Help & Support', '/volunteer/help-support')}
-            <View style={styles.divider} />
-            {renderAction('activity', 'Activity', '/volunteer/activity')}
-          </View>
-        </View>
-
-        {/* More */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>More</Text>
-          <View style={styles.card}>
-            {renderAction('info', 'About App', '/volunteer/about')}
-            <View style={styles.divider} />
-            {renderAction('building', 'Privacy', '/volunteer/privacy')}
-            <View style={styles.divider} />
-            {renderAction('check', 'Terms', '/volunteer/terms')}
-          </View>
-        </View>
-
-        {/* Log Out */}
-        <TouchableOpacity style={styles.logoutBtn} onPress={() => setLogoutVisible(true)}>
-          <Text style={styles.logoutBtnText}>Log Out</Text>
-        </TouchableOpacity>
-
-      </ScrollView>
-
-      {/* Logout Modal */}
-      <Modal visible={logoutVisible} transparent animationType="fade" onRequestClose={() => setLogoutVisible(false)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <View style={styles.modalIconBox}>
-              <Icon name="arrow.right.square" size={28} color="#EF4444" />
-            </View>
-            <Text style={styles.modalTitle}>Log out?</Text>
-            <Text style={styles.modalDesc}>Are you sure you want to log out of your volunteer account?</Text>
-            <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setLogoutVisible(false)}>
-                <Text style={styles.modalCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalLogoutBtn} onPress={handleLogout}>
-                <Text style={styles.modalLogoutText}>Log Out</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-    </SafeAreaView>
+      {!isLast && <View style={styles.rowDivider} />}
+    </>
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: 16, gap: 24, paddingBottom: 40 },
+interface MenuRowProps {
+  iconName: any;
+  label: string;
+  onPress: () => void;
+  isLast?: boolean;
+  danger?: boolean;
+}
 
-  profileHeader: {
+function MenuRow({
+  iconName,
+  label,
+  onPress,
+  isLast = false,
+  danger = false,
+}: MenuRowProps) {
+  return (
+    <>
+      <TouchableOpacity
+        style={styles.menuRow}
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
+        <View
+          style={[
+            styles.menuIconWrap,
+            danger && styles.menuIconWrapDanger,
+          ]}
+        >
+          <Icon
+            name={iconName}
+            size={18}
+            color={danger ? Colors.danger : Colors.primary}
+          />
+        </View>
+
+        <Text
+          style={[
+            styles.menuLabel,
+            danger && styles.menuLabelDanger,
+          ]}
+        >
+          {label}
+        </Text>
+
+        <Icon
+          name="chevron-right"
+          size={18}
+          color={Colors.textMuted}
+        />
+      </TouchableOpacity>
+
+      {!isLast && <View style={styles.rowDivider} />}
+    </>
+  );
+}
+
+interface StatBoxProps {
+  value: string;
+  label: string;
+}
+
+function StatBox({ value, label }: StatBoxProps) {
+  return (
+    <View style={styles.statBox}>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main Screen
+// ─────────────────────────────────────────────────────────────────────────────
+
+export default function VolunteerProfileScreen() {
+  const { profile, pickupPreferences } = useVolunteerStore();
+
+  const [logoutModalVisible, setLogoutModalVisible] =
+    useState(false);
+
+  const initials = getInitials(profile.fullName);
+
+  const availabilityLabel = pickupPreferences.availableToday
+    ? 'Available Today'
+    : 'Not Available';
+
+  const timeRange = `${pickupPreferences.preferredStartTime} – ${pickupPreferences.preferredEndTime}`;
+
+  function handleLogout() {
+    setLogoutModalVisible(false);
+    router.replace('/login');
+  }
+
+  function handleNavPress(tab: string) {
+    const routes: Record<string, string> = {
+      Home: '/volunteer/dashboard',
+      Pickups: '/volunteer/pickups',
+      Notifications: '/volunteer/notifications',
+      Profile: '/volunteer/profile',
+    };
+
+    const route = routes[tab];
+
+    if (route) {
+      router.push(route as any);
+    }
+  }
+
+  return (
+    <View style={styles.root}>
+      {/* ── Header ── */}
+      <SafeAreaView
+        edges={['top']}
+        style={styles.headerSafe}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() =>
+              router.push('/volunteer/dashboard')
+            }
+            activeOpacity={0.7}
+          >
+            <Icon
+              name="arrow-left"
+              size={22}
+              color={Colors.textPrimary}
+            />
+          </TouchableOpacity>
+
+          <Text style={styles.headerTitle}>Profile</Text>
+
+          {/* Spacer to centre the title */}
+          <View style={styles.backBtn} />
+        </View>
+      </SafeAreaView>
+
+      {/* ── Body ── */}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── Profile Header Card ── */}
+        <View style={styles.profileCard}>
+          {/* Avatar */}
+          <View style={styles.avatarContainer}>
+            {profile.avatarUrl ? (
+              <Image
+                source={{ uri: profile.avatarUrl }}
+                style={styles.avatarImage}
+              />
+            ) : (
+              <View style={styles.avatarFallback}>
+                <Text style={styles.avatarInitials}>
+                  {initials}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Name & subtitle */}
+          <Text style={styles.profileName}>
+            {profile.fullName}
+          </Text>
+
+          <Text style={styles.profileSubtitle}>
+            Volunteer
+          </Text>
+
+          {/* Active badge */}
+          <View style={styles.activeBadge}>
+            <View style={styles.activeDot} />
+            <Text style={styles.activeBadgeText}>
+              Active Volunteer
+            </Text>
+          </View>
+
+          {/* Volunteer ID */}
+          <Text style={styles.volunteerId}>
+            ID: {profile.volunteerId}
+          </Text>
+        </View>
+
+        {/* ── Personal Information ── */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>
+            Personal Information
+          </Text>
+
+          <InfoRow
+            label="Name"
+            value={profile.fullName}
+          />
+
+          <InfoRow
+            label="Phone"
+            value={profile.phone}
+          />
+
+          <InfoRow
+            label="Email"
+            value={profile.email}
+          />
+
+          <InfoRow
+            label="Location"
+            value={profile.location}
+          />
+
+          <InfoRow
+            label="Joined"
+            value={profile.joinedDate}
+            isLast
+          />
+        </View>
+
+        {/* ── Pickup Preferences Summary ── */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>
+            Pickup Preferences
+          </Text>
+
+          <InfoRow
+            label="Preferred Area"
+            value={pickupPreferences.preferredArea}
+          />
+
+          <InfoRow
+            label="Preferred Time"
+            value={timeRange}
+          />
+
+          <InfoRow
+            label="Availability"
+            value={availabilityLabel}
+          />
+
+          <InfoRow
+            label="Pickup Radius"
+            value={pickupPreferences.pickupRadius}
+            isLast
+          />
+        </View>
+
+        {/* ── Statistics ── */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>
+            Statistics
+          </Text>
+
+          <View style={styles.statsGrid}>
+            <StatBox
+              value="24"
+              label="Completed Pickups"
+            />
+
+            <StatBox
+              value="286"
+              label="Food Packs"
+            />
+
+            <StatBox
+              value="21"
+              label="Deliveries"
+            />
+
+            <StatBox
+              value="96%"
+              label="Completion Rate"
+            />
+          </View>
+        </View>
+
+        {/* ── Account & Preferences ── */}
+        <Text style={styles.sectionHeader}>
+          Account &amp; Preferences
+        </Text>
+
+        <View style={styles.card}>
+          <MenuRow
+            iconName="person"
+            label="Edit Profile"
+            onPress={() =>
+              router.push('/volunteer/edit-profile')
+            }
+          />
+
+          <MenuRow
+            iconName="bell"
+            label="Notification Preferences"
+            onPress={() =>
+              router.push(
+                '/volunteer/notification-preferences'
+              )
+            }
+          />
+
+          <MenuRow
+            iconName="package"
+            label="Pickup Preferences"
+            onPress={() =>
+              router.push(
+                '/volunteer/pickup-preferences'
+              )
+            }
+          />
+
+          <MenuRow
+            iconName="questionmark.circle"
+            label="Help & Support"
+            onPress={() =>
+              router.push('/volunteer/help-support')
+            }
+          />
+
+          <MenuRow
+            iconName="activity"
+            label="Activity"
+            onPress={() =>
+              router.push('/volunteer/activity')
+            }
+            isLast
+          />
+        </View>
+
+        {/* ── More ── */}
+        <Text style={styles.sectionHeader}>More</Text>
+
+        <View style={styles.card}>
+          <MenuRow
+            iconName="info"
+            label="About App"
+            onPress={() =>
+              router.push('/volunteer/about')
+            }
+          />
+
+          <MenuRow
+            iconName="person"
+            label="Privacy"
+            onPress={() =>
+              router.push('/volunteer/privacy')
+            }
+          />
+
+          <MenuRow
+            iconName="check"
+            label="Terms"
+            onPress={() =>
+              router.push('/volunteer/terms')
+            }
+            isLast
+          />
+        </View>
+
+        {/* ── Logout Button ── */}
+        <TouchableOpacity
+          style={styles.logoutBtn}
+          onPress={() => setLogoutModalVisible(true)}
+          activeOpacity={0.8}
+        >
+          <Icon
+            name="arrow.right.square"
+            size={20}
+            color={Colors.white}
+          />
+
+          <Text style={styles.logoutBtnText}>
+            Log Out
+          </Text>
+        </TouchableOpacity>
+
+        <View style={styles.bottomSpacer} />
+      </ScrollView>
+
+      {/* ── Bottom Nav ── */}
+      <VolunteerBottomNav
+        activeTab="Profile"
+        onPress={handleNavPress}
+      />
+
+      {/* ── Logout Modal ── */}
+      <Modal
+        visible={logoutModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() =>
+          setLogoutModalVisible(false)
+        }
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() =>
+            setLogoutModalVisible(false)
+          }
+        >
+          <Pressable
+            style={styles.modalCard}
+            onPress={() => {}}
+          >
+            {/* Icon */}
+            <View style={styles.modalIconWrap}>
+              <Icon
+                name="arrow.right.square"
+                size={28}
+                color={Colors.danger}
+              />
+            </View>
+
+            <Text style={styles.modalTitle}>
+              Log out?
+            </Text>
+
+            <Text style={styles.modalMessage}>
+              Are you sure you want to log out of your
+              volunteer account?
+            </Text>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() =>
+                  setLogoutModalVisible(false)
+                }
+                activeOpacity={0.8}
+              >
+                <Text style={styles.modalCancelText}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalLogoutBtn}
+                onPress={handleLogout}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.modalLogoutText}>
+                  Log Out
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+    </View>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Styles
+// ─────────────────────────────────────────────────────────────────────────────
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+
+  /* Header */
+
+  headerSafe: {
+    backgroundColor: Colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.primaryDark,
+
+  backBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: Colors.background,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
-  },
-  avatarImage: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 40,
-  },
-  avatarText: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: Colors.white,
-  },
-  verifiedBadge: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: Colors.primary,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: Colors.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  name: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: Colors.textPrimary,
-  },
-  role: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginTop: 4,
-    fontWeight: '500',
-  },
-  idText: {
-    fontSize: 13,
-    color: Colors.textMuted,
-    marginTop: 6,
-    fontFamily: 'monospace',
   },
 
-  section: { gap: 12 },
-  sectionTitle: { fontSize: 14, fontWeight: '700', color: Colors.textSecondary, marginLeft: 4 },
-  
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    letterSpacing: 0.2,
+  },
+
+  /* Scroll */
+
+  scroll: {
+    flex: 1,
+  },
+
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 24,
+  },
+
+  /* Profile Header Card */
+
+  profileCard: {
+    backgroundColor: Colors.primaryDark,
+    borderRadius: 20,
+    paddingVertical: 28,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    marginBottom: 16,
+
+    shadowColor: Colors.primaryDark,
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+
+  avatarContainer: {
+    marginBottom: 14,
+  },
+
+  avatarImage: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.3)',
+  },
+
+  avatarFallback: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: '#047857',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.25)',
+  },
+
+  avatarInitials: {
+    fontSize: 30,
+    fontWeight: '800',
+    color: Colors.white,
+    letterSpacing: 1,
+  },
+
+  profileName: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: Colors.white,
+    marginBottom: 2,
+    textAlign: 'center',
+  },
+
+  profileSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.75)',
+    fontWeight: '500',
+    marginBottom: 12,
+  },
+
+  activeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    marginBottom: 10,
+    gap: 6,
+  },
+
+  activeDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#6EE7B7',
+  },
+
+  activeBadgeText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.white,
+  },
+
+  volunteerId: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.6)',
+    fontWeight: '500',
+    letterSpacing: 0.5,
+  },
+
+  /* Card */
+
   card: {
     backgroundColor: Colors.surface,
     borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: Colors.border,
-    overflow: 'hidden',
+
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  
+
+  cardTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    marginBottom: 14,
+    letterSpacing: 0.1,
+  },
+
+  /* Info Row */
+
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 16,
     alignItems: 'center',
+    paddingVertical: 11,
   },
-  availabilityRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  infoLabel: { fontSize: 14, color: Colors.textSecondary, fontWeight: '500' },
-  infoValue: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary, textAlign: 'right', flex: 1, marginLeft: 16 },
-  
-  divider: { height: 1, backgroundColor: Colors.border, marginHorizontal: 16 },
 
-  actionRow: {
+  infoLabel: {
+    fontSize: 14,
+    color: Colors.textMuted,
+    fontWeight: '500',
+    flex: 1,
+  },
+
+  infoValue: {
+    fontSize: 14,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    flex: 1.5,
+    textAlign: 'right',
+  },
+
+  rowDivider: {
+    height: 1,
+    backgroundColor: Colors.border,
+    opacity: 0.7,
+  },
+
+  /* Stats Grid */
+
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+
+  statBox: {
+    flex: 1,
+    minWidth: '45%',
+    backgroundColor: Colors.primaryWash,
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.primaryLight,
+  },
+
+  statValue: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: Colors.primaryDark,
+    marginBottom: 4,
+  },
+
+  statLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 15,
+  },
+
+  /* Section Header */
+
+  sectionHeader: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 8,
+    marginLeft: 4,
+  },
+
+  /* Menu Row */
+
+  menuRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    paddingVertical: 13,
+    gap: 12,
   },
-  actionIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+
+  menuIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     backgroundColor: Colors.primaryWash,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
-  },
-  actionTitle: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
   },
 
-  logoutBtn: {
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 16,
-    padding: 16,
-    alignItems: 'center',
+  menuIconWrapDanger: {
+    backgroundColor: '#FEF2F2',
   },
-  logoutBtnText: {
-    fontSize: 16,
-    fontWeight: '700',
+
+  menuLabel: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+  },
+
+  menuLabelDanger: {
     color: Colors.danger,
   },
 
+  /* Logout Button */
+
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.danger,
+    borderRadius: 14,
+    paddingVertical: 15,
+    gap: 10,
+    marginTop: 4,
+
+    shadowColor: Colors.danger,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+
+  logoutBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.white,
+    letterSpacing: 0.3,
+  },
+
+  bottomSpacer: {
+    height: 16,
+  },
+
+  /* Modal */
+
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.45)',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 32,
   },
+
   modalCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 0,
-    padding: 32,
+    backgroundColor: Colors.surface,
+    borderRadius: 20,
+    padding: 28,
     width: '100%',
     alignItems: 'center',
+
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 10,
   },
-  modalIconBox: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#FFF5F5',
+
+  modalIconWrap: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#FEF2F2',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
   },
-  modalTitle: { fontSize: 24, fontWeight: '800', color: '#111827', marginBottom: 12 },
-  modalDesc: { fontSize: 16, color: '#6B7280', textAlign: 'center', marginBottom: 32 },
-  modalActions: { flexDirection: 'row', gap: 16, justifyContent: 'center' },
+
+  modalTitle: {
+    fontSize: 19,
+    fontWeight: '800',
+    color: Colors.textPrimary,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+
+  modalMessage: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 21,
+    marginBottom: 24,
+  },
+
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+
   modalCancelBtn: {
-    width: 100,
-    height: 100,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    flex: 1,
+    paddingVertical: 13,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.background,
   },
-  modalCancelText: { fontSize: 16, fontWeight: '700', color: '#111827' },
+
+  modalCancelText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+  },
+
   modalLogoutBtn: {
-    width: 100,
-    height: 100,
-    borderRadius: 20,
-    backgroundColor: '#EF4444',
+    flex: 1,
+    paddingVertical: 13,
+    borderRadius: 12,
+    backgroundColor: Colors.danger,
     alignItems: 'center',
-    justifyContent: 'center',
+
+    shadowColor: Colors.danger,
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  modalLogoutText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
+
+  modalLogoutText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.white,
+  },
 });

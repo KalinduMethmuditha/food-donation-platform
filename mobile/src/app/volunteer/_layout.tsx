@@ -18,7 +18,6 @@ export default function VolunteerLayout() {
       <Stack.Screen name="about" />
       <Stack.Screen name="privacy" />
       <Stack.Screen name="terms" />
-      <Stack.Screen name="welcome" />
     </Stack>
   );
 }

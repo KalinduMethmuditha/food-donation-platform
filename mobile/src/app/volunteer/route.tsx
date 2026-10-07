@@ -1,133 +1,324 @@
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Linking, Alert, Platform } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Linking,
+  Platform,
+  Alert,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '@/components/ui/Icon';
 import { Colors } from '@/constants/colors';
 import { mockActivePickup } from '@/data/mockVolunteerData';
 import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
 import { useVolunteerStore } from '@/store/volunteerStore';
+import { useEffect, useState } from 'react';
+import * as Location from 'expo-location';
+
+// Conditionally load react-native-maps so web does not crash.
+let MapView: any = null;
+let Marker: any = null;
+let Polyline: any = null;
+
+try {
+  if (Platform.OS !== 'web') {
+    const Maps = require('react-native-maps');
+    MapView = Maps.default;
+    Marker = Maps.Marker;
+    Polyline = Maps.Polyline;
+  }
+} catch (e) {
+  // Map is unavailable in the current environment.
+}
 
 export default function RouteScreen() {
   const pickup = mockActivePickup;
-  const { pickupStatus, setPickupStatus } = useVolunteerStore();
+  const { setPickupStatus, pickupStatus } = useVolunteerStore();
+
+  const [currentLocation, setCurrentLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+
+  // Destination coordinates for Green Leaf Bakery, Negombo.
+  const destinationCoords = {
+    latitude: 7.2088,
+    longitude: 79.8362,
+  };
+
+  useEffect(() => {
+    (async () => {
+      // Native location is not used on web.
+      if (Platform.OS === 'web') return;
+
+      try {
+        const { status } =
+          await Location.requestForegroundPermissionsAsync();
+
+        if (status !== 'granted') {
+          // Frontend fallback location if permission is denied.
+          setCurrentLocation({
+            latitude: 7.2,
+            longitude: 79.84,
+          });
+          return;
+        }
+
+        const location = await Location.getCurrentPositionAsync({});
+
+        setCurrentLocation({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+      } catch (error) {
+        // Frontend fallback if location cannot be obtained.
+        setCurrentLocation({
+          latitude: 7.2,
+          longitude: 79.84,
+        });
+      }
+    })();
+  }, []);
 
   const handleOpenMap = () => {
-    // Attempt to open external map for directions
-    const url = `https://maps.google.com/?q=${encodeURIComponent(pickup.address)}`;
-    Linking.canOpenURL(url).then(supported => {
-      if (supported) {
-        Linking.openURL(url);
-      } else {
-        Alert.alert('Error', 'No maps application found on this device.');
-      }
+    const url = Platform.select({
+      ios: `maps:0,0?q=${encodeURIComponent(pickup.address)}`,
+      android: `geo:0,0?q=${encodeURIComponent(pickup.address)}`,
+      web: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        pickup.address
+      )}`,
+      default: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        pickup.address
+      )}`,
     });
+
+    if (!url) {
+      Alert.alert('Map Unavailable', 'Could not create a map link.');
+      return;
+    }
+
+    Linking.canOpenURL(url)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(url);
+        }
+
+        Alert.alert(
+          'Map Unavailable',
+          'Could not open the map application.'
+        );
+      })
+      .catch(() => {
+        Alert.alert(
+          'Map Unavailable',
+          'Could not open the map application.'
+        );
+      });
   };
 
   const handleArrived = () => {
-    if (pickupStatus === 'ON THE WAY' || pickupStatus === 'ASSIGNED') {
-      setPickupStatus('ARRIVED');
-    }
-    router.replace('/volunteer/collection-status');
+    setPickupStatus('ARRIVED');
+    router.push('/volunteer/collection-status');
   };
+
+  const isMapSupported = MapView && Platform.OS !== 'web';
+
+  const fallbackLocation = currentLocation || {
+    latitude: 7.2,
+    longitude: 79.84,
+  };
+
+  const isArrived = pickupStatus === 'ARRIVED';
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <VolunteerScreenHeader title="Route to Pickup" onBack={() => router.back()} />
+      <VolunteerScreenHeader
+        title="Route to Pickup"
+        onBack={() => router.back()}
+      />
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} bounces={false}>
-
-        {/* ─── REAL MAP (WEB) OR MOCK MAP (NATIVE) ─── */}
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* MAP SECTION */}
         <View style={styles.mapContainer}>
-          {Platform.OS === 'web' ? (
-            <iframe
-              src="https://www.openstreetmap.org/export/embed.html?bbox=79.82%2C6.91%2C79.88%2C6.95&layer=mapnik&marker=6.93%2C79.85"
-              width="100%"
-              height="100%"
-              style={{ border: 0 }}
-            />
+          {isMapSupported ? (
+            <MapView
+              style={styles.map}
+              initialRegion={{
+                latitude:
+                  (fallbackLocation.latitude +
+                    destinationCoords.latitude) /
+                  2,
+                longitude:
+                  (fallbackLocation.longitude +
+                    destinationCoords.longitude) /
+                  2,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+              }}
+              showsUserLocation
+            >
+              <Marker
+                coordinate={fallbackLocation}
+                title="You"
+                pinColor={Colors.primary}
+              />
+
+              <Marker
+                coordinate={destinationCoords}
+                title={pickup.donor}
+                description={pickup.address}
+                pinColor={Colors.danger}
+              />
+
+              <Polyline
+                coordinates={[
+                  fallbackLocation,
+                  destinationCoords,
+                ]}
+                strokeColor={Colors.primaryDark}
+                strokeWidth={3}
+                lineDashPattern={[5, 5]}
+              />
+            </MapView>
           ) : (
-            <>
-              <View style={styles.mapOverlay} />
-              {/* Simulated Route Line */}
-              <View style={styles.routeLine} />
-              {/* Origin Pulse */}
-              <View style={styles.originMarker}>
-                <View style={styles.originPulse} />
-                <View style={styles.originDot} />
-              </View>
-              {/* Destination Pin */}
-              <View style={styles.destMarker}>
-                <Icon name="pin" size={32} color={Colors.primaryDark} />
-              </View>
-            </>
+            <View style={styles.mockMap}>
+              <Icon
+                name="map"
+                size={40}
+                color={Colors.primaryLight}
+              />
+              <Text style={styles.mockMapText}>
+                Interactive map available on mobile
+              </Text>
+            </View>
           )}
-          
-          <View style={styles.liveBadge}>
-            <View style={styles.liveDot} />
-            <Text style={styles.liveText}>LIVE</Text>
-          </View>
         </View>
 
-        {/* ─── TRACKING CARD ─── */}
-        <View style={styles.bottomCard}>
-          <Text style={styles.cardTitle}>Live Route Tracking</Text>
-          
-          <View style={styles.destRow}>
-            <View style={styles.destIconBox}>
-              <Icon name="building" size={20} color={Colors.primaryDark} />
+        {/* LIVE ROUTE TRACKING CARD */}
+        <View style={styles.trackingCard}>
+          <View style={styles.trackingTop}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.trackingLabel}>
+                Pickup From
+              </Text>
+
+              <Text style={styles.trackingDonor}>
+                {pickup.donor}
+              </Text>
+
+              <View style={styles.addrRow}>
+                <Icon
+                  name="pin"
+                  size={13}
+                  color={Colors.textSecondary}
+                />
+                <Text style={styles.addrText}>
+                  {pickup.address}
+                </Text>
+              </View>
             </View>
-            <View style={styles.destInfo}>
-              <Text style={styles.destLabel}>Pickup From</Text>
-              <Text style={styles.destName}>{pickup.donor}</Text>
-              <Text style={styles.destAddress}>{pickup.address}</Text>
-            </View>
-            <View style={styles.statusBadge}>
-              <Text style={styles.statusText}>{pickupStatus}</Text>
+
+            <View
+              style={[
+                styles.statusBadge,
+                isArrived && styles.statusBadgeArrived,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.statusText,
+                  isArrived && styles.statusTextArrived,
+                ]}
+              >
+                {isArrived ? 'ARRIVED' : 'ON THE WAY'}
+              </Text>
             </View>
           </View>
 
           <View style={styles.divider} />
 
-          <View style={styles.statusRow}>
-            <View style={styles.currentBox}>
-              <Text style={styles.currentLabel}>Current Status</Text>
-              <Text style={styles.currentValue}>
-                {pickupStatus === 'ARRIVED' ? 'Arrived at pickup location' : 'On the way to pickup location'}
+          <Text style={styles.currentStatusLabel}>
+            Current Status
+          </Text>
+
+          <Text style={styles.currentStatus}>
+            {isArrived
+              ? 'Arrived at pickup location'
+              : 'On the way to pickup location'}
+          </Text>
+
+          <View style={styles.statsRow}>
+            <View style={styles.statBox}>
+              <Text style={styles.statLabel}>
+                DISTANCE
+              </Text>
+
+              <Text style={styles.statValue}>
+                {pickup.distance}
+              </Text>
+            </View>
+
+            <View style={styles.statDivider} />
+
+            <View style={styles.statBox}>
+              <Text style={styles.statLabel}>
+                ESTIMATED TIME
+              </Text>
+
+              <Text style={styles.statValue}>
+                {pickup.estimatedTime}
               </Text>
             </View>
           </View>
+        </View>
 
-          <View style={styles.metricsRow}>
-            <View style={styles.metricBox}>
-              <Text style={styles.metricLabel}>Distance</Text>
-              <Text style={styles.metricValue}>{pickup.distance}</Text>
-            </View>
-            <View style={styles.metricDivider} />
-            <View style={styles.metricBox}>
-              <Text style={styles.metricLabel}>Estimated Time</Text>
-              <Text style={styles.metricValue}>{pickup.estimatedTime}</Text>
-            </View>
-          </View>
+        {/* ACTION BUTTONS */}
+        <View style={styles.btnRow}>
+          <TouchableOpacity
+            onPress={handleOpenMap}
+            style={styles.outlineBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Open Map"
+          >
+            <Icon
+              name="map"
+              size={17}
+              color={Colors.primaryDark}
+            />
 
-          <View style={styles.actions}>
-            <TouchableOpacity style={styles.outlineBtn} onPress={handleOpenMap}>
-              <Icon name="map" size={18} color={Colors.primaryDark} />
-              <Text style={styles.outlineBtnText}>Open Map</Text>
-            </TouchableOpacity>
+            <Text style={styles.outlineBtnText}>
+              Open Map
+            </Text>
+          </TouchableOpacity>
 
-            {pickupStatus !== 'ARRIVED' && pickupStatus !== 'COLLECTED' && pickupStatus !== 'DELIVERED' && (
-              <TouchableOpacity style={styles.primaryBtn} onPress={handleArrived}>
-                <Text style={styles.primaryBtnText}>Arrived</Text>
-              </TouchableOpacity>
-            )}
-            
-            {(pickupStatus === 'ARRIVED' || pickupStatus === 'COLLECTED' || pickupStatus === 'DELIVERED') && (
-              <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push('/volunteer/collection-status')}>
-                <Text style={styles.primaryBtnText}>View Status</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          <TouchableOpacity
+            onPress={handleArrived}
+            style={[
+              styles.arrivedBtn,
+              isArrived && {
+                backgroundColor: Colors.textMuted,
+              },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Arrived at pickup location"
+            disabled={isArrived}
+          >
+            <Icon
+              name="check-circle"
+              size={17}
+              color={Colors.white}
+            />
 
+            <Text style={styles.arrivedBtnText}>
+              Arrived
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -135,162 +326,196 @@ export default function RouteScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  content: { flexGrow: 1 },
+  safe: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
 
-  // Mock Map
+  content: {
+    padding: 20,
+    gap: 14,
+    paddingBottom: 32,
+  },
+
   mapContainer: {
-    height: 320,
-    backgroundColor: '#E5E7EB', // Gray map background
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  mapOverlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(255,255,255,0.4)',
-    // Grid pattern simulation
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
-  },
-  routeLine: {
-    position: 'absolute',
-    top: '30%',
-    left: '20%',
-    width: '60%',
-    height: '40%',
-    borderLeftWidth: 4,
-    borderBottomWidth: 4,
-    borderColor: Colors.primary,
-    borderBottomLeftRadius: 20,
-  },
-  originMarker: {
-    position: 'absolute',
-    bottom: '25%',
-    left: '15%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  originPulse: {
-    width: 32,
-    height: 32,
+    height: 220,
+    backgroundColor: Colors.surfaceMuted,
     borderRadius: 16,
-    backgroundColor: Colors.primary,
-    opacity: 0.2,
-    position: 'absolute',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
-  originDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: Colors.primaryDark,
-    borderWidth: 2,
-    borderColor: Colors.white,
+
+  map: {
+    flex: 1,
   },
-  destMarker: {
-    position: 'absolute',
-    top: '20%',
-    right: '15%',
+
+  mockMap: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    backgroundColor: '#E8F5E9',
+    gap: 8,
   },
-  liveBadge: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
+
+  mockMapText: {
+    fontSize: 13,
+    color: Colors.primaryDark,
+    fontWeight: '600',
+  },
+
+  trackingCard: {
     backgroundColor: Colors.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    padding: 16,
+    gap: 10,
+  },
+
+  trackingTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+
+  trackingLabel: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  trackingDonor: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    marginTop: 2,
+  },
+
+  addrRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
-    gap: 6,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    gap: 4,
+    marginTop: 3,
   },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.danger,
-  },
-  liveText: { fontSize: 11, fontWeight: '800', color: Colors.textPrimary },
 
-  // Bottom Card
-  bottomCard: {
-    flex: 1,
-    marginTop: -24,
-    backgroundColor: Colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 10,
-    gap: 16,
+  addrText: {
+    fontSize: 12,
+    color: Colors.textSecondary,
   },
-  cardTitle: { fontSize: 16, fontWeight: '800', color: Colors.textPrimary, marginBottom: 4 },
-  
-  destRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  destIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: Colors.primaryWash,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  destInfo: { flex: 1, gap: 2 },
-  destLabel: { fontSize: 11, color: Colors.textMuted, fontWeight: '600', textTransform: 'uppercase' },
-  destName: { fontSize: 15, fontWeight: '700', color: Colors.textPrimary },
-  destAddress: { fontSize: 13, color: Colors.textSecondary },
+
   statusBadge: {
     backgroundColor: Colors.primaryLight,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 8,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
   },
-  statusText: { fontSize: 10, fontWeight: '800', color: Colors.primaryDark },
 
-  divider: { height: 1, backgroundColor: Colors.border, marginVertical: 4 },
+  statusBadgeArrived: {
+    backgroundColor: '#DBEAFE',
+  },
 
-  statusRow: { backgroundColor: Colors.background, borderRadius: 12, padding: 16 },
-  currentBox: { gap: 4 },
-  currentLabel: { fontSize: 12, color: Colors.textMuted },
-  currentValue: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
+  statusText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: Colors.primaryDark,
+    letterSpacing: 0.5,
+  },
 
-  metricsRow: { flexDirection: 'row', alignItems: 'center' },
-  metricBox: { flex: 1, gap: 4 },
-  metricDivider: { width: 1, height: 32, backgroundColor: Colors.border, marginHorizontal: 16 },
-  metricLabel: { fontSize: 12, color: Colors.textMuted },
-  metricValue: { fontSize: 18, fontWeight: '800', color: Colors.textPrimary },
+  statusTextArrived: {
+    color: '#1E40AF',
+  },
 
-  actions: { flexDirection: 'row', gap: 12, marginTop: 8 },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.border,
+  },
+
+  currentStatusLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  currentStatus: {
+    fontSize: 14,
+    color: Colors.textPrimary,
+    fontWeight: '500',
+  },
+
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  statBox: {
+    flex: 1,
+    gap: 3,
+  },
+
+  statLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  statValue: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: Colors.textPrimary,
+  },
+
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: Colors.border,
+    marginHorizontal: 16,
+  },
+
+  btnRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+
   outlineBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 7,
+    paddingVertical: 14,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: 12,
-    paddingVertical: 14,
+    backgroundColor: Colors.surface,
   },
-  outlineBtnText: { fontSize: 14, fontWeight: '600', color: Colors.primaryDark },
-  primaryBtn: {
+
+  outlineBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.primaryDark,
+  },
+
+  arrivedBtn: {
     flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.primaryDark,
-    borderRadius: 12,
+    gap: 7,
     paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: Colors.primaryDark,
   },
-  primaryBtnText: { fontSize: 15, fontWeight: '700', color: Colors.white },
+
+  arrivedBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.white,
+  },
 });

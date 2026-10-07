@@ -1,309 +1,1110 @@
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert, Modal, Switch } from 'react-native';
+import {
+  Alert,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
+
 import Icon from '@/components/ui/Icon';
 import { Colors } from '@/constants/colors';
 import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
 import { useVolunteerStore } from '@/store/volunteerStore';
 
-const FOOD_TYPES = ['Cooked Meals', 'Rice & Curry', 'Bakery Items', 'Fruits & Vegetables', 'Packaged Food', 'Beverages', 'Other'];
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const RADIUS_OPTIONS = ['2 km', '5 km', '10 km', '15 km'];
+const FOOD_TYPES: string[] = [
+  'Cooked Meals',
+  'Rice & Curry',
+  'Bakery Items',
+  'Fruits & Vegetables',
+  'Packaged Food',
+  'Beverages',
+  'Other',
+];
+
+const RADIUS_OPTIONS: string[] = [
+  '2 km',
+  '5 km',
+  '10 km',
+  '15 km',
+];
+
+const DAYS: string[] = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
+
+const DAY_ABBR: Record<string, string> = {
+  Monday: 'Mon',
+  Tuesday: 'Tue',
+  Wednesday: 'Wed',
+  Thursday: 'Thu',
+  Friday: 'Fri',
+  Saturday: 'Sat',
+  Sunday: 'Sun',
+};
+
+const TIME_OPTIONS: string[] = [
+  '12:00 PM',
+  '1:00 PM',
+  '2:00 PM',
+  '3:00 PM',
+  '4:00 PM',
+  '4:30 PM',
+  '5:00 PM',
+  '5:30 PM',
+  '6:00 PM',
+  '6:30 PM',
+  '7:00 PM',
+  '8:00 PM',
+];
 
 export default function PickupPreferencesScreen() {
-  const { pickupPreferences, updatePickupPreferences, isAvailable, toggleAvailability } = useVolunteerStore();
-  
-  const [startTime, setStartTime] = useState(pickupPreferences.preferredStartTime);
-  const [endTime, setEndTime] = useState(pickupPreferences.preferredEndTime);
-  const [area, setArea] = useState(pickupPreferences.preferredArea);
-  const [radius, setRadius] = useState(pickupPreferences.pickupRadius);
-  const [foodTypes, setFoodTypes] = useState<string[]>(pickupPreferences.foodTypes);
-  const [availableDays, setAvailableDays] = useState<string[]>(pickupPreferences.availableDays);
+  const {
+    pickupPreferences,
+    updatePickupPreferences,
+  } = useVolunteerStore();
 
-  const [timeSelectorVisible, setTimeSelectorVisible] = useState(false);
-  const [activeTimeField, setActiveTimeField] = useState<'start' | 'end' | null>(null);
-  
-  // Very simple mock time values for our custom selector
-  const TIME_OPTIONS = ['08:00 AM', '10:00 AM', '12:00 PM', '02:00 PM', '04:00 PM', '06:00 PM', '08:00 PM'];
+  const [startTime, setStartTime] = useState<string>(
+    pickupPreferences?.preferredStartTime ?? '5:00 PM'
+  );
 
-  const handleToggleFood = (food: string) => {
-    if (foodTypes.includes(food)) {
-      setFoodTypes(foodTypes.filter(f => f !== food));
-    } else {
-      setFoodTypes([...foodTypes, food]);
+  const [endTime, setEndTime] = useState<string>(
+    pickupPreferences?.preferredEndTime ?? '8:00 PM'
+  );
+
+  const [area, setArea] = useState<string>(
+    pickupPreferences?.preferredArea ?? ''
+  );
+
+  const [radius, setRadius] = useState<string>(
+    pickupPreferences?.pickupRadius ?? '5 km'
+  );
+
+  const [selectedFoodTypes, setSelectedFoodTypes] =
+    useState<string[]>(
+      pickupPreferences?.foodTypes ?? []
+    );
+
+  const [availableToday, setAvailableToday] =
+    useState<boolean>(
+      pickupPreferences?.availableToday ?? false
+    );
+
+  const [availableDays, setAvailableDays] =
+    useState<string[]>(
+      pickupPreferences?.availableDays ?? []
+    );
+
+  const [showStartTimePicker, setShowStartTimePicker] =
+    useState<boolean>(false);
+
+  const [showEndTimePicker, setShowEndTimePicker] =
+    useState<boolean>(false);
+
+  const [showAreaModal, setShowAreaModal] =
+    useState<boolean>(false);
+
+  const [areaInput, setAreaInput] =
+    useState<string>(area);
+
+  const [areaError, setAreaError] =
+    useState<string>('');
+
+  const [pendingStartTime, setPendingStartTime] =
+    useState<string>(startTime);
+
+  const [pendingEndTime, setPendingEndTime] =
+    useState<string>(endTime);
+
+  const toggleFoodType = (type: string) => {
+    setSelectedFoodTypes((prev) =>
+      prev.includes(type)
+        ? prev.filter((t) => t !== type)
+        : [...prev, type]
+    );
+  };
+
+  const toggleDay = (day: string) => {
+    setAvailableDays((prev) =>
+      prev.includes(day)
+        ? prev.filter((d) => d !== day)
+        : [...prev, day]
+    );
+  };
+
+  const handleSaveArea = () => {
+    if (!areaInput.trim()) {
+      setAreaError('Area cannot be empty.');
+      return;
     }
+
+    setAreaError('');
+    setArea(areaInput.trim());
+    setShowAreaModal(false);
   };
 
-  const handleToggleDay = (day: string) => {
-    if (availableDays.includes(day)) {
-      setAvailableDays(availableDays.filter(d => d !== day));
-    } else {
-      setAvailableDays([...availableDays, day]);
-    }
-  };
-
-  const openTimePicker = (field: 'start' | 'end') => {
-    setActiveTimeField(field);
-    setTimeSelectorVisible(true);
-  };
-
-  const handleSelectTime = (t: string) => {
-    if (activeTimeField === 'start') setStartTime(t);
-    if (activeTimeField === 'end') setEndTime(t);
-    setTimeSelectorVisible(false);
+  const handleOpenAreaModal = () => {
+    setAreaInput(area);
+    setAreaError('');
+    setShowAreaModal(true);
   };
 
   const handleSave = () => {
     if (!area.trim()) {
-      Alert.alert('Required', 'Please enter your preferred pickup area.');
+      Alert.alert(
+        'Validation',
+        'Please set a preferred pickup area.'
+      );
       return;
     }
-    
+
     updatePickupPreferences({
       preferredStartTime: startTime,
       preferredEndTime: endTime,
       preferredArea: area,
       pickupRadius: radius,
-      foodTypes,
-      availableDays
+      foodTypes: selectedFoodTypes,
+      availableToday,
+      availableDays,
     });
 
-    Alert.alert('Preferences Saved', 'Your pickup preferences have been updated.', [
-      { text: 'OK', onPress: () => router.back() }
-    ]);
+    Alert.alert(
+      'Saved',
+      'Pickup preferences updated.',
+      [
+        {
+          text: 'OK',
+          onPress: () => router.back(),
+        },
+      ]
+    );
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <VolunteerScreenHeader title="Pickup Preferences" onBack={() => router.back()} />
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={['top', 'bottom']}
+    >
+      <VolunteerScreenHeader
+        title="Pickup Preferences"
+        onBack={() => router.back()}
+      />
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── Preferred Pickup Time ── */}
+        <Text style={styles.sectionLabel}>
+          PREFERRED PICKUP TIME
+        </Text>
 
-        {/* TIME */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Preferred Pickup Time</Text>
-          <View style={styles.timeRow}>
-            <TouchableOpacity style={styles.timeBtn} onPress={() => openTimePicker('start')}>
-              <Text style={styles.timeLabel}>Start Time</Text>
-              <Text style={styles.timeValue}>{startTime}</Text>
-            </TouchableOpacity>
-            <View style={styles.timeDivider}>
-              <Icon name="chevron.right" size={16} color={Colors.textMuted} />
+        <View style={styles.card}>
+          {/* Start Time */}
+          <Pressable
+            style={styles.timeRow}
+            onPress={() => {
+              setPendingStartTime(startTime);
+              setShowStartTimePicker(true);
+            }}
+          >
+            <View style={styles.timeRowLeft}>
+              <Icon
+                name="clock"
+                size={18}
+                color={Colors.primary}
+              />
+
+              <Text style={styles.timeLabel}>
+                Start Time
+              </Text>
             </View>
-            <TouchableOpacity style={styles.timeBtn} onPress={() => openTimePicker('end')}>
-              <Text style={styles.timeLabel}>End Time</Text>
-              <Text style={styles.timeValue}>{endTime}</Text>
-            </TouchableOpacity>
-          </View>
+
+            <View style={styles.timeRowRight}>
+              <Text style={styles.timeValue}>
+                {startTime}
+              </Text>
+
+              <Icon
+                name="chevron-right"
+                size={16}
+                color={Colors.textMuted}
+              />
+            </View>
+          </Pressable>
+
+          <View style={styles.divider} />
+
+          {/* End Time */}
+          <Pressable
+            style={styles.timeRow}
+            onPress={() => {
+              setPendingEndTime(endTime);
+              setShowEndTimePicker(true);
+            }}
+          >
+            <View style={styles.timeRowLeft}>
+              <Icon
+                name="clock"
+                size={18}
+                color={Colors.primary}
+              />
+
+              <Text style={styles.timeLabel}>
+                End Time
+              </Text>
+            </View>
+
+            <View style={styles.timeRowRight}>
+              <Text style={styles.timeValue}>
+                {endTime}
+              </Text>
+
+              <Icon
+                name="chevron-right"
+                size={16}
+                color={Colors.textMuted}
+              />
+            </View>
+          </Pressable>
         </View>
 
-        {/* AREA */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Preferred Pickup Area</Text>
-          <TextInput
-            style={styles.input}
-            value={area}
-            onChangeText={setArea}
-            placeholder="e.g. Negombo, Colombo"
-          />
+        {/* ── Preferred Pickup Area ── */}
+        <Text style={styles.sectionLabel}>
+          PREFERRED PICKUP AREA
+        </Text>
+
+        <View style={styles.card}>
+          <Pressable
+            style={styles.areaRow}
+            onPress={handleOpenAreaModal}
+          >
+            <View style={styles.timeRowLeft}>
+              <Icon
+                name="pin"
+                size={18}
+                color={Colors.primary}
+              />
+
+              <Text style={styles.timeLabel}>
+                Area
+              </Text>
+            </View>
+
+            <View style={styles.timeRowRight}>
+              <Text
+                style={[
+                  styles.timeValue,
+                  !area && {
+                    color: Colors.textMuted,
+                    fontStyle: 'italic',
+                  },
+                ]}
+                numberOfLines={1}
+              >
+                {area || 'Tap to set area'}
+              </Text>
+
+              <Icon
+                name="chevron-right"
+                size={16}
+                color={Colors.textMuted}
+              />
+            </View>
+          </Pressable>
         </View>
 
-        {/* RADIUS */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Pickup Radius</Text>
-          <View style={styles.chipGrid}>
-            {RADIUS_OPTIONS.map(opt => (
+        {/* ── Pickup Radius ── */}
+        <Text style={styles.sectionLabel}>
+          PICKUP RADIUS
+        </Text>
+
+        <View style={styles.card}>
+          <View style={styles.radiusRow}>
+            {RADIUS_OPTIONS.map((opt) => (
               <TouchableOpacity
                 key={opt}
+                style={[
+                  styles.radiusBtn,
+                  radius === opt &&
+                    styles.radiusBtnActive,
+                ]}
                 onPress={() => setRadius(opt)}
-                style={[styles.chip, radius === opt && styles.chipActive]}
+                activeOpacity={0.8}
               >
-                <Text style={[styles.chipText, radius === opt && styles.chipTextActive]}>{opt}</Text>
+                <Text
+                  style={[
+                    styles.radiusBtnText,
+                    radius === opt &&
+                      styles.radiusBtnTextActive,
+                  ]}
+                >
+                  {opt}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
 
-        {/* FOOD TYPES */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Food Types</Text>
-          <View style={styles.chipGrid}>
-            {FOOD_TYPES.map(food => {
-              const active = foodTypes.includes(food);
+        {/* ── Food Types ── */}
+        <Text style={styles.sectionLabel}>
+          FOOD TYPES
+        </Text>
+
+        <View style={styles.card}>
+          <View style={styles.chipsWrap}>
+            {FOOD_TYPES.map((type) => {
+              const selected =
+                selectedFoodTypes.includes(type);
+
               return (
                 <TouchableOpacity
-                  key={food}
-                  onPress={() => handleToggleFood(food)}
-                  style={[styles.chip, active && styles.chipActive]}
+                  key={type}
+                  style={[
+                    styles.chip,
+                    selected && styles.chipActive,
+                  ]}
+                  onPress={() => toggleFoodType(type)}
+                  activeOpacity={0.8}
                 >
-                  <Text style={[styles.chipText, active && styles.chipTextActive]}>{food}</Text>
+                  <Text
+                    style={[
+                      styles.chipText,
+                      selected &&
+                        styles.chipTextActive,
+                    ]}
+                  >
+                    {type}
+                  </Text>
                 </TouchableOpacity>
               );
             })}
           </View>
         </View>
 
-        {/* AVAILABILITY */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Availability</Text>
-          <View style={styles.card}>
-            <View style={styles.availabilityRow}>
-              <Text style={styles.availabilityTitle}>Available Today</Text>
-              <Switch
-                value={isAvailable}
-                onValueChange={toggleAvailability}
-                trackColor={{ false: Colors.border, true: Colors.primary }}
-                thumbColor={Colors.white}
+        {/* ── Availability ── */}
+        <Text style={styles.sectionLabel}>
+          AVAILABILITY
+        </Text>
+
+        <View style={styles.card}>
+          {/* Available Today toggle */}
+          <View style={styles.switchRow}>
+            <View style={styles.switchRowLeft}>
+              <Icon
+                name="clock"
+                size={18}
+                color={Colors.primary}
               />
+
+              <Text style={styles.switchLabel}>
+                Available Today
+              </Text>
             </View>
-            <View style={styles.divider} />
-            <Text style={styles.subLabel}>Available Days</Text>
-            <View style={styles.daysRow}>
-              {DAYS.map(day => {
-                const active = availableDays.includes(day);
-                const short = day.substring(0, 3);
-                return (
-                  <TouchableOpacity
-                    key={day}
-                    onPress={() => handleToggleDay(day)}
-                    style={[styles.dayCircle, active && styles.dayCircleActive]}
+
+            <Switch
+              value={availableToday}
+              onValueChange={setAvailableToday}
+              trackColor={{
+                false: Colors.border,
+                true: Colors.primary,
+              }}
+              thumbColor={Colors.white}
+            />
+          </View>
+
+          <View style={styles.divider} />
+
+          {/* Days grid */}
+          <Text style={styles.daysTitle}>
+            Available Days
+          </Text>
+
+          <View style={styles.daysWrap}>
+            {DAYS.map((day) => {
+              const selected =
+                availableDays.includes(day);
+
+              return (
+                <TouchableOpacity
+                  key={day}
+                  style={[
+                    styles.dayPill,
+                    selected &&
+                      styles.dayPillActive,
+                  ]}
+                  onPress={() => toggleDay(day)}
+                  activeOpacity={0.8}
+                >
+                  <Text
+                    style={[
+                      styles.dayPillText,
+                      selected &&
+                        styles.dayPillTextActive,
+                    ]}
                   >
-                    <Text style={[styles.dayText, active && styles.dayTextActive]}>{short}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+                    {DAY_ABBR[day]}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
+        <View style={styles.bottomSpacer} />
       </ScrollView>
 
       {/* Save Button */}
-      <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-          <Text style={styles.saveBtnText}>Save Preferences</Text>
+      <View style={styles.saveContainer}>
+        <TouchableOpacity
+          style={styles.saveBtn}
+          onPress={handleSave}
+          activeOpacity={0.85}
+        >
+          <Icon
+            name="check-circle"
+            size={20}
+            color={Colors.white}
+          />
+
+          <Text style={styles.saveBtnText}>
+            Save Preferences
+          </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Time Picker Modal */}
-      <Modal visible={timeSelectorVisible} transparent animationType="slide">
+      {/* ── Start Time Picker Modal ── */}
+      <Modal
+        visible={showStartTimePicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() =>
+          setShowStartTimePicker(false)
+        }
+      >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalSheet}>
-            <Text style={styles.modalTitle}>Select {activeTimeField === 'start' ? 'Start Time' : 'End Time'}</Text>
-            <ScrollView style={{ maxHeight: 300 }}>
-              {TIME_OPTIONS.map(t => (
-                <TouchableOpacity key={t} style={styles.timeOption} onPress={() => handleSelectTime(t)}>
-                  <Text style={styles.timeOptionText}>{t}</Text>
-                </TouchableOpacity>
-              ))}
+          <View style={styles.timePickerContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                Select Start Time
+              </Text>
+
+              <TouchableOpacity
+                onPress={() =>
+                  setShowStartTimePicker(false)
+                }
+              >
+                <Icon
+                  name="x-circle"
+                  size={22}
+                  color={Colors.textSecondary}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.timeGrid}>
+                {TIME_OPTIONS.map((t) => (
+                  <TouchableOpacity
+                    key={t}
+                    style={[
+                      styles.timeOption,
+                      pendingStartTime === t &&
+                        styles.timeOptionActive,
+                    ]}
+                    onPress={() =>
+                      setPendingStartTime(t)
+                    }
+                    activeOpacity={0.8}
+                  >
+                    <Text
+                      style={[
+                        styles.timeOptionText,
+                        pendingStartTime === t &&
+                          styles.timeOptionTextActive,
+                      ]}
+                    >
+                      {t}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </ScrollView>
-            <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setTimeSelectorVisible(false)}>
-              <Text style={styles.modalCancelText}>Cancel</Text>
+
+            <TouchableOpacity
+              style={styles.modalSaveBtn}
+              onPress={() => {
+                setStartTime(pendingStartTime);
+                setShowStartTimePicker(false);
+              }}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.modalSaveBtnText}>
+                Confirm
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
+      {/* ── End Time Picker Modal ── */}
+      <Modal
+        visible={showEndTimePicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() =>
+          setShowEndTimePicker(false)
+        }
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.timePickerContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                Select End Time
+              </Text>
+
+              <TouchableOpacity
+                onPress={() =>
+                  setShowEndTimePicker(false)
+                }
+              >
+                <Icon
+                  name="x-circle"
+                  size={22}
+                  color={Colors.textSecondary}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.timeGrid}>
+                {TIME_OPTIONS.map((t) => (
+                  <TouchableOpacity
+                    key={t}
+                    style={[
+                      styles.timeOption,
+                      pendingEndTime === t &&
+                        styles.timeOptionActive,
+                    ]}
+                    onPress={() =>
+                      setPendingEndTime(t)
+                    }
+                    activeOpacity={0.8}
+                  >
+                    <Text
+                      style={[
+                        styles.timeOptionText,
+                        pendingEndTime === t &&
+                          styles.timeOptionTextActive,
+                      ]}
+                    >
+                      {t}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.modalSaveBtn}
+              onPress={() => {
+                setEndTime(pendingEndTime);
+                setShowEndTimePicker(false);
+              }}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.modalSaveBtnText}>
+                Confirm
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Area Modal ── */}
+      <Modal
+        visible={showAreaModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() =>
+          setShowAreaModal(false)
+        }
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.areaModalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                Set Pickup Area
+              </Text>
+
+              <TouchableOpacity
+                onPress={() =>
+                  setShowAreaModal(false)
+                }
+              >
+                <Icon
+                  name="x-circle"
+                  size={22}
+                  color={Colors.textSecondary}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.areaInputLabel}>
+              Enter your preferred pickup area or
+              neighbourhood
+            </Text>
+
+            <TextInput
+              style={[
+                styles.areaTextInput,
+                areaError
+                  ? styles.areaTextInputError
+                  : null,
+              ]}
+              value={areaInput}
+              onChangeText={(text) => {
+                setAreaInput(text);
+
+                if (areaError) {
+                  setAreaError('');
+                }
+              }}
+              placeholder="e.g. Colombo 03, Nugegoda"
+              placeholderTextColor={Colors.textMuted}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={handleSaveArea}
+            />
+
+            {!!areaError && (
+              <Text style={styles.errorText}>
+                {areaError}
+              </Text>
+            )}
+
+            <View style={styles.areaModalActions}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() =>
+                  setShowAreaModal(false)
+                }
+                activeOpacity={0.8}
+              >
+                <Text style={styles.cancelBtnText}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalSaveBtn2}
+                onPress={handleSaveArea}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.modalSaveBtnText}>
+                  Save
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: 16, gap: 24, paddingBottom: 40 },
-
-  section: { gap: 10 },
-  sectionTitle: { fontSize: 14, fontWeight: '700', color: Colors.textSecondary, marginLeft: 4 },
-
-  timeRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  timeBtn: {
+  safeArea: {
     flex: 1,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 12,
-    padding: 14,
-  },
-  timeLabel: { fontSize: 11, color: Colors.textMuted, marginBottom: 4 },
-  timeValue: { fontSize: 15, fontWeight: '600', color: Colors.textPrimary },
-  timeDivider: { width: 24, alignItems: 'center' },
-
-  input: {
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 15,
-    color: Colors.textPrimary,
+    backgroundColor: Colors.background,
   },
 
-  chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  chip: {
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 20,
+  scrollView: {
+    flex: 1,
+  },
+
+  scrollContent: {
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingTop: 12,
+    paddingBottom: 16,
   },
-  chipActive: {
-    backgroundColor: Colors.primaryWash,
-    borderColor: Colors.primaryDark,
+
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    color: Colors.textMuted,
+    marginBottom: 8,
+    marginTop: 20,
+    textTransform: 'uppercase',
   },
-  chipText: { fontSize: 13, fontWeight: '500', color: Colors.textSecondary },
-  chipTextActive: { color: Colors.primaryDark, fontWeight: '700' },
 
   card: {
     backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
     borderRadius: 16,
-    padding: 16,
-  },
-  availabilityRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  availabilityTitle: { fontSize: 15, fontWeight: '600', color: Colors.textPrimary },
-  divider: { height: 1, backgroundColor: Colors.border, marginBottom: 16 },
-  subLabel: { fontSize: 13, color: Colors.textSecondary, marginBottom: 12 },
-  daysRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  dayCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     borderWidth: 1,
     borderColor: Colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.background,
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    overflow: 'hidden',
   },
-  dayCircleActive: {
-    backgroundColor: Colors.primaryDark,
-    borderColor: Colors.primaryDark,
-  },
-  dayText: { fontSize: 12, color: Colors.textSecondary, fontWeight: '600' },
-  dayTextActive: { color: Colors.white, fontWeight: '700' },
 
-  bottomBar: {
-    padding: 16,
-    paddingBottom: 24,
-    backgroundColor: Colors.surface,
+  timeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+  },
+
+  timeRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+
+  timeRowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+
+  timeLabel: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: Colors.textPrimary,
+  },
+
+  timeValue: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.primary,
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: Colors.border,
+    marginHorizontal: -16,
+  },
+
+  areaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+  },
+
+  radiusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    gap: 8,
+  },
+
+  radiusBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.white,
+    alignItems: 'center',
+  },
+
+  radiusBtnActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+
+  radiusBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+
+  radiusBtnTextActive: {
+    color: Colors.white,
+  },
+
+  chipsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    paddingVertical: 14,
+  },
+
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.white,
+  },
+
+  chipActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+
+  chipText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: Colors.textPrimary,
+  },
+
+  chipTextActive: {
+    color: Colors.white,
+  },
+
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+  },
+
+  switchRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+
+  switchLabel: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: Colors.textPrimary,
+  },
+
+  daysTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+    marginTop: 12,
+    marginBottom: 10,
+  },
+
+  daysWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    paddingBottom: 14,
+  },
+
+  dayPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.white,
+  },
+
+  dayPillActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+
+  dayPillText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+
+  dayPillTextActive: {
+    color: Colors.white,
+  },
+
+  bottomSpacer: {
+    height: 16,
+  },
+
+  saveContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: Colors.background,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
   },
+
   saveBtn: {
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: Colors.primaryDark,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primary,
+    borderRadius: 14,
+    paddingVertical: 16,
+    gap: 8,
+  },
+
+  saveBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.white,
+  },
+
+  /* Modals */
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+
+  timePickerContainer: {
+    width: '100%',
+    maxHeight: '70%',
+    backgroundColor: Colors.white,
+    borderRadius: 20,
+    padding: 20,
+  },
+
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+  },
+
+  timeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    justifyContent: 'flex-start',
+    paddingBottom: 8,
+  },
+
+  timeOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    backgroundColor: Colors.white,
+    minWidth: '30%',
     alignItems: 'center',
   },
-  saveBtnText: { fontSize: 15, fontWeight: '700', color: Colors.white },
 
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalSheet: { backgroundColor: Colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 },
-  modalTitle: { fontSize: 18, fontWeight: '800', color: Colors.textPrimary, marginBottom: 16 },
-  timeOption: { paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  timeOptionText: { fontSize: 16, color: Colors.textPrimary, textAlign: 'center' },
-  modalCancelBtn: { marginTop: 16, paddingVertical: 14, backgroundColor: Colors.background, borderRadius: 12, borderWidth: 1, borderColor: Colors.border, alignItems: 'center' },
-  modalCancelText: { fontSize: 15, fontWeight: '600', color: Colors.textPrimary },
+  timeOptionActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+
+  timeOptionText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.textPrimary,
+  },
+
+  timeOptionTextActive: {
+    color: Colors.white,
+    fontWeight: '700',
+  },
+
+  modalSaveBtn: {
+    marginTop: 16,
+    backgroundColor: Colors.primary,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+
+  modalSaveBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.white,
+  },
+
+  /* Area modal */
+
+  areaModalContainer: {
+    width: '100%',
+    backgroundColor: Colors.white,
+    borderRadius: 20,
+    padding: 20,
+  },
+
+  areaInputLabel: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginBottom: 10,
+    lineHeight: 18,
+  },
+
+  areaTextInput: {
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: Colors.textPrimary,
+    backgroundColor: Colors.background,
+  },
+
+  areaTextInputError: {
+    borderColor: '#EF4444',
+  },
+
+  errorText: {
+    fontSize: 12,
+    color: '#EF4444',
+    marginTop: 6,
+  },
+
+  areaModalActions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 18,
+  },
+
+  cancelBtn: {
+    flex: 1,
+    paddingVertical: 13,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+  },
+
+  cancelBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+
+  modalSaveBtn2: {
+    flex: 1,
+    backgroundColor: Colors.primary,
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: 'center',
+  },
 });

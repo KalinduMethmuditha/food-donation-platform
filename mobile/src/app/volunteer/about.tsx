@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '@/components/ui/Icon';
 import { Colors } from '@/constants/colors';
@@ -7,126 +7,296 @@ import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader'
 
 export default function AboutScreen() {
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <VolunteerScreenHeader title="About App" onBack={() => router.back()} />
+    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+      <VolunteerScreenHeader
+        title="About"
+        onBack={() => router.back()}
+      />
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        
-        {/* App Identity */}
-        <View style={styles.identityBlock}>
-          <View style={styles.logoBox}>
-            <Icon name="leaf" size={40} color={Colors.white} />
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* App Logo Section */}
+        <View style={styles.logoSection}>
+          <View style={styles.logoCircle}>
+            <Icon name="leaf" size={34} color="#FFFFFF" />
           </View>
-          <Text style={styles.appName}>Food Donation Platform</Text>
-          <Text style={styles.appTagline}>Volunteer Mobile App</Text>
+
+          <Text style={styles.appName}>
+            Food Donation Platform
+          </Text>
+
+          <Text style={styles.appSubtitle}>
+            Volunteer App
+          </Text>
+
           <View style={styles.versionBadge}>
-            <Text style={styles.versionText}>Version 1.0.0</Text>
+            <Text style={styles.versionText}>
+              Version 1.0.0
+            </Text>
           </View>
         </View>
 
-        {/* Description */}
+        <View style={styles.divider} />
+
+        {/* About This App */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>About</Text>
+          <View style={styles.cardHeader}>
+            <View style={styles.cardIconWrap}>
+              <Icon
+                name="info"
+                size={18}
+                color="#10B981"
+              />
+            </View>
+
+            <Text style={styles.cardTitle}>
+              About This App
+            </Text>
+          </View>
+
           <Text style={styles.cardBody}>
-            The Food Donation Platform connects volunteers, donors, and NGOs to reduce food waste and
-            support communities in need. Volunteers like you play a vital role in collecting surplus
-            food from donors and delivering it to those who need it most.{'\n\n'}
-            Together, we are making a real difference — one pickup at a time.
+            The Food Donation Platform connects volunteers
+            with food donors to reduce food waste and help
+            those in need. As a volunteer, you can accept
+            pickup requests, navigate to donors, collect
+            food packages, and ensure deliveries reach
+            communities in need.
           </Text>
         </View>
 
-        {/* Key Features */}
+        {/* Our Mission */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Key Features</Text>
-          {[
-            { icon: 'truck', text: 'Real-time pickup management' },
-            { icon: 'route', text: 'Route tracking and navigation' },
-            { icon: 'bell', text: 'Smart notifications' },
-            { icon: 'check-circle', text: 'Collection status updates' },
-            { icon: 'activity', text: 'Activity history and reporting' },
-          ].map((f, i) => (
-            <View key={i} style={styles.featureRow}>
-              <View style={styles.featureIcon}>
-                <Icon name={f.icon as any} size={18} color={Colors.primaryDark} />
-              </View>
-              <Text style={styles.featureText}>{f.text}</Text>
+          <View style={styles.cardHeader}>
+            <View style={styles.cardIconWrap}>
+              <Icon
+                name="heart"
+                size={18}
+                color="#10B981"
+              />
             </View>
-          ))}
+
+            <Text style={styles.cardTitle}>
+              Our Mission
+            </Text>
+          </View>
+
+          <Text style={styles.cardBody}>
+            Zero food waste. Every meal matters. We believe
+            that food waste is a solvable problem when
+            communities come together.
+          </Text>
         </View>
 
-        {/* Links */}
+        {/* Legal Links */}
         <View style={styles.card}>
-          <TouchableOpacity style={styles.linkRow} onPress={() => router.push('/volunteer/terms' as any)}>
-            <Text style={styles.linkText}>Terms of Service</Text>
-            <Icon name="chevron.right" size={16} color={Colors.border} />
-          </TouchableOpacity>
-          <View style={styles.divider} />
-          <TouchableOpacity style={styles.linkRow} onPress={() => router.push('/volunteer/privacy' as any)}>
-            <Text style={styles.linkText}>Privacy Policy</Text>
-            <Icon name="chevron.right" size={16} color={Colors.border} />
-          </TouchableOpacity>
+          <View style={styles.legalRow}>
+            <View style={styles.legalLeft}>
+              <Icon
+                name="info"
+                size={16}
+                color="#6B7280"
+              />
+
+              <Text style={styles.legalLabel}>
+                Terms of Service
+              </Text>
+            </View>
+
+            <Text style={styles.legalAction}>
+              View Terms
+            </Text>
+          </View>
+
+          <View style={styles.legalDivider} />
+
+          <View style={styles.legalRow}>
+            <View style={styles.legalLeft}>
+              <Icon
+                name="check"
+                size={16}
+                color="#6B7280"
+              />
+
+              <Text style={styles.legalLabel}>
+                Privacy Policy
+              </Text>
+            </View>
+
+            <Text style={styles.legalAction}>
+              View Privacy
+            </Text>
+          </View>
         </View>
 
-        <Text style={styles.copyright}>
-          © 2026 Food Donation Platform. All rights reserved.{'\n'}
-          Designed with ❤️ to fight food waste.
+        {/* Footer */}
+        <Text style={styles.footer}>
+          © 2026 Food Donation Platform. All rights reserved.
         </Text>
-
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: 16, gap: 20, paddingBottom: 40 },
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F7F9F8',
+  },
 
-  identityBlock: { alignItems: 'center', paddingVertical: 24, gap: 8 },
-  logoBox: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
-    backgroundColor: Colors.primaryDark,
+  scrollView: {
+    flex: 1,
+  },
+
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 40,
+  },
+
+  /* Logo Section */
+  logoSection: {
+    alignItems: 'center',
+    paddingVertical: 32,
+  },
+
+  logoCircle: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    backgroundColor: '#10B981',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    shadowColor: '#10B981',
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+    marginBottom: 16,
   },
-  appName: { fontSize: 22, fontWeight: '800', color: Colors.textPrimary },
-  appTagline: { fontSize: 15, color: Colors.textSecondary, fontWeight: '500' },
-  versionBadge: {
-    backgroundColor: Colors.primaryWash,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+
+  appName: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#17221D',
+    letterSpacing: 0.2,
+    textAlign: 'center',
+  },
+
+  appSubtitle: {
+    fontSize: 13,
+    color: '#6B7280',
     marginTop: 4,
+    textAlign: 'center',
   },
-  versionText: { fontSize: 13, fontWeight: '700', color: Colors.primaryDark },
 
+  versionBadge: {
+    marginTop: 10,
+    backgroundColor: '#DDF7EC',
+    paddingHorizontal: 14,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+
+  versionText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#059669',
+  },
+
+  /* Divider */
+  divider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginBottom: 20,
+  },
+
+  /* Card */
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 16,
-    gap: 12,
+    padding: 18,
+    marginBottom: 14,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  cardTitle: { fontSize: 15, fontWeight: '700', color: Colors.textPrimary },
-  cardBody: { fontSize: 14, color: Colors.textSecondary, lineHeight: 22 },
 
-  featureRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  featureIcon: {
-    width: 34,
-    height: 34,
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+
+  cardIconWrap: {
+    width: 30,
+    height: 30,
     borderRadius: 8,
-    backgroundColor: Colors.primaryWash,
+    backgroundColor: '#F0FCF6',
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 10,
   },
-  featureText: { fontSize: 14, color: Colors.textPrimary, fontWeight: '500' },
 
-  linkRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 4 },
-  linkText: { fontSize: 15, color: Colors.primaryDark, fontWeight: '600' },
-  divider: { height: 1, backgroundColor: Colors.border, marginVertical: 4 },
+  cardTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#17221D',
+  },
 
-  copyright: { fontSize: 12, color: Colors.textMuted, textAlign: 'center', lineHeight: 18 },
+  cardBody: {
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 22,
+  },
+
+  /* Legal Rows */
+  legalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+  },
+
+  legalLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+
+  legalLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#17221D',
+  },
+
+  legalAction: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#10B981',
+  },
+
+  legalDivider: {
+    height: 1,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 8,
+  },
+
+  /* Footer */
+  footer: {
+    textAlign: 'center',
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 10,
+    marginBottom: 4,
+  },
 });

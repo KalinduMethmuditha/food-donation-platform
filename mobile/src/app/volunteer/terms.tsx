@@ -1,104 +1,170 @@
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { Colors } from '@/constants/colors';
 import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
-
-const TERMS = [
-  {
-    title: '1. Volunteer Responsibilities',
-    body: 'As a registered volunteer, you agree to collect and deliver food donations in a timely and safe manner, treating donors and recipients with respect and professionalism at all times.',
-  },
-  {
-    title: '2. Food Safety',
-    body: 'Volunteers must ensure food items are handled safely and hygienically. Any food that appears spoiled, damaged, or unsafe must be reported immediately using the issue reporting feature.',
-  },
-  {
-    title: '3. Pickup Commitments',
-    body: 'When you accept a pickup assignment, you commit to completing it within the assigned time window. If you are unable to complete a pickup, you must notify the coordination team as soon as possible.',
-  },
-  {
-    title: '4. Data and Privacy',
-    body: 'Your personal information is collected for volunteer coordination purposes only. We do not share your data with third parties. See our Privacy Policy for details.',
-  },
-  {
-    title: '5. Code of Conduct',
-    body: 'Volunteers represent the Food Donation Platform and must behave with integrity, honesty, and kindness. Misconduct, including misuse of donor or recipient information, may result in removal from the platform.',
-  },
-  {
-    title: '6. Liability',
-    body: 'The Food Donation Platform is not liable for any accidents, injuries, or damages that occur during volunteer activities. Volunteers are encouraged to follow safe driving and food handling practices.',
-  },
-  {
-    title: '7. Amendments',
-    body: 'These terms may be updated periodically. Continued use of the volunteer application constitutes acceptance of the updated terms.',
-  },
-];
 
 export default function TermsScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <VolunteerScreenHeader title="Terms of Service" onBack={() => router.back()} />
+      <VolunteerScreenHeader
+        title="Terms of Service"
+        onBack={() => router.back()}
+      />
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Terms of Service</Text>
-          <Text style={styles.headerDate}>Effective: January 2026</Text>
-        </View>
-
-        <Text style={styles.intro}>
-          By using the Food Donation Platform Volunteer App, you agree to these terms. Please read them carefully.
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.header}>
+          Effective January 2026
         </Text>
 
-        {TERMS.map((t, i) => (
-          <View key={i} style={styles.section}>
-            <Text style={styles.sectionTitle}>{t.title}</Text>
-            <Text style={styles.sectionBody}>{t.body}</Text>
-          </View>
-        ))}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>
+            Volunteer Agreement
+          </Text>
 
-        <View style={styles.contactCard}>
-          <Text style={styles.contactTitle}>Have questions?</Text>
-          <Text style={styles.contactBody}>
-            Contact our support team at legal@fooddonation.example.com for any questions about these terms.
+          <Text style={styles.cardText}>
+            By using this app as a volunteer, you agree to
+            collect food donations responsibly, handle food
+            safely, and deliver to the designated recipients
+            in a timely manner.
           </Text>
         </View>
 
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>
+            Pickup Responsibilities
+          </Text>
+
+          <Text style={styles.cardText}>
+            Volunteers must arrive at pickup locations within
+            the specified window. Food must be handled with
+            care and kept upright during transport. Any issues
+            must be reported through the app.
+          </Text>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>
+            Code of Conduct
+          </Text>
+
+          <Text style={styles.cardText}>
+            Volunteers are expected to maintain professional
+            and respectful conduct with donors and recipients.
+            Misuse of the app or false reporting may result in
+            account suspension.
+          </Text>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>
+            Data &amp; Privacy
+          </Text>
+
+          <Text style={styles.cardText}>
+            By using this app, you consent to the collection
+            and local storage of your activity data as
+            described in our Privacy Policy. No data is
+            transmitted to external servers in this version.
+          </Text>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>
+            Limitation of Liability
+          </Text>
+
+          <Text style={styles.cardText}>
+            Food Donation Platform is not liable for any issues
+            arising from food quality or safety. Volunteers
+            participate on a voluntary basis and assume
+            responsibility for their actions.
+          </Text>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>
+            Changes to Terms
+          </Text>
+
+          <Text style={styles.cardText}>
+            We reserve the right to update these terms.
+            Continued use of the app constitutes acceptance of
+            any changes. We will notify volunteers of
+            significant updates.
+          </Text>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>
+            Contact
+          </Text>
+
+          <Text style={styles.cardText}>
+            For questions about these terms, contact
+            legal@fooddonation.lk
+          </Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: 16, paddingBottom: 40, gap: 16 },
+  safe: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
 
-  header: { gap: 4, marginBottom: 4 },
-  headerTitle: { fontSize: 22, fontWeight: '800', color: Colors.textPrimary },
-  headerDate: { fontSize: 13, color: Colors.textMuted },
+  content: {
+    padding: 16,
+    paddingBottom: 40,
+  },
 
-  intro: { fontSize: 14, color: Colors.textSecondary, lineHeight: 22 },
+  header: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
 
-  section: {
+  card: {
     backgroundColor: Colors.surface,
-    borderRadius: 14,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: Colors.border,
-    padding: 16,
-    gap: 8,
-  },
-  sectionTitle: { fontSize: 14, fontWeight: '700', color: Colors.textPrimary },
-  sectionBody: { fontSize: 14, color: Colors.textSecondary, lineHeight: 22 },
 
-  contactCard: {
-    backgroundColor: Colors.primaryWash,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.primaryLight,
-    padding: 16,
-    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  contactTitle: { fontSize: 15, fontWeight: '700', color: Colors.primaryDark },
-  contactBody: { fontSize: 14, color: Colors.textSecondary, lineHeight: 22 },
+
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    marginBottom: 8,
+  },
+
+  cardText: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    lineHeight: 22,
+  },
 });
