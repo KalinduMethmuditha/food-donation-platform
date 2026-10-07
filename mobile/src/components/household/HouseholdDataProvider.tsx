@@ -1,7 +1,25 @@
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import type { PropsWithChildren } from 'react';
-import { simulatePublishDonation } from '@/services/restaurantDonations';
 import type { Donation, DonationDraft } from '@/types/donation';
+
+async function simulatePublishDonation(draft: DonationDraft): Promise<Donation> {
+  const quantity = Number(draft.quantity);
+  if (!draft.foodType.trim() || !Number.isFinite(quantity) || quantity <= 0
+    || !draft.pickupLocation.trim() || !draft.pickupDeadline.trim()) {
+    throw new Error('Complete all donation details before saving.');
+  }
+
+  return {
+    ...draft,
+    id: `household-${Date.now()}`,
+    foodType: draft.foodType.trim(),
+    quantity,
+    description: draft.description.trim(),
+    pickupLocation: draft.pickupLocation.trim(),
+    pickupDeadline: draft.pickupDeadline.trim(),
+    status: 'published',
+  };
+}
 
 const initialDonations: Donation[] = [{
   id: 'household-1',

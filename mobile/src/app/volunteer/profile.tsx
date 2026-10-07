@@ -6,10 +6,11 @@ import Icon from '@/components/ui/Icon';
 import { Colors } from '@/constants/colors';
 import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
 import { useVolunteerStore } from '@/store/volunteerStore';
+import { logoutUser } from '@/services/auth';
 import type { IconName } from '@/components/ui/Icon';
 
 export default function ProfileScreen() {
-  const { isAvailable, toggleAvailability, pickupStatus, profile, pickupPreferences, logout } = useVolunteerStore();
+  const { isAvailable, toggleAvailability, pickupStatus, profile, pickupPreferences } = useVolunteerStore();
   const [logoutVisible, setLogoutVisible] = useState(false);
 
   const renderAction = (icon: IconName, title: string, route: any, color = Colors.textPrimary) => (
@@ -24,8 +25,9 @@ export default function ProfileScreen() {
 
   const handleLogout = () => {
     setLogoutVisible(false);
-    logout();
-    router.replace('/volunteer/welcome');
+    void logoutUser()
+      .catch(() => undefined)
+      .finally(() => router.replace('/welcome'));
   };
 
   const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').substring(0, 2);
