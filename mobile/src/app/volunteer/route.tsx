@@ -6,6 +6,10 @@ import { Colors } from '@/constants/colors';
 import { mockActivePickup } from '@/data/mockVolunteerData';
 import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
 import { useVolunteerStore } from '@/store/volunteerStore';
+<<<<<<< Updated upstream
+=======
+import { Platform } from 'react-native';
+>>>>>>> Stashed changes
 
 export default function RouteScreen() {
   const pickup = mockActivePickup;
@@ -36,6 +40,7 @@ export default function RouteScreen() {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} bounces={false}>
 
+<<<<<<< Updated upstream
         {/* ─── LOCAL MOCK MAP UI ─── */}
         <View style={styles.mapContainer}>
           <View style={styles.mapOverlay} />
@@ -50,6 +55,33 @@ export default function RouteScreen() {
           <View style={styles.destMarker}>
             <Icon name="pin" size={32} color={Colors.primaryDark} />
           </View>
+=======
+        {/* ─── REAL MAP (WEB) OR MOCK MAP (NATIVE) ─── */}
+        <View style={styles.mapContainer}>
+          {Platform.OS === 'web' ? (
+            <iframe
+              src="https://www.openstreetmap.org/export/embed.html?bbox=79.82%2C6.91%2C79.88%2C6.95&layer=mapnik&marker=6.93%2C79.85"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+            />
+          ) : (
+            <>
+              <View style={styles.mapOverlay} />
+              {/* Simulated Route Line */}
+              <View style={styles.routeLine} />
+              {/* Origin Pulse */}
+              <View style={styles.originMarker}>
+                <View style={styles.originPulse} />
+                <View style={styles.originDot} />
+              </View>
+              {/* Destination Pin */}
+              <View style={styles.destMarker}>
+                <Icon name="pin" size={32} color={Colors.primaryDark} />
+              </View>
+            </>
+          )}
+>>>>>>> Stashed changes
           
           <View style={styles.liveBadge}>
             <View style={styles.liveDot} />

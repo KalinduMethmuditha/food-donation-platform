@@ -1,5 +1,9 @@
 import { router } from 'expo-router';
+<<<<<<< Updated upstream
 import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert } from 'react-native';
+=======
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert, Modal, Image, Platform } from 'react-native';
+>>>>>>> Stashed changes
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import Icon from '@/components/ui/Icon';
@@ -14,14 +18,42 @@ export default function EditProfileScreen() {
   const [phone, setPhone] = useState(profile.phone);
   const [email, setEmail] = useState(profile.email);
   const [location, setLocation] = useState(profile.location);
+<<<<<<< Updated upstream
 
   const getInitials = (n: string) => n.split(' ').map(x => x[0]).join('').substring(0, 2);
+=======
+  const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl);
+  
+  const [avatarModalVisible, setAvatarModalVisible] = useState(false);
+
+  const getInitials = (n: string) => n.split(' ').map(x => x[0]).join('').substring(0, 2).toUpperCase();
+
+  const handlePickImage = () => {
+    if (Platform.OS === 'web') {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = (e: any) => {
+        const file = e.target.files?.[0];
+        if (file) {
+          const blobUrl = URL.createObjectURL(file);
+          setAvatarUrl(blobUrl);
+          setAvatarModalVisible(false);
+        }
+      };
+      input.click();
+    } else {
+      Alert.alert('Not Supported', 'Please run on web to select local files without native plugins.');
+    }
+  };
+>>>>>>> Stashed changes
 
   const handleSave = () => {
     if (!name.trim()) {
       Alert.alert('Validation Error', 'Full Name is required.');
       return;
     }
+<<<<<<< Updated upstream
     if (!phone.trim()) {
       Alert.alert('Validation Error', 'Phone Number is required.');
       return;
@@ -30,12 +62,18 @@ export default function EditProfileScreen() {
       Alert.alert('Validation Error', 'A valid Email is required.');
       return;
     }
+=======
+>>>>>>> Stashed changes
     
     updateProfile({
       fullName: name,
       phone,
       email,
       location,
+<<<<<<< Updated upstream
+=======
+      avatarUrl,
+>>>>>>> Stashed changes
     });
     
     Alert.alert('Profile Updated', 'Your profile information has been updated successfully.', [
@@ -52,9 +90,19 @@ export default function EditProfileScreen() {
         {/* Photo Edit */}
         <View style={styles.photoSection}>
           <View style={styles.avatar}>
+<<<<<<< Updated upstream
             <Text style={styles.avatarText}>{getInitials(name || 'Volunteer')}</Text>
           </View>
           <TouchableOpacity style={styles.editPhotoBtn}>
+=======
+            {avatarUrl ? (
+              <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
+            ) : (
+              <Text style={styles.avatarText}>{getInitials(name || 'Volunteer')}</Text>
+            )}
+          </View>
+          <TouchableOpacity style={styles.editPhotoBtn} onPress={() => setAvatarModalVisible(true)}>
+>>>>>>> Stashed changes
             <Icon name="person" size={16} color={Colors.white} />
             <Text style={styles.editPhotoText}>Change Photo</Text>
           </TouchableOpacity>
@@ -125,6 +173,43 @@ export default function EditProfileScreen() {
           <Text style={styles.saveBtnText}>Save Changes</Text>
         </TouchableOpacity>
       </View>
+<<<<<<< Updated upstream
+=======
+
+      {/* Avatar Selection Modal */}
+      <Modal visible={avatarModalVisible} transparent animationType="slide" onRequestClose={() => setAvatarModalVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Profile Photo</Text>
+            
+            <View style={styles.avatarActions}>
+              <TouchableOpacity style={styles.actionBtn} onPress={handlePickImage}>
+                <Icon name="person" size={20} color={Colors.primaryDark} />
+                <Text style={styles.actionBtnText}>Upload from Device</Text>
+              </TouchableOpacity>
+              
+              {avatarUrl ? (
+                <TouchableOpacity 
+                  style={[styles.actionBtn, styles.actionBtnDanger]}
+                  onPress={() => {
+                    setAvatarUrl(null);
+                    setAvatarModalVisible(false);
+                  }}
+                >
+                  <Icon name="trash" size={20} color={Colors.danger} />
+                  <Text style={[styles.actionBtnText, { color: Colors.danger }]}>Remove Photo</Text>
+                </TouchableOpacity>
+              ) : null}
+            </View>
+
+            <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setAvatarModalVisible(false)}>
+              <Text style={styles.modalCloseBtnText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+>>>>>>> Stashed changes
     </SafeAreaView>
   );
 }
@@ -145,6 +230,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
+<<<<<<< Updated upstream
+=======
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+>>>>>>> Stashed changes
   },
   avatarText: {
     fontSize: 32,
@@ -216,4 +309,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveBtnText: { fontSize: 15, fontWeight: '700', color: Colors.white },
+<<<<<<< Updated upstream
 });
+=======
+
+  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
+  modalSheet: { backgroundColor: Colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 },
+  modalHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: Colors.border, alignSelf: 'center', marginBottom: 20 },
+  modalTitle: { fontSize: 18, fontWeight: '800', color: Colors.textPrimary, marginBottom: 20, textAlign: 'center' },
+  avatarActions: { gap: 12, marginBottom: 24 },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.primaryWash, padding: 16, borderRadius: 12, gap: 12 },
+  actionBtnDanger: { backgroundColor: '#FEF2F2' },
+  actionBtnText: { fontSize: 16, fontWeight: '600', color: Colors.primaryDark },
+  modalCloseBtn: { paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: Colors.border, alignItems: 'center', backgroundColor: Colors.background },
+  modalCloseBtnText: { fontSize: 15, fontWeight: '600', color: Colors.textPrimary },
+});
+
+>>>>>>> Stashed changes
