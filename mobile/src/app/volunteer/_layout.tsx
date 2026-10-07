@@ -11,6 +11,14 @@ export default function VolunteerLayout() {
       <Stack.Screen name="notifications" />
       <Stack.Screen name="activity" />
       <Stack.Screen name="profile" />
+      <Stack.Screen name="edit-profile" />
+      <Stack.Screen name="notification-preferences" />
+      <Stack.Screen name="pickup-preferences" />
+      <Stack.Screen name="help-support" />
+      <Stack.Screen name="about" />
+      <Stack.Screen name="privacy" />
+      <Stack.Screen name="terms" />
+      <Stack.Screen name="welcome" />
     </Stack>
   );
 }
