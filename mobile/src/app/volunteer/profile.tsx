@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View, Switch, TouchableOpacity, Modal } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, Switch, TouchableOpacity, Modal, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import Icon from '@/components/ui/Icon';
@@ -25,10 +25,10 @@ export default function ProfileScreen() {
   const handleLogout = () => {
     setLogoutVisible(false);
     logout();
-    router.replace('/volunteer/welcome');
+    router.replace('/login');
   };
 
-  const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').substring(0, 2);
+  const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -39,7 +39,11 @@ export default function ProfileScreen() {
         {/* Profile Header */}
         <View style={styles.profileHeader}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{getInitials(profile.fullName)}</Text>
+            {profile.avatarUrl ? (
+              <Image source={{ uri: profile.avatarUrl }} style={styles.avatarImage} />
+            ) : (
+              <Text style={styles.avatarText}>{getInitials(profile.fullName)}</Text>
+            )}
             <View style={styles.verifiedBadge}>
               <Icon name="checkmark.seal.fill" size={12} color={Colors.white} />
             </View>
@@ -172,7 +176,7 @@ export default function ProfileScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <View style={styles.modalIconBox}>
-              <Icon name="arrow.right.square" size={24} color={Colors.danger} />
+              <Icon name="arrow.right.square" size={28} color="#EF4444" />
             </View>
             <Text style={styles.modalTitle}>Log out?</Text>
             <Text style={styles.modalDesc}>Are you sure you want to log out of your volunteer account?</Text>
@@ -208,6 +212,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 40,
   },
   avatarText: {
     fontSize: 28,
@@ -314,45 +323,47 @@ const styles = StyleSheet.create({
 
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
   },
   modalCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 24,
-    padding: 24,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 0,
+    padding: 32,
     width: '100%',
     alignItems: 'center',
   },
   modalIconBox: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#FEF2F2',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FFF5F5',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
   },
-  modalTitle: { fontSize: 20, fontWeight: '800', color: Colors.textPrimary, marginBottom: 8 },
-  modalDesc: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center', marginBottom: 24, lineHeight: 20 },
-  modalActions: { flexDirection: 'row', gap: 12 },
+  modalTitle: { fontSize: 24, fontWeight: '800', color: '#111827', marginBottom: 12 },
+  modalDesc: { fontSize: 16, color: '#6B7280', textAlign: 'center', marginBottom: 32 },
+  modalActions: { flexDirection: 'row', gap: 16, justifyContent: 'center' },
   modalCancelBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
+    width: 100,
+    height: 100,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: '#E5E7EB',
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
   },
-  modalCancelText: { fontSize: 15, fontWeight: '600', color: Colors.textPrimary },
+  modalCancelText: { fontSize: 16, fontWeight: '700', color: '#111827' },
   modalLogoutBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: Colors.danger,
+    width: 100,
+    height: 100,
+    borderRadius: 20,
+    backgroundColor: '#EF4444',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  modalLogoutText: { fontSize: 15, fontWeight: '700', color: Colors.white },
+  modalLogoutText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
 });
