@@ -14,4 +14,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/donations', [DonationController::class, 'index']);
     Route::post('/donations', [DonationController::class, 'store']);
     Route::get('/donations/{donation}', [DonationController::class, 'show']);
+    Route::put('/donations/{donation}', [DonationController::class, 'update']);
+    Route::delete('/donations/{donation}', [DonationController::class, 'destroy']);
 });

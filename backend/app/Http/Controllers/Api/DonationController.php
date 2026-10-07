@@ -67,4 +67,39 @@ class DonationController extends Controller
             'donation' => $donation->load('statusLogs'),
         ]);
     }
+
+    public function update(StoreDonationRequest $request, Donation $donation): JsonResponse
+    {
+        if ($donation->user_id !== $request->user()->id ||
+            ! in_array($request->user()->role, ['restaurant', 'household'])) {
+            return response()->json(['message' => 'You are not allowed to edit this donation.'], 403);
+        }
+
+        if ($donation->status !== 'published') {
+            return response()->json(['message' => 'Only published donations can be edited.'], 409);
+        }
+
+        $donation->update($request->validated());
+
+        return response()->json([
+            'message' => 'Donation updated successfully.',
+            'donation' => $donation->refresh()->load('statusLogs'),
+        ]);
+    }
+
+    public function destroy(Request $request, Donation $donation): JsonResponse
+    {
+        if ($donation->user_id !== $request->user()->id ||
+            ! in_array($request->user()->role, ['restaurant', 'household'])) {
+            return response()->json(['message' => 'You are not allowed to delete this donation.'], 403);
+        }
+
+        if ($donation->status !== 'published') {
+            return response()->json(['message' => 'Only published donations can be deleted.'], 409);
+        }
+
+        $donation->delete();
+
+        return response()->json(['message' => 'Donation deleted successfully.']);
+    }
 }
