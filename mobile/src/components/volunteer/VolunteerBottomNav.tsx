@@ -7,8 +7,8 @@ type Tab = { label: string; icon: 'home' | 'truck' | 'activity' | 'user'; route:
 const TABS: Tab[] = [
   { label: 'Home', icon: 'home', route: '/volunteer/dashboard' },
   { label: 'Pickups', icon: 'truck', route: '/volunteer/pickup-details' },
-  { label: 'Activity', icon: 'activity', route: '/volunteer/confirmation' },
-  { label: 'Profile', icon: 'user', route: '/volunteer/dashboard' },
+  { label: 'Activity', icon: 'activity', route: '/volunteer/activity' },
+  { label: 'Profile', icon: 'user', route: '/volunteer/profile' },
 ];
 
 type Props = { activeTab?: string; onPress?: (route: string) => void };
