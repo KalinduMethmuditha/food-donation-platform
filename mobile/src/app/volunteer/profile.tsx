@@ -25,7 +25,7 @@ export default function ProfileScreen() {
   const handleLogout = () => {
     setLogoutVisible(false);
     logout();
-    router.replace('/volunteer/welcome');
+    router.replace('/welcome');
   };
 
   const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').substring(0, 2);

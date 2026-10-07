@@ -1,46 +1,25 @@
 import { router } from 'expo-router';
-<<<<<<< Updated upstream
 import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
-=======
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
->>>>>>> Stashed changes
 import Icon from '@/components/ui/Icon';
 import { Colors } from '@/constants/colors';
 import { mockActivePickup, mockVolunteer } from '@/data/mockVolunteerData';
 import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
-<<<<<<< Updated upstream
-=======
 import { useVolunteerStore } from '@/store/volunteerStore';
->>>>>>> Stashed changes
 
 type SummaryRow = { label: string; value: string };
 
 export default function ConfirmationScreen() {
   const pickup = mockActivePickup;
-<<<<<<< Updated upstream
   const [activityVisible, setActivityVisible] = useState(false);
-=======
   const { pickupStatus, collectedTime, deliveredTime } = useVolunteerStore();
 
   const isDelivered = pickupStatus === 'DELIVERED';
->>>>>>> Stashed changes
 
   const summaryRows: SummaryRow[] = [
     { label: 'Donor', value: pickup.donor },
     { label: 'Items Collected', value: `${pickup.quantity}` },
-<<<<<<< Updated upstream
-    { label: 'Collected Time', value: pickup.collectedTime },
-    { label: 'Volunteer', value: mockVolunteer.fullName },
-    { label: 'Reference ID', value: pickup.referenceId },
-  ];
-
-  return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <VolunteerScreenHeader title="Pickup Confirmation" onBack={() => router.back()} />
-=======
     { label: 'Collected Time', value: collectedTime || 'Pending...' },
   ];
 
@@ -59,7 +38,6 @@ export default function ConfirmationScreen() {
         title={isDelivered ? 'Delivery Confirmation' : 'Pickup Confirmation'} 
         onBack={() => router.back()} 
       />
->>>>>>> Stashed changes
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
@@ -68,11 +46,6 @@ export default function ConfirmationScreen() {
           <View style={styles.checkCircle}>
             <Icon name="check-circle" size={56} color={Colors.white} />
           </View>
-<<<<<<< Updated upstream
-          <Text style={styles.confirmedTitle}>Pickup Confirmed!</Text>
-          <Text style={styles.confirmedSub}>
-            The donation has been successfully collected and recorded.
-=======
           <Text style={styles.confirmedTitle}>
             {isDelivered ? 'Delivery Completed!' : 'Pickup Confirmed!'}
           </Text>
@@ -80,19 +53,14 @@ export default function ConfirmationScreen() {
             {isDelivered 
               ? 'The donation has been successfully delivered.'
               : 'The donation has been successfully collected and recorded.'}
->>>>>>> Stashed changes
           </Text>
         </View>
 
         {/* ─── COLLECTION SUMMARY ─── */}
         <View style={styles.summaryCard}>
-<<<<<<< Updated upstream
-          <Text style={styles.summaryTitle}>Collection Summary</Text>
-=======
           <Text style={styles.summaryTitle}>
             {isDelivered ? 'Delivery Summary' : 'Collection Summary'}
           </Text>
->>>>>>> Stashed changes
           <View style={styles.divider} />
           {summaryRows.map((row, i) => (
             <View key={row.label}>
@@ -101,10 +69,6 @@ export default function ConfirmationScreen() {
                 <Text style={[
                   styles.summaryValue,
                   row.label === 'Reference ID' && styles.refIdValue,
-<<<<<<< Updated upstream
-=======
-                  !row.value.includes(':') && row.label.includes('Time') && { color: Colors.textMuted }
->>>>>>> Stashed changes
                 ]}>
                   {row.value}
                 </Text>
@@ -125,11 +89,7 @@ export default function ConfirmationScreen() {
 
         {/* ─── BUTTONS ─── */}
         <TouchableOpacity
-<<<<<<< Updated upstream
           onPress={() => setActivityVisible(true)}
-=======
-          onPress={() => router.push('/volunteer/activity')}
->>>>>>> Stashed changes
           style={styles.outlineBtn}
           accessibilityRole="button"
           accessibilityLabel="View Activity"
@@ -149,7 +109,6 @@ export default function ConfirmationScreen() {
         </TouchableOpacity>
 
       </ScrollView>
-<<<<<<< Updated upstream
 
       {/* ─── ACTIVITY MODAL ─── */}
       <Modal
@@ -188,13 +147,10 @@ export default function ConfirmationScreen() {
           </View>
         </View>
       </Modal>
-=======
->>>>>>> Stashed changes
     </SafeAreaView>
   );
 }
 
-<<<<<<< Updated upstream
 const modal = StyleSheet.create({
   overlay: {
     flex: 1,
@@ -255,8 +211,6 @@ const modal = StyleSheet.create({
   closeBtnText: { fontSize: 14, fontWeight: '600', color: Colors.textSecondary },
 });
 
-=======
->>>>>>> Stashed changes
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
   content: { padding: 20, gap: 16, paddingBottom: 32, alignItems: 'stretch' },
