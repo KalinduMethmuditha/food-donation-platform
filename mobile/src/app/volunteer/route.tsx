@@ -1,32 +1,18 @@
 import { router } from 'expo-router';
-<<<<<<< Updated upstream
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Linking, Alert } from 'react-native';
-=======
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Linking, Alert, Platform } from 'react-native';
->>>>>>> Stashed changes
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '@/components/ui/Icon';
 import { Colors } from '@/constants/colors';
 import { mockActivePickup } from '@/data/mockVolunteerData';
 import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
 import { useVolunteerStore } from '@/store/volunteerStore';
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-import { Platform } from 'react-native';
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
 export default function RouteScreen() {
   const pickup = mockActivePickup;
   const { pickupStatus, setPickupStatus } = useVolunteerStore();
 
   const handleOpenMap = () => {
-<<<<<<< Updated upstream
     // Attempt to open external map for directions
-=======
->>>>>>> Stashed changes
     const url = `https://maps.google.com/?q=${encodeURIComponent(pickup.address)}`;
     Linking.canOpenURL(url).then(supported => {
       if (supported) {
@@ -38,14 +24,10 @@ export default function RouteScreen() {
   };
 
   const handleArrived = () => {
-<<<<<<< Updated upstream
     if (pickupStatus === 'ON THE WAY' || pickupStatus === 'ASSIGNED') {
       setPickupStatus('ARRIVED');
     }
     router.replace('/volunteer/collection-status');
-=======
-    setPickupStatus('ARRIVED');
->>>>>>> Stashed changes
   };
 
   return (
@@ -54,27 +36,7 @@ export default function RouteScreen() {
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} bounces={false}>
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-        {/* ─── LOCAL MOCK MAP UI ─── */}
-        <View style={styles.mapContainer}>
-          <View style={styles.mapOverlay} />
-          {/* Simulated Route Line */}
-          <View style={styles.routeLine} />
-          {/* Origin Pulse */}
-          <View style={styles.originMarker}>
-            <View style={styles.originPulse} />
-            <View style={styles.originDot} />
-          </View>
-          {/* Destination Pin */}
-          <View style={styles.destMarker}>
-            <Icon name="pin" size={32} color={Colors.primaryDark} />
-          </View>
-=======
         {/* ─── REAL MAP (WEB) OR MOCK MAP (NATIVE) ─── */}
-=======
-        {/* MAP SECTION */}
->>>>>>> Stashed changes
         <View style={styles.mapContainer}>
           {Platform.OS === 'web' ? (
             <iframe
@@ -86,49 +48,30 @@ export default function RouteScreen() {
           ) : (
             <>
               <View style={styles.mapOverlay} />
-<<<<<<< Updated upstream
               {/* Simulated Route Line */}
               <View style={styles.routeLine} />
               {/* Origin Pulse */}
-=======
-              <View style={styles.routeLine} />
->>>>>>> Stashed changes
               <View style={styles.originMarker}>
                 <View style={styles.originPulse} />
                 <View style={styles.originDot} />
               </View>
-<<<<<<< Updated upstream
               {/* Destination Pin */}
-=======
->>>>>>> Stashed changes
               <View style={styles.destMarker}>
                 <Icon name="pin" size={32} color={Colors.primaryDark} />
               </View>
             </>
           )}
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
           
-=======
-
->>>>>>> Stashed changes
           <View style={styles.liveBadge}>
             <View style={styles.liveDot} />
             <Text style={styles.liveText}>LIVE</Text>
           </View>
         </View>
 
-<<<<<<< Updated upstream
         {/* ─── TRACKING CARD ─── */}
         <View style={styles.bottomCard}>
           <Text style={styles.cardTitle}>Live Route Tracking</Text>
           
-=======
-        {/* TRACKING CARD */}
-        <View style={styles.bottomCard}>
-          <Text style={styles.cardTitle}>Live Route Tracking</Text>
-
->>>>>>> Stashed changes
           <View style={styles.destRow}>
             <View style={styles.destIconBox}>
               <Icon name="building" size={20} color={Colors.primaryDark} />
@@ -177,11 +120,7 @@ export default function RouteScreen() {
                 <Text style={styles.primaryBtnText}>Arrived</Text>
               </TouchableOpacity>
             )}
-<<<<<<< Updated upstream
             
-=======
-
->>>>>>> Stashed changes
             {(pickupStatus === 'ARRIVED' || pickupStatus === 'COLLECTED' || pickupStatus === 'DELIVERED') && (
               <TouchableOpacity style={styles.primaryBtn} onPress={() => router.push('/volunteer/collection-status')}>
                 <Text style={styles.primaryBtnText}>View Status</Text>
@@ -199,26 +138,17 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
   content: { flexGrow: 1 },
 
-<<<<<<< Updated upstream
   // Mock Map
   mapContainer: {
     height: 320,
     backgroundColor: '#E5E7EB', // Gray map background
-=======
-  mapContainer: {
-    height: 320,
-    backgroundColor: '#E5E7EB',
->>>>>>> Stashed changes
     position: 'relative',
     overflow: 'hidden',
   },
   mapOverlay: {
     ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(255,255,255,0.4)',
-<<<<<<< Updated upstream
     // Grid pattern simulation
-=======
->>>>>>> Stashed changes
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.05)',
   },
@@ -282,7 +212,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-<<<<<<< Updated upstream
   liveDot: {
     width: 6,
     height: 6,
@@ -292,11 +221,6 @@ const styles = StyleSheet.create({
   liveText: { fontSize: 11, fontWeight: '800', color: Colors.textPrimary },
 
   // Bottom Card
-=======
-  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.danger },
-  liveText: { fontSize: 11, fontWeight: '800', color: Colors.textPrimary },
-
->>>>>>> Stashed changes
   bottomCard: {
     flex: 1,
     marginTop: -24,
@@ -312,11 +236,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   cardTitle: { fontSize: 16, fontWeight: '800', color: Colors.textPrimary, marginBottom: 4 },
-<<<<<<< Updated upstream
   
-=======
-
->>>>>>> Stashed changes
   destRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   destIconBox: {
     width: 44,
