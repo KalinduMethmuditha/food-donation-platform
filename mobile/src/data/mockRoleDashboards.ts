@@ -6,12 +6,13 @@ export type RoleDashboardData = {
   actionTitle: string;
   actionDescription: string;
   actionLabel: string;
+  actionRoute?: string;
   heroIcon: IconName;
   stats: readonly { value: number; label: string }[];
   featuredTitle: string;
   featured: readonly { id: string; name: string; detail: string; status: string; extra: string; destination?: string }[];
   activities: readonly { id: string; icon: IconName; title: string; description: string; time: string }[];
-  tabs: readonly { label: string; icon: IconName }[];
+  tabs: readonly { label: string; icon: IconName; route?: string }[];
 };
 
 // Frontend-only dashboard examples. Replace these fixtures with API responses later.
@@ -38,6 +39,7 @@ export const mockRoleDashboards = {
     actionTitle: 'Have food to share?',
     actionDescription: 'Publish a household food donation in just a few steps.',
     actionLabel: 'Create Donation',
+    actionRoute: '/household/create-donation/food-details',
     heroIcon: 'heart',
     stats: [{ value: 1, label: 'Active' }, { value: 6, label: 'Completed' }, { value: 7, label: 'Total' }],
     featuredTitle: 'Latest Donation',
@@ -46,7 +48,7 @@ export const mockRoleDashboards = {
       { id: 'h2', icon: 'check', title: 'Donation accepted', description: 'Community Care NGO', time: '15 min ago' },
       { id: 'h3', icon: 'gift', title: 'Food collected', description: 'Bread & Bakery Items', time: 'Yesterday' },
     ],
-    tabs: [{ label: 'Home', icon: 'home' }, { label: 'Donations', icon: 'gift' }, { label: 'Notifications', icon: 'bell' }, { label: 'Profile', icon: 'user' }],
+    tabs: [{ label: 'Home', icon: 'home' }, { label: 'Donations', icon: 'gift', route: '/household/activity' }, { label: 'Notifications', icon: 'bell' }, { label: 'Profile', icon: 'user' }],
   },
   ngo: {
     title: 'NGO Dashboard',
