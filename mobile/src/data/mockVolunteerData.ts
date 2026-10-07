@@ -4,7 +4,10 @@ export const mockVolunteer = {
   fullName: 'H.G.K Nimsara',
 };
 
-export type PickupStatus = 'ACTIVE' | 'ASSIGNED' | 'COMPLETED';
+export type PickupStatus =
+  | 'ACTIVE'
+  | 'ASSIGNED'
+  | 'COMPLETED';
 
 export type Pickup = {
   id: string;
@@ -60,7 +63,11 @@ export const mockAssignedPickup: Pickup = {
   tags: ['FR-07', 'US-03'],
 };
 
-export type NotificationType = 'pickup' | 'reminder' | 'route' | 'collection';
+export type NotificationType =
+  | 'pickup'
+  | 'reminder'
+  | 'route'
+  | 'collection';
 
 export type AppNotification = {
   id: string;
@@ -77,34 +84,41 @@ export const mockNotifications: AppNotification[] = [
     id: 'n1',
     type: 'pickup',
     title: 'New pickup assigned',
-    description: 'Green Leaf Bakery has assigned a new pickup request.',
+    description:
+      'Green Leaf Bakery has assigned a new pickup request.',
     time: '2 mins ago',
     read: false,
     navigateTo: '/volunteer/pickup-details',
   },
+
   {
     id: 'n2',
     type: 'reminder',
     title: 'Pickup reminder',
-    description: 'Please collect the donation before 5:00 PM.',
+    description:
+      'Please collect the donation before 5:00 PM.',
     time: '15 mins ago',
     read: false,
     navigateTo: '/volunteer/pickup-details',
   },
+
   {
     id: 'n3',
     type: 'route',
     title: 'Route updated',
-    description: 'Traffic has increased on your current route.',
+    description:
+      'Traffic has increased on your current route.',
     time: '22 mins ago',
     read: true,
     navigateTo: '/volunteer/route',
   },
+
   {
     id: 'n4',
     type: 'collection',
     title: 'Collection recorded',
-    description: 'Your pickup has been successfully confirmed.',
+    description:
+      'Your pickup has been successfully confirmed.',
     time: '1 hour ago',
     read: true,
     navigateTo: '/volunteer/confirmation',

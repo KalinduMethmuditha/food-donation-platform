@@ -1,7 +1,16 @@
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View, Alert } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
+  Alert,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Icon from '@/components/ui/Icon';
+import type { ReactNode } from 'react';
+
 import { Colors } from '@/constants/colors';
 import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
 import { useVolunteerStore } from '@/store/volunteerStore';
@@ -17,15 +26,24 @@ interface SwitchRowProps {
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-function SwitchRow({ label, value, onChange, isLast = false }: SwitchRowProps) {
+function SwitchRow({
+  label,
+  value,
+  onChange,
+  isLast = false,
+}: SwitchRowProps) {
   return (
     <View style={[styles.row, !isLast && styles.rowDivider]}>
       <Text style={styles.rowLabel}>{label}</Text>
+
       <Switch
         value={value}
         onValueChange={onChange}
         thumbColor={Colors.white}
-        trackColor={{ false: '#D1D5DB', true: Colors.primary }}
+        trackColor={{
+          false: '#D1D5DB',
+          true: Colors.primary,
+        }}
         ios_backgroundColor="#D1D5DB"
       />
     </View>
@@ -34,7 +52,7 @@ function SwitchRow({ label, value, onChange, isLast = false }: SwitchRowProps) {
 
 interface SectionProps {
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 function Section({ title, children }: SectionProps) {
@@ -49,18 +67,29 @@ function Section({ title, children }: SectionProps) {
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
 export default function NotificationPreferencesScreen() {
-  const { notificationPreferences, updateNotificationPreferences } = useVolunteerStore();
+  const {
+    notificationPreferences,
+    updateNotificationPreferences,
+  } = useVolunteerStore();
 
   const handleSave = () => {
     Alert.alert(
       'Preferences saved',
       'Your notification preferences have been updated.',
-      [{ text: 'OK', onPress: () => router.back() }],
+      [
+        {
+          text: 'OK',
+          onPress: () => router.back(),
+        },
+      ]
     );
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={['top', 'bottom']}
+    >
       <VolunteerScreenHeader
         title="Notification Preferences"
         onBack={() => router.back()}
@@ -76,27 +105,51 @@ export default function NotificationPreferencesScreen() {
           <SwitchRow
             label="New pickup assigned"
             value={notificationPreferences.newPickupAssigned}
-            onChange={(val) => updateNotificationPreferences({ newPickupAssigned: val })}
+            onChange={(val) =>
+              updateNotificationPreferences({
+                newPickupAssigned: val,
+              })
+            }
           />
+
           <SwitchRow
             label="Pickup reminder"
             value={notificationPreferences.pickupReminder}
-            onChange={(val) => updateNotificationPreferences({ pickupReminder: val })}
+            onChange={(val) =>
+              updateNotificationPreferences({
+                pickupReminder: val,
+              })
+            }
           />
+
           <SwitchRow
             label="Route updates"
             value={notificationPreferences.routeUpdates}
-            onChange={(val) => updateNotificationPreferences({ routeUpdates: val })}
+            onChange={(val) =>
+              updateNotificationPreferences({
+                routeUpdates: val,
+              })
+            }
           />
+
           <SwitchRow
             label="Pickup status updates"
             value={notificationPreferences.statusUpdates}
-            onChange={(val) => updateNotificationPreferences({ statusUpdates: val })}
+            onChange={(val) =>
+              updateNotificationPreferences({
+                statusUpdates: val,
+              })
+            }
           />
+
           <SwitchRow
             label="Delivery completed"
             value={notificationPreferences.deliveryCompleted}
-            onChange={(val) => updateNotificationPreferences({ deliveryCompleted: val })}
+            onChange={(val) =>
+              updateNotificationPreferences({
+                deliveryCompleted: val,
+              })
+            }
             isLast
           />
         </Section>
@@ -106,17 +159,31 @@ export default function NotificationPreferencesScreen() {
           <SwitchRow
             label="New activity"
             value={notificationPreferences.activityUpdates}
-            onChange={(val) => updateNotificationPreferences({ activityUpdates: val })}
+            onChange={(val) =>
+              updateNotificationPreferences({
+                activityUpdates: val,
+              })
+            }
           />
+
           <SwitchRow
             label="Collection updates"
             value={notificationPreferences.issueUpdates}
-            onChange={(val) => updateNotificationPreferences({ issueUpdates: val })}
+            onChange={(val) =>
+              updateNotificationPreferences({
+                issueUpdates: val,
+              })
+            }
           />
+
           <SwitchRow
             label="Volunteer announcements"
             value={notificationPreferences.announcements}
-            onChange={(val) => updateNotificationPreferences({ announcements: val })}
+            onChange={(val) =>
+              updateNotificationPreferences({
+                announcements: val,
+              })
+            }
             isLast
           />
         </Section>
@@ -126,12 +193,21 @@ export default function NotificationPreferencesScreen() {
           <SwitchRow
             label="General notifications"
             value={notificationPreferences.generalNotifications}
-            onChange={(val) => updateNotificationPreferences({ generalNotifications: val })}
+            onChange={(val) =>
+              updateNotificationPreferences({
+                generalNotifications: val,
+              })
+            }
           />
+
           <SwitchRow
             label="Important alerts"
             value={notificationPreferences.importantAlerts}
-            onChange={(val) => updateNotificationPreferences({ importantAlerts: val })}
+            onChange={(val) =>
+              updateNotificationPreferences({
+                importantAlerts: val,
+              })
+            }
             isLast
           />
         </Section>
@@ -142,7 +218,9 @@ export default function NotificationPreferencesScreen() {
           onPress={handleSave}
           activeOpacity={0.85}
         >
-          <Text style={styles.saveButtonText}>Save Preferences</Text>
+          <Text style={styles.saveButtonText}>
+            Save Preferences
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -156,18 +234,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+
   scrollView: {
     flex: 1,
   },
+
   scrollContent: {
     padding: 16,
     paddingBottom: 32,
   },
 
-  // Section
   section: {
     marginBottom: 24,
   },
+
   sectionTitle: {
     fontSize: 13,
     fontWeight: '700',
@@ -177,7 +257,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
 
-  // Card
   card: {
     backgroundColor: Colors.surface,
     borderRadius: 16,
@@ -185,15 +264,18 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     paddingHorizontal: 4,
     paddingVertical: 4,
+
     // Subtle shadow
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
     shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 2,
   },
 
-  // Row
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -201,10 +283,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
+
   rowDivider: {
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,
   },
+
   rowLabel: {
     flex: 1,
     fontSize: 15,
@@ -213,7 +297,6 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
 
-  // Save button
   saveButton: {
     backgroundColor: Colors.primaryDark,
     borderRadius: 12,
@@ -222,12 +305,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: '100%',
     marginTop: 8,
+
     shadowColor: Colors.primaryDark,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.25,
     shadowRadius: 6,
     elevation: 3,
   },
+
   saveButtonText: {
     color: Colors.white,
     fontSize: 16,

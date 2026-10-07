@@ -1,5 +1,14 @@
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Linking, Platform, Alert } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Linking,
+  Platform,
+  Alert,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '@/components/ui/Icon';
 import { Colors } from '@/constants/colors';
@@ -9,10 +18,11 @@ import { useVolunteerStore } from '@/store/volunteerStore';
 import { useEffect, useState } from 'react';
 import * as Location from 'expo-location';
 
-// Conditionally import MapView to avoid crashing on unsupported environments
+// Conditionally load react-native-maps so web does not crash.
 let MapView: any = null;
 let Marker: any = null;
 let Polyline: any = null;
+
 try {
   if (Platform.OS !== 'web') {
     const Maps = require('react-native-maps');
@@ -21,36 +31,54 @@ try {
     Polyline = Maps.Polyline;
   }
 } catch (e) {
-  // Map not available
+  // Map is unavailable in the current environment.
 }
 
 export default function RouteScreen() {
   const pickup = mockActivePickup;
   const { setPickupStatus, pickupStatus } = useVolunteerStore();
-  const [currentLocation, setCurrentLocation] = useState<{ latitude: number, longitude: number } | null>(null);
-  
-  // Destination coordinates (mock for Negombo)
-  const destinationCoords = { latitude: 7.2088, longitude: 79.8362 };
+
+  const [currentLocation, setCurrentLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+
+  // Destination coordinates for Green Leaf Bakery, Negombo.
+  const destinationCoords = {
+    latitude: 7.2088,
+    longitude: 79.8362,
+  };
 
   useEffect(() => {
     (async () => {
+      // Native location is not used on web.
       if (Platform.OS === 'web') return;
+
       try {
-        let { status } = await Location.requestForegroundPermissionsAsync();
+        const { status } =
+          await Location.requestForegroundPermissionsAsync();
+
         if (status !== 'granted') {
-          // Fallback location if permission denied
-          setCurrentLocation({ latitude: 7.2000, longitude: 79.8400 });
+          // Frontend fallback location if permission is denied.
+          setCurrentLocation({
+            latitude: 7.2,
+            longitude: 79.84,
+          });
           return;
         }
 
-        let location = await Location.getCurrentPositionAsync({});
+        const location = await Location.getCurrentPositionAsync({});
+
         setCurrentLocation({
           latitude: location.coords.latitude,
           longitude: location.coords.longitude,
         });
       } catch (error) {
-        // Fallback location if error
-        setCurrentLocation({ latitude: 7.2000, longitude: 79.8400 });
+        // Frontend fallback if location cannot be obtained.
+        setCurrentLocation({
+          latitude: 7.2,
+          longitude: 79.84,
+        });
       }
     })();
   }, []);
@@ -59,17 +87,36 @@ export default function RouteScreen() {
     const url = Platform.select({
       ios: `maps:0,0?q=${encodeURIComponent(pickup.address)}`,
       android: `geo:0,0?q=${encodeURIComponent(pickup.address)}`,
-      web: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pickup.address)}`,
-      default: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(pickup.address)}`,
+      web: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        pickup.address
+      )}`,
+      default: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+        pickup.address
+      )}`,
     });
-    
-    Linking.canOpenURL(url).then(supported => {
-      if (supported) {
-        Linking.openURL(url);
-      } else {
-        Alert.alert('Map Unavailable', 'Could not open the map application.');
-      }
-    });
+
+    if (!url) {
+      Alert.alert('Map Unavailable', 'Could not create a map link.');
+      return;
+    }
+
+    Linking.canOpenURL(url)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(url);
+        }
+
+        Alert.alert(
+          'Map Unavailable',
+          'Could not open the map application.'
+        );
+      })
+      .catch(() => {
+        Alert.alert(
+          'Map Unavailable',
+          'Could not open the map application.'
+        );
+      });
   };
 
   const handleArrived = () => {
@@ -78,40 +125,62 @@ export default function RouteScreen() {
   };
 
   const isMapSupported = MapView && Platform.OS !== 'web';
-  const fallbackLocation = currentLocation || { latitude: 7.2000, longitude: 79.8400 };
+
+  const fallbackLocation = currentLocation || {
+    latitude: 7.2,
+    longitude: 79.84,
+  };
+
+  const isArrived = pickupStatus === 'ARRIVED';
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <VolunteerScreenHeader title="Route to Pickup" onBack={() => router.back()} />
+      <VolunteerScreenHeader
+        title="Route to Pickup"
+        onBack={() => router.back()}
+      />
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-
-        {/* ─── MAP SECTION ─── */}
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* MAP SECTION */}
         <View style={styles.mapContainer}>
           {isMapSupported ? (
             <MapView
               style={styles.map}
               initialRegion={{
-                latitude: (fallbackLocation.latitude + destinationCoords.latitude) / 2,
-                longitude: (fallbackLocation.longitude + destinationCoords.longitude) / 2,
+                latitude:
+                  (fallbackLocation.latitude +
+                    destinationCoords.latitude) /
+                  2,
+                longitude:
+                  (fallbackLocation.longitude +
+                    destinationCoords.longitude) /
+                  2,
                 latitudeDelta: 0.05,
                 longitudeDelta: 0.05,
               }}
-              showsUserLocation={true}
+              showsUserLocation
             >
               <Marker
                 coordinate={fallbackLocation}
                 title="You"
                 pinColor={Colors.primary}
               />
+
               <Marker
                 coordinate={destinationCoords}
                 title={pickup.donor}
                 description={pickup.address}
                 pinColor={Colors.danger}
               />
+
               <Polyline
-                coordinates={[fallbackLocation, destinationCoords]}
+                coordinates={[
+                  fallbackLocation,
+                  destinationCoords,
+                ]}
                 strokeColor={Colors.primaryDark}
                 strokeWidth={3}
                 lineDashPattern={[5, 5]}
@@ -119,51 +188,97 @@ export default function RouteScreen() {
             </MapView>
           ) : (
             <View style={styles.mockMap}>
-              <Icon name="map" size={40} color={Colors.primaryLight} />
-              <Text style={styles.mockMapText}>Interactive map available on mobile</Text>
+              <Icon
+                name="map"
+                size={40}
+                color={Colors.primaryLight}
+              />
+              <Text style={styles.mockMapText}>
+                Interactive map available on mobile
+              </Text>
             </View>
           )}
         </View>
 
-        {/* ─── LIVE ROUTE TRACKING CARD ─── */}
+        {/* LIVE ROUTE TRACKING CARD */}
         <View style={styles.trackingCard}>
           <View style={styles.trackingTop}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.trackingLabel}>Pickup From</Text>
-              <Text style={styles.trackingDonor}>{pickup.donor}</Text>
+              <Text style={styles.trackingLabel}>
+                Pickup From
+              </Text>
+
+              <Text style={styles.trackingDonor}>
+                {pickup.donor}
+              </Text>
+
               <View style={styles.addrRow}>
-                <Icon name="pin" size={13} color={Colors.textSecondary} />
-                <Text style={styles.addrText}>{pickup.address}</Text>
+                <Icon
+                  name="pin"
+                  size={13}
+                  color={Colors.textSecondary}
+                />
+                <Text style={styles.addrText}>
+                  {pickup.address}
+                </Text>
               </View>
             </View>
-            <View style={[styles.statusBadge, pickupStatus === 'ARRIVED' && styles.statusBadgeArrived]}>
-              <Text style={[styles.statusText, pickupStatus === 'ARRIVED' && styles.statusTextArrived]}>
-                {pickupStatus === 'ARRIVED' ? 'ARRIVED' : 'ON THE WAY'}
+
+            <View
+              style={[
+                styles.statusBadge,
+                isArrived && styles.statusBadgeArrived,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.statusText,
+                  isArrived && styles.statusTextArrived,
+                ]}
+              >
+                {isArrived ? 'ARRIVED' : 'ON THE WAY'}
               </Text>
             </View>
           </View>
 
           <View style={styles.divider} />
 
-          <Text style={styles.currentStatusLabel}>Current Status</Text>
+          <Text style={styles.currentStatusLabel}>
+            Current Status
+          </Text>
+
           <Text style={styles.currentStatus}>
-            {pickupStatus === 'ARRIVED' ? 'Arrived at pickup location' : 'On the way to pickup location'}
+            {isArrived
+              ? 'Arrived at pickup location'
+              : 'On the way to pickup location'}
           </Text>
 
           <View style={styles.statsRow}>
             <View style={styles.statBox}>
-              <Text style={styles.statLabel}>DISTANCE</Text>
-              <Text style={styles.statValue}>{pickup.distance}</Text>
+              <Text style={styles.statLabel}>
+                DISTANCE
+              </Text>
+
+              <Text style={styles.statValue}>
+                {pickup.distance}
+              </Text>
             </View>
+
             <View style={styles.statDivider} />
+
             <View style={styles.statBox}>
-              <Text style={styles.statLabel}>ESTIMATED TIME</Text>
-              <Text style={styles.statValue}>{pickup.estimatedTime}</Text>
+              <Text style={styles.statLabel}>
+                ESTIMATED TIME
+              </Text>
+
+              <Text style={styles.statValue}>
+                {pickup.estimatedTime}
+              </Text>
             </View>
           </View>
         </View>
 
-        {/* ─── BUTTONS ─── */}
+        {/* ACTION BUTTONS */}
         <View style={styles.btnRow}>
           <TouchableOpacity
             onPress={handleOpenMap}
@@ -171,30 +286,56 @@ export default function RouteScreen() {
             accessibilityRole="button"
             accessibilityLabel="Open Map"
           >
-            <Icon name="map" size={17} color={Colors.primaryDark} />
-            <Text style={styles.outlineBtnText}>Open Map</Text>
+            <Icon
+              name="map"
+              size={17}
+              color={Colors.primaryDark}
+            />
+
+            <Text style={styles.outlineBtnText}>
+              Open Map
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={handleArrived}
-            style={[styles.arrivedBtn, pickupStatus === 'ARRIVED' && { backgroundColor: Colors.textMuted }]}
+            style={[
+              styles.arrivedBtn,
+              isArrived && {
+                backgroundColor: Colors.textMuted,
+              },
+            ]}
             accessibilityRole="button"
             accessibilityLabel="Arrived at pickup location"
-            disabled={pickupStatus === 'ARRIVED'}
+            disabled={isArrived}
           >
-            <Icon name="check-circle" size={17} color={Colors.white} />
-            <Text style={styles.arrivedBtnText}>Arrived</Text>
+            <Icon
+              name="check-circle"
+              size={17}
+              color={Colors.white}
+            />
+
+            <Text style={styles.arrivedBtnText}>
+              Arrived
+            </Text>
           </TouchableOpacity>
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: 20, gap: 14, paddingBottom: 32 },
+  safe: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+
+  content: {
+    padding: 20,
+    gap: 14,
+    paddingBottom: 32,
+  },
 
   mapContainer: {
     height: 220,
@@ -204,7 +345,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  map: { flex: 1 },
+
+  map: {
+    flex: 1,
+  },
+
   mockMap: {
     flex: 1,
     alignItems: 'center',
@@ -212,7 +357,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8F5E9',
     gap: 8,
   },
-  mockMapText: { fontSize: 13, color: Colors.primaryDark, fontWeight: '600' },
+
+  mockMapText: {
+    fontSize: 13,
+    color: Colors.primaryDark,
+    fontWeight: '600',
+  },
 
   trackingCard: {
     backgroundColor: Colors.surface,
@@ -222,38 +372,117 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 10,
   },
+
   trackingTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
-  trackingLabel: { fontSize: 11, color: Colors.textSecondary, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
-  trackingDonor: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary, marginTop: 2 },
-  addrRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
-  addrText: { fontSize: 12, color: Colors.textSecondary },
-  
+
+  trackingLabel: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  trackingDonor: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    marginTop: 2,
+  },
+
+  addrRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 3,
+  },
+
+  addrText: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
+
   statusBadge: {
     backgroundColor: Colors.primaryLight,
     borderRadius: 8,
     paddingHorizontal: 9,
     paddingVertical: 5,
   },
+
   statusBadgeArrived: {
     backgroundColor: '#DBEAFE',
   },
-  statusText: { fontSize: 10, fontWeight: '700', color: Colors.primaryDark, letterSpacing: 0.5 },
-  statusTextArrived: { color: '#1E40AF' },
 
-  divider: { height: 1, backgroundColor: Colors.border },
-  currentStatusLabel: { fontSize: 11, fontWeight: '600', color: Colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
-  currentStatus: { fontSize: 14, color: Colors.textPrimary, fontWeight: '500' },
-  statsRow: { flexDirection: 'row', alignItems: 'center' },
-  statBox: { flex: 1, gap: 3 },
-  statLabel: { fontSize: 10, fontWeight: '600', color: Colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5 },
-  statValue: { fontSize: 22, fontWeight: '800', color: Colors.textPrimary },
-  statDivider: { width: 1, height: 40, backgroundColor: Colors.border, marginHorizontal: 16 },
+  statusText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: Colors.primaryDark,
+    letterSpacing: 0.5,
+  },
 
-  btnRow: { flexDirection: 'row', gap: 10 },
+  statusTextArrived: {
+    color: '#1E40AF',
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: Colors.border,
+  },
+
+  currentStatusLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  currentStatus: {
+    fontSize: 14,
+    color: Colors.textPrimary,
+    fontWeight: '500',
+  },
+
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  statBox: {
+    flex: 1,
+    gap: 3,
+  },
+
+  statLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+
+  statValue: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: Colors.textPrimary,
+  },
+
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: Colors.border,
+    marginHorizontal: 16,
+  },
+
+  btnRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+
   outlineBtn: {
     flex: 1,
     flexDirection: 'row',
@@ -266,7 +495,13 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     backgroundColor: Colors.surface,
   },
-  outlineBtnText: { fontSize: 14, fontWeight: '600', color: Colors.primaryDark },
+
+  outlineBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.primaryDark,
+  },
+
   arrivedBtn: {
     flex: 1,
     flexDirection: 'row',
@@ -277,5 +512,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: Colors.primaryDark,
   },
-  arrivedBtnText: { fontSize: 14, fontWeight: '700', color: Colors.white },
+
+  arrivedBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.white,
+  },
 });

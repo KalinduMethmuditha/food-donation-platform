@@ -4,9 +4,11 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import AppHeader from '@/components/shared/AppHeader';
 import Screen from '@/components/shared/Screen';
+import PickupMap from '@/components/shared/PickupMap';
 import StepProgress from '@/components/shared/StepProgress';
 import Card from '@/components/ui/Card';
 import FormField from '@/components/ui/FormField';
+import PickupDeadlineField from '@/components/restaurant/PickupDeadlineField';
 import Icon from '@/components/ui/Icon';
 import PrimaryButton from '@/components/ui/PrimaryButton';
 import SecondaryButton from '@/components/ui/SecondaryButton';
@@ -22,7 +24,7 @@ import {
 export default function PickupDetailsScreen() {
   const { editing } = useLocalSearchParams<{ editing?: string }>();
   const isEditing = editing === 'preview';
-  const { foodType, quantity, unit, pickupLocation, pickupDeadline, updatePickupDetails } =
+  const { foodType, quantity, unit, pickupLocation, pickupDeadline, pickupLatitude, pickupLongitude, updatePickupDetails } =
     useDonationDraftStore();
   const [errors, setErrors] = useState<PickupDetailsErrors>({});
 
@@ -44,7 +46,7 @@ export default function PickupDetailsScreen() {
   };
 
   const handleNext = () => {
-    const nextErrors = validatePickupDetails({ pickupLocation, pickupDeadline });
+    const nextErrors = validatePickupDetails({ pickupLocation, pickupDeadline, pickupLatitude, pickupLongitude });
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
     if (isEditing) {
@@ -100,27 +102,21 @@ export default function PickupDetailsScreen() {
             style={styles.addressInput}
           />
 
-          <Text style={formStyles.fieldLabel}>Location Preview</Text>
-          <View style={styles.mapPlaceholder} accessibilityLabel="Illustrative map placeholder">
-            <View style={styles.mapRoadHorizontal} />
-            <View style={styles.mapRoadVertical} />
-            <View style={styles.locationPin}>
-              <Icon name="pin" size={24} color={Colors.white} />
-            </View>
-            <Text style={styles.mapText}>Map preview placeholder</Text>
-          </View>
+          <Text style={formStyles.fieldLabel}>Pickup Point</Text>
+          <PickupMap latitude={pickupLatitude} longitude={pickupLongitude}
+            onLocationChange={(latitude, longitude) => {
+              updatePickupDetails({ pickupLatitude: latitude, pickupLongitude: longitude });
+              setErrors((current) => ({ ...current, pickupCoordinates: undefined }));
+            }} />
+          {errors.pickupCoordinates ? <Text accessibilityRole="alert" style={styles.coordinateError}>{errors.pickupCoordinates}</Text> : null}
 
-          <FormField
-            label="Collection / Pickup Deadline"
-            placeholder="e.g. Today, 3:00 PM"
+          <PickupDeadlineField
             value={pickupDeadline}
-            onChangeText={(value) => {
+            onChange={(value) => {
               updatePickupDetails({ pickupDeadline: value });
               setErrors((current) => ({ ...current, pickupDeadline: undefined }));
             }}
             error={errors.pickupDeadline}
-            hint="Include the day and latest collection time."
-            maxLength={100}
           />
         </Card>
 
@@ -141,46 +137,7 @@ export default function PickupDetailsScreen() {
 
 const styles = StyleSheet.create({
   addressInput: { minHeight: 76 },
-  mapPlaceholder: {
-    height: 145,
-    overflow: 'hidden',
-    borderRadius: 14,
-    backgroundColor: Colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  mapRoadHorizontal: {
-    position: 'absolute',
-    width: '120%',
-    height: 18,
-    backgroundColor: Colors.surface,
-    transform: [{ rotate: '-10deg' }],
-  },
-  mapRoadVertical: {
-    position: 'absolute',
-    width: 18,
-    height: '140%',
-    backgroundColor: Colors.surface,
-    transform: [{ rotate: '25deg' }],
-  },
-  locationPin: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.primaryDark,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  mapText: {
-    marginTop: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-    backgroundColor: Colors.surface,
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
+  coordinateError: { color: Colors.danger, fontSize: 12, marginBottom: 16 },
   summaryHeading: {
     marginTop: 22,
     marginBottom: 10,

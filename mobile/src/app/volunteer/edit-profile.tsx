@@ -1,5 +1,16 @@
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Alert, Modal, Image, Platform } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  Alert,
+  Modal,
+  Image,
+  Platform,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import Icon from '@/components/ui/Icon';
@@ -18,24 +29,35 @@ export default function EditProfileScreen() {
   const [avatarModalVisible, setAvatarModalVisible] = useState(false);
 
   const getInitials = (n: string) =>
-    n.split(' ').map(x => x[0]).join('').substring(0, 2).toUpperCase();
+    n
+      .split(' ')
+      .map((x) => x[0])
+      .join('')
+      .substring(0, 2)
+      .toUpperCase();
 
   const handlePickImage = () => {
     if (Platform.OS === 'web') {
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'image/*';
+
       input.onchange = (e: any) => {
         const file = e.target.files?.[0];
+
         if (file) {
           const blobUrl = URL.createObjectURL(file);
           setAvatarUrl(blobUrl);
           setAvatarModalVisible(false);
         }
       };
+
       input.click();
     } else {
-      Alert.alert('Not Supported', 'Please run on web to select local files without native plugins.');
+      Alert.alert(
+        'Not Supported',
+        'Please run on web to select local files without native plugins.'
+      );
     }
   };
 
@@ -44,27 +66,54 @@ export default function EditProfileScreen() {
       Alert.alert('Validation Error', 'Full Name is required.');
       return;
     }
-    updateProfile({ fullName: name, phone, email, location, avatarUrl });
-    Alert.alert('Profile Updated', 'Your profile information has been updated successfully.', [
-      { text: 'OK', onPress: () => router.back() },
-    ]);
+
+    updateProfile({
+      fullName: name,
+      phone,
+      email,
+      location,
+      avatarUrl,
+    });
+
+    Alert.alert(
+      'Profile Updated',
+      'Your profile information has been updated successfully.',
+      [
+        {
+          text: 'OK',
+          onPress: () => router.back(),
+        },
+      ]
+    );
   };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <VolunteerScreenHeader title="Edit Profile" onBack={() => router.back()} />
+      <VolunteerScreenHeader
+        title="Edit Profile"
+        onBack={() => router.back()}
+      />
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Photo Section */}
         <View style={styles.photoSection}>
           <View style={styles.avatar}>
             {avatarUrl ? (
               <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
             ) : (
-              <Text style={styles.avatarText}>{getInitials(name || 'Volunteer')}</Text>
+              <Text style={styles.avatarText}>
+                {getInitials(name || 'Volunteer')}
+              </Text>
             )}
           </View>
-          <TouchableOpacity style={styles.editPhotoBtn} onPress={() => setAvatarModalVisible(true)}>
+
+          <TouchableOpacity
+            style={styles.editPhotoBtn}
+            onPress={() => setAvatarModalVisible(true)}
+          >
             <Icon name="person" size={16} color={Colors.white} />
             <Text style={styles.editPhotoText}>Change Photo</Text>
           </TouchableOpacity>
@@ -74,7 +123,11 @@ export default function EditProfileScreen() {
         <View style={styles.formCard}>
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Volunteer ID</Text>
-            <TextInput style={[styles.input, styles.inputDisabled]} value={profile.volunteerId} editable={false} />
+            <TextInput
+              style={[styles.input, styles.inputDisabled]}
+              value={profile.volunteerId}
+              editable={false}
+            />
           </View>
 
           <View style={styles.inputGroup}>
@@ -124,9 +177,13 @@ export default function EditProfileScreen() {
 
       {/* Bottom Bar */}
       <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.cancelBtn} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.cancelBtn}
+          onPress={() => router.back()}
+        >
           <Text style={styles.cancelBtnText}>Cancel</Text>
         </TouchableOpacity>
+
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
           <Text style={styles.saveBtnText}>Save Changes</Text>
         </TouchableOpacity>
@@ -142,26 +199,49 @@ export default function EditProfileScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
+
             <Text style={styles.modalTitle}>Profile Photo</Text>
 
             <View style={styles.avatarActions}>
-              <TouchableOpacity style={styles.actionBtn} onPress={handlePickImage}>
-                <Icon name="person" size={20} color={Colors.primaryDark} />
-                <Text style={styles.actionBtnText}>Upload from Device</Text>
+              <TouchableOpacity
+                style={styles.actionBtn}
+                onPress={handlePickImage}
+              >
+                <Icon
+                  name="person"
+                  size={20}
+                  color={Colors.primaryDark}
+                />
+                <Text style={styles.actionBtnText}>
+                  Upload from Device
+                </Text>
               </TouchableOpacity>
 
               {avatarUrl ? (
                 <TouchableOpacity
                   style={[styles.actionBtn, styles.actionBtnDanger]}
-                  onPress={() => { setAvatarUrl(null); setAvatarModalVisible(false); }}
+                  onPress={() => {
+                    setAvatarUrl(null);
+                    setAvatarModalVisible(false);
+                  }}
                 >
                   <Icon name="trash" size={20} color={Colors.danger} />
-                  <Text style={[styles.actionBtnText, { color: Colors.danger }]}>Remove Photo</Text>
+                  <Text
+                    style={[
+                      styles.actionBtnText,
+                      { color: Colors.danger },
+                    ]}
+                  >
+                    Remove Photo
+                  </Text>
                 </TouchableOpacity>
               ) : null}
             </View>
 
-            <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setAvatarModalVisible(false)}>
+            <TouchableOpacity
+              style={styles.modalCloseBtn}
+              onPress={() => setAvatarModalVisible(false)}
+            >
               <Text style={styles.modalCloseBtnText}>Cancel</Text>
             </TouchableOpacity>
           </View>
@@ -172,10 +252,21 @@ export default function EditProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: 16, paddingBottom: 40 },
+  safe: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
 
-  photoSection: { alignItems: 'center', paddingVertical: 24 },
+  content: {
+    padding: 16,
+    paddingBottom: 40,
+  },
+
+  photoSection: {
+    alignItems: 'center',
+    paddingVertical: 24,
+  },
+
   avatar: {
     width: 96,
     height: 96,
@@ -186,8 +277,18 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     overflow: 'hidden',
   },
-  avatarImage: { width: '100%', height: '100%' },
-  avatarText: { fontSize: 32, fontWeight: '700', color: Colors.white },
+
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+
+  avatarText: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: Colors.white,
+  },
+
   editPhotoBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -197,7 +298,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     gap: 8,
   },
-  editPhotoText: { color: Colors.white, fontWeight: '600', fontSize: 14 },
+
+  editPhotoText: {
+    color: Colors.white,
+    fontWeight: '600',
+    fontSize: 14,
+  },
 
   formCard: {
     backgroundColor: Colors.surface,
@@ -207,8 +313,17 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 16,
   },
-  inputGroup: { gap: 6 },
-  label: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary },
+
+  inputGroup: {
+    gap: 6,
+  },
+
+  label: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+
   input: {
     backgroundColor: Colors.background,
     borderWidth: 1,
@@ -218,7 +333,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Colors.textPrimary,
   },
-  inputDisabled: { backgroundColor: '#F3F4F6', color: Colors.textMuted },
+
+  inputDisabled: {
+    backgroundColor: '#F3F4F6',
+    color: Colors.textMuted,
+  },
 
   bottomBar: {
     flexDirection: 'row',
@@ -229,6 +348,7 @@ const styles = StyleSheet.create({
     borderTopColor: Colors.border,
     gap: 12,
   },
+
   cancelBtn: {
     flex: 1,
     paddingVertical: 14,
@@ -237,7 +357,13 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     alignItems: 'center',
   },
-  cancelBtnText: { fontSize: 15, fontWeight: '600', color: Colors.textPrimary },
+
+  cancelBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+  },
+
   saveBtn: {
     flex: 1,
     paddingVertical: 14,
@@ -245,9 +371,19 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primaryDark,
     alignItems: 'center',
   },
-  saveBtnText: { fontSize: 15, fontWeight: '700', color: Colors.white },
 
-  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
+  saveBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: Colors.white,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+
   modalSheet: {
     backgroundColor: Colors.surface,
     borderTopLeftRadius: 24,
@@ -255,9 +391,29 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingBottom: 40,
   },
-  modalHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: Colors.border, alignSelf: 'center', marginBottom: 20 },
-  modalTitle: { fontSize: 18, fontWeight: '800', color: Colors.textPrimary, marginBottom: 20, textAlign: 'center' },
-  avatarActions: { gap: 12, marginBottom: 24 },
+
+  modalHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: Colors.border,
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: Colors.textPrimary,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+
+  avatarActions: {
+    gap: 12,
+    marginBottom: 24,
+  },
+
   actionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -266,8 +422,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     gap: 12,
   },
-  actionBtnDanger: { backgroundColor: '#FEF2F2' },
-  actionBtnText: { fontSize: 16, fontWeight: '600', color: Colors.primaryDark },
+
+  actionBtnDanger: {
+    backgroundColor: '#FEF2F2',
+  },
+
+  actionBtnText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.primaryDark,
+  },
+
   modalCloseBtn: {
     paddingVertical: 14,
     borderRadius: 12,
@@ -276,5 +441,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.background,
   },
-  modalCloseBtnText: { fontSize: 15, fontWeight: '600', color: Colors.textPrimary },
+
+  modalCloseBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+  },
 });

@@ -1,4 +1,10 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+
 import Icon from '@/components/ui/Icon';
 import { Colors } from '@/constants/colors';
 import type { IconName } from '@/components/ui/Icon';
@@ -9,12 +15,26 @@ type Props = {
   onPress: () => void;
 };
 
-export default function VolunteerQuickAction({ title, icon, onPress }: Props) {
+export default function VolunteerQuickAction({
+  title,
+  icon,
+  onPress,
+}: Props) {
   return (
-    <Pressable onPress={onPress} style={styles.container} accessibilityRole="button" accessibilityLabel={title}>
+    <Pressable
+      onPress={onPress}
+      style={styles.container}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+    >
       <View style={styles.iconBox}>
-        <Icon name={icon} size={22} color={Colors.primaryDark} />
+        <Icon
+          name={icon}
+          size={22}
+          color={Colors.primaryDark}
+        />
       </View>
+
       <Text style={styles.label}>{title}</Text>
     </Pressable>
   );
@@ -26,6 +46,7 @@ const styles = StyleSheet.create({
     gap: 6,
     flex: 1,
   },
+
   iconBox: {
     width: 52,
     height: 52,
@@ -36,6 +57,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+
   label: {
     fontSize: 12,
     fontWeight: '600',

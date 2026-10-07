@@ -7,7 +7,6 @@ import Icon from '@/components/ui/Icon';
 import SecondaryButton from '@/components/ui/SecondaryButton';
 import { Colors } from '@/constants/colors';
 import { restaurantTabs } from '@/constants/restaurantNavigation';
-import { restaurantProfile } from '@/data/mockRestaurantData';
 
 // Restaurant actions live here; the shared header stays presentation-only.
 export default function RestaurantHeader(props: AppHeaderProps) {
@@ -20,8 +19,8 @@ export default function RestaurantHeader(props: AppHeaderProps) {
     <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={() => setMenuOpen(false)}>
       <SafeAreaView style={styles.overlay}>
         <View style={styles.menu} accessibilityViewIsModal>
-          <Text style={styles.title}>{restaurantProfile.name}</Text>
-          <Text style={styles.subtitle}>{restaurantProfile.role}</Text>
+          <Text style={styles.title}>FoodShare</Text>
+          <Text style={styles.subtitle}>Restaurant Donor</Text>
           {restaurantTabs.map((tab) => <Pressable key={tab.name} accessibilityRole="button" accessibilityLabel={tab.name}
             style={({ pressed }) => [styles.row, pressed && styles.pressed]}
             onPress={() => { setMenuOpen(false); router.replace(tab.href); }}>
