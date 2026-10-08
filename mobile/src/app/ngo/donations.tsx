@@ -3,7 +3,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useMemo, useState } from 'react';
 import {
   Image,
-  ImageSourcePropType,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '@/components/ui/Icon';
+import { donations } from '@/constants/donations';
 
 // ---------- Colour palette (same as dashboard) ----------
 const C = {
@@ -29,30 +29,13 @@ const C = {
   white: '#FFFFFF',
 };
 
-type Donation = {
-  id: string;
-  title: string;
-  quantity: string;
-  distance: string;
-  category: 'Rice' | 'Bread' | 'Fruits' | 'Vegetables';
-  emoji: string; // shown when no image is provided
-  image?: ImageSourcePropType; // e.g. require('@/assets/images/rice.png')
-};
-
 const categories = ['All', 'Rice', 'Bread', 'Fruits', 'Vegetables'] as const;
-
-const donations: Donation[] = [
-  { id: '1', title: 'Rice & Curry', quantity: '20 items', distance: '5 km away', category: 'Rice', emoji: '🍛' },
-  { id: '2', title: 'Bread & pastries', quantity: '3 bags', distance: '8 km away', category: 'Bread', emoji: '🥐' },
-  { id: '3', title: 'Fruits', quantity: '1 item', distance: '12 km away', category: 'Fruits', emoji: '🍎' },
-  { id: '4', title: 'Vegetables', quantity: '10 items', distance: '3.5 km away', category: 'Vegetables', emoji: '🥕' },
-];
 
 const navItems = [
   { id: 'home', label: 'Home', icon: 'home', route: '/ngo/dashboard' },
   { id: 'donations', label: 'Donations', icon: 'package', route: null },
-  { id: 'collections', label: 'Collections', icon: 'truck', route: null },
-  { id: 'notifications', label: 'Notifications', icon: 'bell', route: null },
+  { id: 'collections', label: 'Collections', icon: 'truck', route: '/ngo/activecollection' },
+  { id: 'notifications', label: 'Notifications', icon: 'bell', route: '/ngo/notifications' },
 ];
 
 export default function NgoDonations() {
@@ -102,7 +85,11 @@ export default function NgoDonations() {
             />
           </View>
           <TouchableOpacity style={[styles.card, styles.filterBtn]}>
-            <Icon name="filter" size={20} color={C.primaryDark} />
+            <View style={{ gap: 4, alignItems: 'center' }}>
+              <View style={{ width: 20, height: 2.5, borderRadius: 2, backgroundColor: C.primaryDark }} />
+              <View style={{ width: 14, height: 2.5, borderRadius: 2, backgroundColor: C.primaryDark }} />
+              <View style={{ width: 8, height: 2.5, borderRadius: 2, backgroundColor: C.primaryDark }} />
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -134,7 +121,7 @@ export default function NgoDonations() {
               key={d.id}
               activeOpacity={0.85}
               style={[styles.card, styles.item]}
-              // onPress={() => router.push({ pathname: '/ngo/donation-details', params: { id: d.id } })}
+              onPress={() => router.push({ pathname: '/ngo/donationdetails' as any, params: { id: d.id } })}
             >
               {d.image ? (
                 <Image source={d.image} style={styles.thumb} />
@@ -149,7 +136,7 @@ export default function NgoDonations() {
                 <Text style={styles.itemQty}>Quantity: {d.quantity}</Text>
 
                 <View style={styles.distRow}>
-                  <Icon name="map-pin" size={12} color={C.primary} />
+                  <Icon name="map" size={12} color={C.primary} />
                   <Text style={styles.distText}>{d.distance}</Text>
                 </View>
 

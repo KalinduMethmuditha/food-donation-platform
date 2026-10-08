@@ -34,14 +34,14 @@ const activities = [
   { id: '1', type: 'accepted', title: 'Donation accepted', subtitle: 'Canned Food · 20 items', time: '2h ago', icon: 'check' },
   { id: '2', type: 'collected', title: 'Collection completed', subtitle: 'Clothes · 3 bags', time: '5h ago', icon: 'truck' },
   { id: '3', type: 'assigned', title: 'Volunteer assigned', subtitle: 'Ravi Kumar · Furniture', time: '1d ago', icon: 'user' },
-  { id: '4', type: 'rejected', title: 'Donation rejected', subtitle: 'Books · 10 items', time: '2d ago', icon: 'x' },
+  { id: '4', type: 'rejected', title: 'Donation rejected', subtitle: 'Books · 10 items', time: '2d ago', icon: 'x-circle' },
 ];
 
 const navItems = [
   { id: 'home', label: 'Home', icon: 'home', route: null },
   { id: 'donations', label: 'Donations', icon: 'package', route: '/ngo/donations' },
-  { id: 'collections', label: 'Collections', icon: 'truck', route: null },
-  { id: 'notifications', label: 'Notifications', icon: 'bell', route: null },
+  { id: 'collections', label: 'Collections', icon: 'truck', route: '/ngo/activecollection' },
+  { id: 'notifications', label: 'Notifications', icon: 'bell', route: '/ngo/notifications' },
 ];
 
 export default function NgoDashboard() {
@@ -60,7 +60,7 @@ export default function NgoDashboard() {
 
               <Text style={styles.headerTitle}>NGO Dashboard</Text>
 
-              <TouchableOpacity style={styles.circleBtn}>
+              <TouchableOpacity style={styles.circleBtn} onPress={() => router.push('/ngo/notifications' as any)}>
                 <Icon name="bell" size={20} color={C.white} />
                 <View style={styles.badge} />
               </TouchableOpacity>
