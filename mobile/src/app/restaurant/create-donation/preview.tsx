@@ -12,6 +12,8 @@ import PrimaryButton from '@/components/ui/PrimaryButton';
 import { Colors } from '@/constants/colors';
 import { donationFormStyles as formStyles } from '@/constants/donationFormStyles';
 import { useDonationDraftStore } from '@/stores/donationDraft.store';
+import { getApiErrorMessage } from '@/services/apiErrors';
+import { formatDateTime } from '@/utils/dateTime';
 import {
   validateFoodDetails,
   validatePickupDetails,
@@ -19,9 +21,9 @@ import {
 
 export default function DonationPreviewScreen() {
   const navigation = useNavigation<{
-    reset: (state: { index: number; routes: Array<
+    reset: (state: { index: number; routes: (
       { name: 'dashboard' } | { name: 'donations/[id]'; params: { id: string } }
-    > }) => void;
+    )[] }) => void;
   }>('/restaurant');
   const draft = useDonationDraftStore();
   const { publishDonation, isPublishing } = useRestaurantData();
@@ -55,6 +57,8 @@ export default function DonationPreviewScreen() {
         unit: draft.unit,
         description: draft.description,
         pickupLocation: draft.pickupLocation,
+        pickupLatitude: draft.pickupLatitude,
+        pickupLongitude: draft.pickupLongitude,
         pickupDeadline: draft.pickupDeadline,
       });
       // Leave no cleared wizard screens behind in the Restaurant stack.
@@ -66,8 +70,8 @@ export default function DonationPreviewScreen() {
         ],
       });
       draft.resetDraft();
-    } catch {
-      setPublishError('Could not publish this donation. Please try again.');
+    } catch (error) {
+      setPublishError(getApiErrorMessage(error, 'donation'));
       submitting.current = false;
     }
   };
@@ -115,7 +119,9 @@ export default function DonationPreviewScreen() {
           </Pressable>
         </View>
         <DetailRow label="Pickup Location" value={draft.pickupLocation} />
-        <DetailRow label="Pickup Deadline" value={draft.pickupDeadline} />
+        {draft.pickupLatitude !== undefined && draft.pickupLongitude !== undefined ?
+          <DetailRow label="Pickup Point" value="Pickup point selected on map" /> : null}
+        <DetailRow label="Pickup Deadline" value={formatDateTime(draft.pickupDeadline)} />
       </Card>
 
       <View style={styles.infoBox}>
