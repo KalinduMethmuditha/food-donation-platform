@@ -42,6 +42,8 @@ class AuthRoleTest extends TestCase
                 ->assertJsonPath('user.role', $role)
                 ->assertJsonStructure(['token']);
 
+            $this->app['auth']->forgetGuards();
+
             $this->withToken($login->json('token'))
                 ->getJson('/api/me')
                 ->assertOk()

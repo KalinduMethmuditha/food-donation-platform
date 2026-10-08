@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -22,6 +21,16 @@ class User extends Authenticatable
         return $this->hasMany(Donation::class);
     }
 
+    public function acceptedDonations(): HasMany
+    {
+        return $this->hasMany(Donation::class, 'accepted_by_ngo_id');
+    }
+
+    public function assignedDonations(): HasMany
+    {
+        return $this->hasMany(Donation::class, 'assigned_volunteer_id');
+    }
+
     public function statusChanges(): HasMany
     {
         return $this->hasMany(
@@ -34,6 +43,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'is_available' => 'boolean',
             'password' => 'hashed',
         ];
     }

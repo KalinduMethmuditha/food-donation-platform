@@ -29,6 +29,16 @@ class Donation extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function acceptedByNgo(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'accepted_by_ngo_id');
+    }
+
+    public function assignedVolunteer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_volunteer_id');
+    }
+
     public function statusLogs(): HasMany
     {
         return $this->hasMany(DonationStatusLog::class);
