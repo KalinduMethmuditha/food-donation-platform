@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { PropsWithChildren } from 'react';
 
 import { getApiErrorMessage } from '@/services/apiErrors';
-import { createDonation, getDonation, getDonations } from '@/services/restaurantDonations';
+import { createDonation, getDonation, getDonations } from '@/services/donations';
 import { removeToken } from '@/services/tokenStorage';
 import type { Donation, DonationDraft } from '@/types/donation';
 
