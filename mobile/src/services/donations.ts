@@ -2,7 +2,7 @@ import { api } from '@/services/api';
 import type { Donation, DonationDraft, DonationStatus } from '@/types/donation';
 import { isValidPickupCoordinates, parsePickupCoordinate } from '@/utils/pickupCoordinates';
 
-type ApiDonation = {
+export type ApiDonation = {
   id: number;
   food_type: string;
   quantity: string | number;

@@ -1,4 +1,5 @@
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import AppHeader from '@/components/restaurant/AppHeader';
 import BottomNavigation from '@/components/restaurant/BottomNavigation';
@@ -17,8 +18,9 @@ import { getDonationActivity } from '@/utils/donation';
 
 export default function RestaurantDashboard() {
   const { donations, isLoading, loadError, refreshDonations } = useRestaurantData();
+  useFocusEffect(useCallback(() => { void refreshDonations(); }, [refreshDonations]));
   const latestDonation = donations[0];
-  const activeCount = donations.filter((donation) => donation.status !== 'collected' && donation.status !== 'cancelled').length;
+  const activeCount = donations.filter((donation) => !['collected', 'delivered', 'cancelled'].includes(donation.status)).length;
   const completedCount = donations.filter((donation) => donation.status === 'collected' || donation.status === 'delivered').length;
   const activities = getDonationActivity(donations).slice(0, 4);
 

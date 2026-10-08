@@ -1,3 +1,5 @@
+import { useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import AppHeader from '@/components/restaurant/AppHeader';
 import BottomNavigation from '@/components/restaurant/BottomNavigation';
@@ -29,6 +31,7 @@ const notificationText: Record<NotificationItem['kind'], { title: string; messag
 
 export default function NotificationsScreen() {
   const { donations, isLoading, loadError, refreshDonations } = useRestaurantData();
+  useFocusEffect(useCallback(() => { void refreshDonations(); }, [refreshDonations]));
   const visibleNotifications: NotificationItem[] = getDonationActivity(donations).map((activity) => ({
     id: activity.id,
     donationId: activity.donationId,

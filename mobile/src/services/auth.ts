@@ -5,6 +5,7 @@ import {
 } from '@/services/tokenStorage';
 import { useVolunteerStore, type NotificationPreferences, type PickupPreferences } from '@/store/volunteerStore';
 import { useVolunteerAssignments } from '@/store/volunteerAssignments.store';
+import { useNgoDonations } from '@/store/ngoDonations.store';
 
 export type UserRole =
   | 'restaurant'
@@ -47,6 +48,7 @@ export async function loginUser(
 
   await saveToken(data.token);
   useVolunteerAssignments.getState().clear();
+  useNgoDonations.getState().clear();
   syncVolunteerAccount(data.user);
 
   return data;
@@ -72,6 +74,7 @@ export async function registerUser(input: {
 
   await saveToken(data.token);
   useVolunteerAssignments.getState().clear();
+  useNgoDonations.getState().clear();
   syncVolunteerAccount(data.user);
 
   return data;
@@ -90,6 +93,7 @@ export async function logoutUser() {
   } finally {
     await removeToken();
     useVolunteerAssignments.getState().clear();
+    useNgoDonations.getState().clear();
   }
 }
 

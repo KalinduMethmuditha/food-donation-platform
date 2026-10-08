@@ -1,5 +1,5 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useRestaurantData } from '@/components/restaurant/RestaurantDataProvider';
@@ -22,7 +22,6 @@ export default function DonationDetailsScreen() {
   const donation = donations.find((item) => item.id === id);
   const [isFetching, setIsFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const requestedId = useRef<string | null>(null);
 
   const fetchDonation = useCallback(async (donationId: string) => {
     setIsFetching(true);
@@ -36,11 +35,9 @@ export default function DonationDetailsScreen() {
     }
   }, [getDonationById]);
 
-  useEffect(() => {
-    if (!id || donation || isLoading || requestedId.current === id) return;
-    requestedId.current = id;
-    void fetchDonation(id);
-  }, [id, donation, isLoading, fetchDonation]);
+  useFocusEffect(useCallback(() => {
+    if (id) void fetchDonation(id);
+  }, [id, fetchDonation]));
 
   const openDonations = () => router.navigate('/restaurant/donations');
   const goBack = () => router.canGoBack() ? router.back() : router.replace('/restaurant/donations');

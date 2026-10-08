@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import AppHeader from '@/components/restaurant/AppHeader';
 import BottomNavigation from '@/components/restaurant/BottomNavigation';
@@ -16,6 +16,7 @@ const tabs = [{ label: 'Active', value: 'active' }, { label: 'Completed', value:
 
 export default function DonationsScreen() {
   const { donations, isLoading, loadError, refreshDonations } = useRestaurantData();
+  useFocusEffect(useCallback(() => { void refreshDonations(); }, [refreshDonations]));
   const [selectedTab, setSelectedTab] = useState<'active' | 'completed'>('active');
   const [search, setSearch] = useState('');
   const filteredDonations = donations.filter((donation) =>

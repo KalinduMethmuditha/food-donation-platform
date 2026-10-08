@@ -1,5 +1,12 @@
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+
+import { NgoSessionContext } from '@/components/ngo/NgoSessionContext';
+import { Colors } from '@/constants/colors';
+import { demoRoleDestinations } from '@/constants/demoRoles';
+import { getCurrentUser, type AuthUser } from '@/services/auth';
 
 // Same background colour used on every NGO screen (no colour changes)
 const BG = '#F2F6F4';
@@ -10,8 +17,41 @@ export const unstable_settings = {
 };
 
 export default function NgoLayout() {
+  const [user, setUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    void getCurrentUser()
+      .then((currentUser) => {
+        if (!active) return;
+
+        if (currentUser.role !== 'ngo') {
+          router.replace(demoRoleDestinations[currentUser.role]);
+          return;
+        }
+
+        setUser(currentUser);
+      })
+      .catch(() => {
+        if (active) router.replace('/login');
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  if (!user) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator color={Colors.primary} accessibilityLabel="Loading NGO account" />
+      </View>
+    );
+  }
+
   return (
-    <>
+    <NgoSessionContext.Provider value={user}>
       <StatusBar style="dark" />
 
       <Stack
@@ -33,6 +73,15 @@ export default function NgoLayout() {
         <Stack.Screen name="donationrequest" />
         <Stack.Screen name="assignvolunteer" />
       </Stack>
-    </>
+    </NgoSessionContext.Provider>
   );
 }
+
+const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: BG,
+  },
+});
