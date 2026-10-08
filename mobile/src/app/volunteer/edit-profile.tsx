@@ -17,6 +17,8 @@ import Icon from '@/components/ui/Icon';
 import { Colors } from '@/constants/colors';
 import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
 import { useVolunteerStore } from '@/store/volunteerStore';
+import { updateVolunteerProfile } from '@/services/auth';
+import { getApiErrorMessage } from '@/services/apiErrors';
 
 export default function EditProfileScreen() {
   const { profile, updateProfile } = useVolunteerStore();
@@ -27,6 +29,8 @@ export default function EditProfileScreen() {
   const [location, setLocation] = useState(profile.location);
   const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl);
   const [avatarModalVisible, setAvatarModalVisible] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const getInitials = (n: string) =>
     n
@@ -61,30 +65,22 @@ export default function EditProfileScreen() {
     }
   };
 
-  const handleSave = () => {
-    if (!name.trim()) {
-      Alert.alert('Validation Error', 'Full Name is required.');
+  const handleSave = async () => {
+    if (!name.trim() || !email.trim()) {
+      setSaveError('Name and email are required.');
       return;
     }
-
-    updateProfile({
-      fullName: name,
-      phone,
-      email,
-      location,
-      avatarUrl,
-    });
-
-    Alert.alert(
-      'Profile Updated',
-      'Your profile information has been updated successfully.',
-      [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
-        },
-      ]
-    );
+    setIsSaving(true);
+    setSaveError('');
+    try {
+      await updateVolunteerProfile({ name: name.trim(), email: email.trim(), phone: phone.trim(), location: location.trim() });
+      updateProfile({ avatarUrl });
+      router.back();
+    } catch (error) {
+      setSaveError(getApiErrorMessage(error, 'register'));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -176,6 +172,7 @@ export default function EditProfileScreen() {
       </ScrollView>
 
       {/* Bottom Bar */}
+      {saveError ? <Text accessibilityRole="alert" style={{ color: Colors.danger, paddingHorizontal: 16 }}>{saveError}</Text> : null}
       <View style={styles.bottomBar}>
         <TouchableOpacity
           style={styles.cancelBtn}
@@ -184,8 +181,8 @@ export default function EditProfileScreen() {
           <Text style={styles.cancelBtnText}>Cancel</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-          <Text style={styles.saveBtnText}>Save Changes</Text>
+        <TouchableOpacity style={styles.saveBtn} onPress={() => void handleSave()} disabled={isSaving}>
+          <Text style={styles.saveBtnText}>{isSaving ? 'Saving...' : 'Save Changes'}</Text>
         </TouchableOpacity>
       </View>
 

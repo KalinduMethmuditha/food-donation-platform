@@ -26,7 +26,7 @@ export default function HouseholdActivity() {
       {!isLoading && donations.length === 0 ? <EmptyState title="No donations yet"
         description="Your household donations will appear here after you publish them." icon="heart" /> : null}
       {donations.map((donation) => <Pressable key={donation.id} onPress={() => router.push({
-        pathname: donation.status === 'collected' ? '/household/donations/delivered' : '/household/donations/[id]',
+        pathname: ['collected', 'delivered'].includes(donation.status) ? '/household/donations/delivered' : '/household/donations/[id]',
         params: { id: donation.id },
       })}>
         <Card style={styles.card}>

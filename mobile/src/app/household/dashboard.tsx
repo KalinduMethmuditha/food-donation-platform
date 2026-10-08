@@ -24,8 +24,8 @@ export default function HouseholdDashboard() {
 
   useFocusEffect(useCallback(() => { void refreshDonations(); }, [refreshDonations]));
 
-  const active = donations.filter((item) => !['collected', 'cancelled'].includes(item.status)).length;
-  const completed = donations.filter((item) => item.status === 'collected').length;
+  const active = donations.filter((item) => !['collected', 'delivered', 'cancelled'].includes(item.status)).length;
+  const completed = donations.filter((item) => item.status === 'collected' || item.status === 'delivered').length;
   const latest = donations[0];
   const activities = getDonationActivity(donations).slice(0, 3);
 

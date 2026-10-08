@@ -19,7 +19,7 @@ export default function DonationsScreen() {
   const [selectedTab, setSelectedTab] = useState<'active' | 'completed'>('active');
   const [search, setSearch] = useState('');
   const filteredDonations = donations.filter((donation) =>
-    (selectedTab === 'completed' ? donation.status === 'collected' : donation.status !== 'collected' && donation.status !== 'cancelled') &&
+    (selectedTab === 'completed' ? ['collected', 'delivered'].includes(donation.status) : !['collected', 'delivered', 'cancelled'].includes(donation.status)) &&
     donation.foodType.toLowerCase().includes(search.trim().toLowerCase()));
 
   return <Screen>

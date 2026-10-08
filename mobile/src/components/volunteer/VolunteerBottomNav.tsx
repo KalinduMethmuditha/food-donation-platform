@@ -54,7 +54,7 @@ export default function VolunteerBottomNav({
         return (
           <Pressable
             key={tab.label}
-            onPress={() => onPress?.(tab.label)}
+            onPress={() => onPress?.(tab.route)}
             accessibilityRole="tab"
             accessibilityState={{
               selected: isActive,

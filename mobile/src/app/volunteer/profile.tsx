@@ -17,6 +17,7 @@ import { Colors } from '@/constants/colors';
 import VolunteerBottomNav from '@/components/volunteer/VolunteerBottomNav';
 import { logoutUser } from '@/services/auth';
 import { useVolunteerStore } from '@/store/volunteerStore';
+import { useVolunteerAssignments } from '@/store/volunteerAssignments.store';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -156,13 +157,14 @@ function StatBox({ value, label }: StatBoxProps) {
 
 export default function VolunteerProfileScreen() {
   const { profile, pickupPreferences } = useVolunteerStore();
+  const { assignments, isAvailable } = useVolunteerAssignments();
 
   const [logoutModalVisible, setLogoutModalVisible] =
     useState(false);
 
   const initials = getInitials(profile.fullName);
 
-  const availabilityLabel = pickupPreferences.availableToday
+  const availabilityLabel = isAvailable
     ? 'Available Today'
     : 'Not Available';
 
@@ -175,19 +177,8 @@ export default function VolunteerProfileScreen() {
       .finally(() => router.replace('/welcome'));
   }
 
-  function handleNavPress(tab: string) {
-    const routes: Record<string, string> = {
-      Home: '/volunteer/dashboard',
-      Pickups: '/volunteer/pickup-details',
-      Activity: '/volunteer/activity',
-      Profile: '/volunteer/profile',
-    };
-
-    const route = routes[tab];
-
-    if (route) {
-      router.push(route as any);
-    }
+  function handleNavPress(route: string) {
+    router.push(route as any);
   }
 
   return (
@@ -279,7 +270,7 @@ export default function VolunteerProfileScreen() {
 
           <InfoRow
             label="Phone"
-            value={profile.phone}
+            value={profile.phone || 'Not provided'}
           />
 
           <InfoRow
@@ -289,12 +280,12 @@ export default function VolunteerProfileScreen() {
 
           <InfoRow
             label="Location"
-            value={profile.location}
+            value={profile.location || 'Not provided'}
           />
 
           <InfoRow
             label="Joined"
-            value={profile.joinedDate}
+            value={profile.joinedDate || 'Unavailable'}
             isLast
           />
         </View>
@@ -335,23 +326,23 @@ export default function VolunteerProfileScreen() {
 
           <View style={styles.statsGrid}>
             <StatBox
-              value="24"
+              value={String(assignments.filter((item) => item.status === 'collected' || item.status === 'delivered').length)}
               label="Completed Pickups"
             />
 
             <StatBox
-              value="286"
-              label="Food Packs"
+              value={String(assignments.length)}
+              label="Assigned Pickups"
             />
 
             <StatBox
-              value="21"
+              value={String(assignments.filter((item) => item.status === 'delivered').length)}
               label="Deliveries"
             />
 
             <StatBox
-              value="96%"
-              label="Completion Rate"
+              value={String(assignments.filter((item) => !['collected', 'delivered'].includes(item.status)).length)}
+              label="Active Pickups"
             />
           </View>
         </View>

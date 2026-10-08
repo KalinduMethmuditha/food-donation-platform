@@ -14,7 +14,7 @@ export default function PrivacyScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <VolunteerScreenHeader
-        title="Privacy Policy"
+        title="Volunteer Data & Privacy"
         onBack={() => router.back()}
       />
 
@@ -23,7 +23,7 @@ export default function PrivacyScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.header}>
-          Last updated January 2026
+          How volunteer data is used in this app
         </Text>
 
         <View style={styles.card}>
@@ -32,9 +32,9 @@ export default function PrivacyScreen() {
           </Text>
 
           <Text style={styles.cardText}>
-            We collect your name, email, phone number, and
-            volunteer ID to manage your account. This information
-            is stored locally on your device during your session.
+            Your name, email, optional phone and location, and account ID
+            are saved with your account on the server. The sign-in token
+            is stored on your device.
           </Text>
         </View>
 
@@ -44,10 +44,9 @@ export default function PrivacyScreen() {
           </Text>
 
           <Text style={styles.cardText}>
-            Location data is only used for pickup routing and
-            navigation assistance. We do not store or transmit
-            your location to any backend systems in this version
-            of the app.
+            Donors may provide a pickup address and map point. The route
+            screen uses that information to open directions. A location
+            entered in your profile is saved with your account.
           </Text>
         </View>
 
@@ -57,9 +56,9 @@ export default function PrivacyScreen() {
           </Text>
 
           <Text style={styles.cardText}>
-            Notification preferences are stored locally on your
-            device. Push notifications require your permission
-            and are managed through device settings.
+            Your notification preferences and read state are saved on
+            the server. This version shows pickup updates in the app;
+            it does not send device push notifications.
           </Text>
         </View>
 
@@ -69,9 +68,8 @@ export default function PrivacyScreen() {
           </Text>
 
           <Text style={styles.cardText}>
-            Pickup history, status updates, and activity logs are
-            stored locally on your device for session purposes
-            only. No data is sent to servers.
+            Assigned pickups, progress updates, notes, and support
+            requests are saved on the server and shown in your account.
           </Text>
         </View>
 
@@ -81,9 +79,9 @@ export default function PrivacyScreen() {
           </Text>
 
           <Text style={styles.cardText}>
-            All data in this version of the app is stored locally.
-            We are committed to protecting your privacy and will
-            update this policy as our data practices evolve.
+            The app requests account and pickup data from the backend
+            when you open volunteer screens. Signing out removes the
+            saved sign-in token from this device.
           </Text>
         </View>
 
@@ -93,8 +91,7 @@ export default function PrivacyScreen() {
           </Text>
 
           <Text style={styles.cardText}>
-            For privacy concerns, email us at
-            privacy@fooddonation.lk or call +94 11 234 5678.
+            Use Help &amp; Support in your profile to send a request.
           </Text>
         </View>
       </ScrollView>

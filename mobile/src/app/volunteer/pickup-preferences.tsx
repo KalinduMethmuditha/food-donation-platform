@@ -12,12 +12,15 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Icon from '@/components/ui/Icon';
 import { Colors } from '@/constants/colors';
 import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
 import { useVolunteerStore } from '@/store/volunteerStore';
+import { useVolunteerAssignments } from '@/store/volunteerAssignments.store';
+import { updateVolunteerPreferences } from '@/services/auth';
+import { getApiErrorMessage } from '@/services/apiErrors';
 
 const FOOD_TYPES: string[] = [
   'Cooked Meals',
@@ -76,6 +79,9 @@ export default function PickupPreferencesScreen() {
     pickupPreferences,
     updatePickupPreferences,
   } = useVolunteerStore();
+  const { isAvailable, isLoading, setAvailability } = useVolunteerAssignments();
+  const [saveError, setSaveError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const [startTime, setStartTime] = useState<string>(
     pickupPreferences?.preferredStartTime ?? '5:00 PM'
@@ -102,6 +108,7 @@ export default function PickupPreferencesScreen() {
     useState<boolean>(
       pickupPreferences?.availableToday ?? false
     );
+  useEffect(() => { if (!isLoading) setAvailableToday(isAvailable); }, [isAvailable, isLoading]);
 
   const [availableDays, setAvailableDays] =
     useState<string[]>(
@@ -162,16 +169,13 @@ export default function PickupPreferencesScreen() {
     setShowAreaModal(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!area.trim()) {
-      Alert.alert(
-        'Validation',
-        'Please set a preferred pickup area.'
-      );
+      setSaveError('Please set a preferred pickup area.');
       return;
     }
 
-    updatePickupPreferences({
+    const preferences = {
       preferredStartTime: startTime,
       preferredEndTime: endTime,
       preferredArea: area,
@@ -179,18 +183,19 @@ export default function PickupPreferencesScreen() {
       foodTypes: selectedFoodTypes,
       availableToday,
       availableDays,
-    });
-
-    Alert.alert(
-      'Saved',
-      'Pickup preferences updated.',
-      [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
-        },
-      ]
-    );
+    };
+    setIsSaving(true);
+    setSaveError('');
+    try {
+      await updateVolunteerPreferences({ pickup_preferences: preferences });
+      await setAvailability(availableToday);
+      updatePickupPreferences(preferences);
+      router.back();
+    } catch (error) {
+      setSaveError(getApiErrorMessage(error, 'load'));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -469,10 +474,12 @@ export default function PickupPreferencesScreen() {
       </ScrollView>
 
       {/* Save Button */}
+      {saveError ? <Text accessibilityRole="alert" style={{ color: Colors.danger, paddingHorizontal: 20 }}>{saveError}</Text> : null}
       <View style={styles.saveContainer}>
         <TouchableOpacity
           style={styles.saveBtn}
-          onPress={handleSave}
+          onPress={() => void handleSave()}
+          disabled={isSaving}
           activeOpacity={0.85}
         >
           <Icon

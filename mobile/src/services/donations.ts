@@ -44,6 +44,7 @@ export function mapApiDonationToDonation(donation: ApiDonation): Donation {
       createdAt: log.created_at,
     })),
     collectedAt: donation.status_logs?.find((log) => log.status === 'collected')?.created_at,
+    deliveredAt: donation.status_logs?.find((log) => log.status === 'delivered')?.created_at,
     ngoName: donation.accepted_by_ngo?.name,
     volunteerName: donation.assigned_volunteer?.name,
   };

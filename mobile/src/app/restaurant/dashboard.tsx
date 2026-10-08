@@ -19,7 +19,7 @@ export default function RestaurantDashboard() {
   const { donations, isLoading, loadError, refreshDonations } = useRestaurantData();
   const latestDonation = donations[0];
   const activeCount = donations.filter((donation) => donation.status !== 'collected' && donation.status !== 'cancelled').length;
-  const completedCount = donations.filter((donation) => donation.status === 'collected').length;
+  const completedCount = donations.filter((donation) => donation.status === 'collected' || donation.status === 'delivered').length;
   const activities = getDonationActivity(donations).slice(0, 4);
 
   return <Screen>

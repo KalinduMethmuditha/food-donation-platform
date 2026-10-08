@@ -9,11 +9,13 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import { Colors } from '@/constants/colors';
 import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
 import { useVolunteerStore } from '@/store/volunteerStore';
+import { updateVolunteerPreferences } from '@/services/auth';
+import { getApiErrorMessage } from '@/services/apiErrors';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -71,18 +73,20 @@ export default function NotificationPreferencesScreen() {
     notificationPreferences,
     updateNotificationPreferences,
   } = useVolunteerStore();
+  const [saveError, setSaveError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = () => {
-    Alert.alert(
-      'Preferences saved',
-      'Your notification preferences have been updated.',
-      [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
-        },
-      ]
-    );
+  const handleSave = async () => {
+    setIsSaving(true);
+    setSaveError('');
+    try {
+      await updateVolunteerPreferences({ notification_preferences: notificationPreferences });
+      router.back();
+    } catch (error) {
+      setSaveError(getApiErrorMessage(error, 'load'));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -213,9 +217,11 @@ export default function NotificationPreferencesScreen() {
         </Section>
 
         {/* ── Save Button ── */}
+        {saveError ? <Text accessibilityRole="alert" style={{ color: Colors.danger }}>{saveError}</Text> : null}
         <TouchableOpacity
           style={styles.saveButton}
-          onPress={handleSave}
+          onPress={() => void handleSave()}
+          disabled={isSaving}
           activeOpacity={0.85}
         >
           <Text style={styles.saveButtonText}>

@@ -13,7 +13,7 @@ import { formatDateTime } from '@/utils/dateTime';
 import { getDonationActivity } from '@/utils/donation';
 
 const notificationIcons: Record<NotificationItem['kind'], IconName> = {
-  assigned: 'users', accepted: 'check', published: 'arrow-up', pickup: 'truck', collected: 'gift', cancelled: 'check',
+  assigned: 'users', accepted: 'check', published: 'arrow-up', pickup: 'truck', arrived: 'pin', collected: 'gift', delivered: 'check', cancelled: 'check',
 };
 
 const notificationText: Record<NotificationItem['kind'], { title: string; message: (food: string) => string }> = {
@@ -21,7 +21,9 @@ const notificationText: Record<NotificationItem['kind'], { title: string; messag
   accepted: { title: 'Donation Accepted', message: (food) => `${food} was accepted by an NGO.` },
   assigned: { title: 'Volunteer Assigned', message: (food) => `A volunteer was assigned to ${food}.` },
   pickup: { title: 'Pickup Started', message: (food) => `Collection has started for ${food}.` },
+  arrived: { title: 'Volunteer Arrived', message: (food) => `The volunteer arrived to collect ${food}.` },
   collected: { title: 'Food Collected', message: (food) => `${food} was successfully collected.` },
+  delivered: { title: 'Food Delivered', message: (food) => `${food} was delivered successfully.` },
   cancelled: { title: 'Donation Cancelled', message: (food) => `${food} was cancelled.` },
 };
 

@@ -1,8 +1,4 @@
-// Mock data for Volunteer feature — frontend only, no backend
-export const mockVolunteer = {
-  name: 'Nimsara',
-  fullName: 'H.G.K Nimsara',
-};
+// Pickup examples used by volunteer screens until those screens use the assignment API.
 
 export type PickupStatus =
   | 'ACTIVE'

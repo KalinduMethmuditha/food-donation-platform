@@ -3,6 +3,8 @@ import {
   removeToken,
   saveToken,
 } from '@/services/tokenStorage';
+import { useVolunteerStore, type NotificationPreferences, type PickupPreferences } from '@/store/volunteerStore';
+import { useVolunteerAssignments } from '@/store/volunteerAssignments.store';
 
 export type UserRole =
   | 'restaurant'
@@ -15,7 +17,18 @@ export type AuthUser = {
   name: string;
   email: string;
   role: UserRole;
+  created_at?: string;
+  phone?: string | null;
+  location?: string | null;
+  pickup_preferences?: Partial<PickupPreferences> | null;
+  notification_preferences?: Partial<NotificationPreferences> | null;
 };
+
+function syncVolunteerAccount(user: AuthUser) {
+  if (user.role === 'volunteer') {
+    useVolunteerStore.getState().setAuthenticatedVolunteer(user);
+  }
+}
 
 type AuthResponse = {
   message: string;
@@ -33,6 +46,8 @@ export async function loginUser(
   });
 
   await saveToken(data.token);
+  useVolunteerAssignments.getState().clear();
+  syncVolunteerAccount(data.user);
 
   return data;
 }
@@ -56,6 +71,8 @@ export async function registerUser(input: {
   });
 
   await saveToken(data.token);
+  useVolunteerAssignments.getState().clear();
+  syncVolunteerAccount(data.user);
 
   return data;
 }
@@ -63,6 +80,7 @@ export async function registerUser(input: {
 export async function getCurrentUser(): Promise<AuthUser> {
   const { data } = await api.get<{ user: AuthUser }>('/me');
 
+  syncVolunteerAccount(data.user);
   return data.user;
 }
 
@@ -71,5 +89,21 @@ export async function logoutUser() {
     await api.post('/logout');
   } finally {
     await removeToken();
+    useVolunteerAssignments.getState().clear();
   }
+}
+
+export async function updateVolunteerProfile(input: { name: string; email: string; phone: string; location: string }) {
+  const { data } = await api.patch<{ user: AuthUser }>('/volunteer/profile', input);
+  syncVolunteerAccount(data.user);
+  return data.user;
+}
+
+export async function updateVolunteerPreferences(input: {
+  pickup_preferences?: Partial<PickupPreferences>;
+  notification_preferences?: Partial<NotificationPreferences>;
+}) {
+  const { data } = await api.patch<{ user: AuthUser }>('/volunteer/preferences', input);
+  syncVolunteerAccount(data.user);
+  return data.user;
 }

@@ -26,5 +26,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/ngo/donations/{donation}/assign', [NgoDonationController::class, 'assign']);
 
     Route::get('/volunteer/assignments', [VolunteerController::class, 'assignments']);
+    Route::patch('/volunteer/assignments/{donation}/status', [VolunteerController::class, 'updateStatus']);
+    Route::post('/volunteer/assignments/{donation}/updates', [VolunteerController::class, 'addUpdate']);
     Route::patch('/volunteer/availability', [VolunteerController::class, 'updateAvailability']);
+    Route::patch('/volunteer/profile', [VolunteerController::class, 'updateProfile']);
+    Route::patch('/volunteer/preferences', [VolunteerController::class, 'updatePreferences']);
+    Route::patch('/volunteer/notification-reads', [VolunteerController::class, 'markNotificationReads']);
+    Route::get('/volunteer/support-requests', [VolunteerController::class, 'supportRequests']);
+    Route::post('/volunteer/support-requests', [VolunteerController::class, 'createSupportRequest']);
 });

@@ -44,6 +44,9 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'is_available' => 'boolean',
+            'pickup_preferences' => 'array',
+            'notification_preferences' => 'array',
+            'read_notification_ids' => 'array',
             'password' => 'hashed',
         ];
     }

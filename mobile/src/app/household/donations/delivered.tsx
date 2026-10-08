@@ -34,7 +34,7 @@ export default function HouseholdDelivered() {
     return () => { active = false; };
   }, [id, getDonationById]));
 
-  const isCollected = donation?.status === 'collected';
+  const isCollected = donation?.status === 'collected' || donation?.status === 'delivered';
   const collectedAt = donation?.collectedAt
     ?? donation?.statusLogs?.find((log) => log.status === 'collected')?.createdAt;
 
