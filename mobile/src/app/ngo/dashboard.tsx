@@ -1,179 +1,64 @@
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-// import { Image } from 'react-native'; // <- uncomment if you use a real basket image
+import { useCallback, useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '@/components/ui/Icon';
-
-// ---------- Colour palette (from the design) ----------
-const C = {
-  gradientTop: '#2FB584',
-  gradientBottom: '#14855A',
-  primary: '#1E9E6A',
-  primaryDark: '#14855A',
-  tint: '#E3F4EA',
-  redTint: '#FDE4E4',
-  red: '#E5484D',
-  bg: '#F2F6F4',
-  card: '#FFFFFF',
-  border: '#E6ECE8',
-  text: '#1B2B24',
-  muted: '#8A9A93',
-  white: '#FFFFFF',
-};
-
-const avatars = ['🥗', '🍞', '🍚'];
-
-const stats = [
-  { id: 'pending', value: 12, label: 'Pending', icon: 'clock' },
-  { id: 'collection', value: 8, label: 'In Collection', icon: 'truck' },
-  { id: 'completed', value: 25, label: 'Completed', icon: 'check' },
-];
-
-const activities = [
-  { id: '1', type: 'accepted', title: 'Donation accepted', subtitle: 'Canned Food · 20 items', time: '2h ago', icon: 'check' },
-  { id: '2', type: 'collected', title: 'Collection completed', subtitle: 'Clothes · 3 bags', time: '5h ago', icon: 'truck' },
-  { id: '3', type: 'assigned', title: 'Volunteer assigned', subtitle: 'Ravi Kumar · Furniture', time: '1d ago', icon: 'user' },
-  { id: '4', type: 'rejected', title: 'Donation rejected', subtitle: 'Books · 10 items', time: '2d ago', icon: 'x-circle' },
-];
-
-const navItems = [
-  { id: 'home', label: 'Home', icon: 'home', route: null },
-  { id: 'donations', label: 'Donations', icon: 'package', route: '/ngo/donations' },
-  { id: 'collections', label: 'Collections', icon: 'truck', route: '/ngo/activecollection' },
-  { id: 'notifications', label: 'Notifications', icon: 'bell', route: '/ngo/notifications' },
-];
+import { C, NgoDesignNav, NgoGradientButton, NgoLoadState } from '@/components/ngo/NgoDesign';
+import { useNgoSession } from '@/components/ngo/NgoSessionContext';
+import { useNgoDonations } from '@/store/ngoDonations.store';
+import { logoutUser } from '@/services/auth';
+import { foodVisual, ngoNotices, relativeTime } from '@/utils/ngoPresentation';
 
 export default function NgoDashboard() {
-  const activeTab = 'home';
-
-  return (
-    <View style={styles.root}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110 }}>
-        {/* ================= HEADER ================= */}
-        <LinearGradient colors={[C.gradientTop, C.gradientBottom]} style={styles.header}>
-          <SafeAreaView edges={['top']}>
-            <View style={styles.headerTop}>
-              <TouchableOpacity style={styles.circleBtn}>
-                <Icon name="menu" size={20} color={C.white} />
-              </TouchableOpacity>
-
-              <Text style={styles.headerTitle}>NGO Dashboard</Text>
-
-              <TouchableOpacity style={styles.circleBtn} onPress={() => router.push('/ngo/notifications' as any)}>
-                <Icon name="bell" size={20} color={C.white} />
-                <View style={styles.badge} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.welcomeRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.welcomeTitle}>Welcome back!</Text>
-                <Text style={styles.welcomeSub}>Here's what's happening today</Text>
-              </View>
-
-              {/* Replace with: <Image source={require('@/assets/images/food-basket.png')} style={styles.basketImg} /> */}
-              <View style={styles.basketBox}>
-                <Text style={styles.basketEmoji}>🧺</Text>
-              </View>
-            </View>
-          </SafeAreaView>
-        </LinearGradient>
-
-        {/* ================= DONATIONS CARD (overlaps header) ================= */}
-        <View style={[styles.card, styles.donationCard]}>
-          <View style={styles.donationTop}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.donationTitle}>New donations nearby</Text>
-              <Text style={styles.donationSub}>5 new donations in your area</Text>
-            </View>
-
-            <View style={styles.avatarRow}>
-              {avatars.map((e, i) => (
-                <View key={i} style={[styles.avatar, i > 0 && { marginLeft: -10 }]}>
-                  <Text style={{ fontSize: 14 }}>{e}</Text>
-                </View>
-              ))}
-              <View style={styles.morePill}>
-                <Text style={styles.moreText}>+2</Text>
-              </View>
-            </View>
+  const user = useNgoSession();
+  const { available, mine, rejected, readNoticeIds, refresh, isLoading, error } = useNgoDonations();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  useFocusEffect(useCallback(() => { void refresh(); }, [refresh]));
+  const notices = ngoNotices(available, mine, rejected);
+  const activities = ngoNotices([], mine, rejected).slice(0, 4);
+  const unread = notices.some((notice) => !readNoticeIds.includes(notice.id));
+  const stats = [
+    { id: 'pending', value: available.length, label: 'Pending', icon: 'clock' as const },
+    { id: 'collection', value: mine.filter((item) => !['delivered', 'cancelled'].includes(item.status)).length, label: 'In Collection', icon: 'truck' as const },
+    { id: 'completed', value: mine.filter((item) => item.status === 'delivered').length, label: 'Completed', icon: 'check' as const },
+  ];
+  const signOut = async () => {
+    setSigningOut(true);
+    try { await logoutUser(); } catch { /* Local authentication is cleared by logoutUser. */ }
+    finally { router.replace('/welcome'); }
+  };
+  return <View style={styles.root}>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110 }}>
+      <LinearGradient colors={[C.gradientTop, C.gradientBottom]} style={styles.header}>
+        <SafeAreaView edges={['top']}>
+          <View style={styles.headerTop}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Account menu" style={styles.circleBtn} onPress={() => setMenuOpen(true)}><Icon name="menu" size={20} color={C.white} /></Pressable>
+            <Text style={styles.headerTitle}>Serve With Purpose</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Notifications" style={styles.circleBtn} onPress={() => router.push('/ngo/notifications')}><Icon name="bell" size={20} color={C.white} />{unread ? <View style={styles.badge} /> : null}</Pressable>
           </View>
-
-          <TouchableOpacity activeOpacity={0.85} onPress={() => router.push('/ngo/donations')}>
-            <LinearGradient colors={[C.primary, C.primaryDark]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.viewBtn}>
-              <Text style={styles.viewBtnText}>View Available Donations</Text>
-              <Icon name="chevron-right" size={18} color={C.white} />
-            </LinearGradient>
-          </TouchableOpacity>
+          <View style={styles.welcomeRow}><View style={{ flex: 1 }}><Text style={styles.welcomeTitle}>{user?.name.trim() ? `Hi ${user.name.trim().split(/\s+/)[0]}!` : 'Welcome back!'}</Text><Text style={styles.welcomeSub}>Here&apos;s what&apos;s happening today</Text></View><View style={styles.basketBox}><Text style={styles.basketEmoji}>🧺</Text></View></View>
+        </SafeAreaView>
+      </LinearGradient>
+      <View style={[styles.card, styles.donationCard]}>
+        <View style={styles.donationTop}><View style={{ flex: 1 }}><Text style={styles.donationTitle}>New donations available</Text><Text style={styles.donationSub}>{available.length} published donations to review</Text></View>
+          <View style={styles.avatarRow}>{available.slice(0, 3).map((item, index) => <View key={item.id} style={[styles.avatar, index > 0 && { marginLeft: -10 }]}><Text>{foodVisual(item.foodType).emoji}</Text></View>)}{available.length > 3 ? <View style={styles.morePill}><Text style={styles.moreText}>+{available.length - 3}</Text></View> : null}</View>
         </View>
-
-        {/* ================= STATS ================= */}
-        <View style={styles.statsRow}>
-          {stats.map((s) => (
-            <View key={s.id} style={[styles.card, styles.statCard]}>
-              <View style={styles.statIcon}>
-                <Icon name={s.icon as any} size={14} color={C.primary} />
-              </View>
-              <Text style={styles.statNumber}>{s.value}</Text>
-              <Text style={styles.statLabel}>{s.label}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* ================= RECENT ACTIVITY ================= */}
-        <View style={styles.activityHeader}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAll}>See all</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={[styles.card, styles.activityCard]}>
-          {activities.map((a, index) => {
-            const rejected = a.type === 'rejected';
-            return (
-              <TouchableOpacity
-                key={a.id}
-                activeOpacity={0.7}
-                style={[styles.activityItem, index < activities.length - 1 && styles.activityDivider]}
-              >
-                <View style={[styles.activityIcon, { backgroundColor: rejected ? C.redTint : C.tint }]}>
-                  <Icon name={a.icon as any} size={18} color={rejected ? C.red : C.primary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.activityTitle}>{a.title}</Text>
-                  <Text style={styles.activitySub}>{a.subtitle}</Text>
-                </View>
-                <Text style={styles.activityTime}>{a.time}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </ScrollView>
-
-      {/* ================= BOTTOM NAV ================= */}
-      <SafeAreaView edges={['bottom']} style={styles.navWrap}>
-        <View style={styles.nav}>
-          {navItems.map((n) => {
-            const active = n.id === activeTab;
-            return (
-              <TouchableOpacity
-                key={n.id}
-                style={styles.navItem}
-                onPress={() => n.route && router.push(n.route as any)}
-              >
-                <View style={[styles.navIconWrap, active && styles.navIconActive]}>
-                  <Icon name={n.icon as any} size={20} color={active ? C.primaryDark : C.muted} />
-                </View>
-                <Text style={[styles.navLabel, active && styles.navLabelActive]}>{n.label}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </SafeAreaView>
-    </View>
-  );
+        <NgoGradientButton title="View Available Donations" icon="chevron-right" onPress={() => router.push('/ngo/donations')} />
+      </View>
+      <View style={styles.statsRow}>{stats.map((stat) => <View key={stat.id} style={[styles.card, styles.statCard]}><View style={styles.statIcon}><Icon name={stat.icon} size={14} color={C.primary} /></View><Text style={styles.statNumber}>{stat.value}</Text><Text style={styles.statLabel}>{stat.label}</Text></View>)}</View>
+      <NgoLoadState loading={isLoading && mine.length === 0} error={error} retry={() => { void refresh(); }} />
+      <View style={styles.activityHeader}><Text style={styles.sectionTitle}>Recent Activity</Text><Pressable accessibilityRole="button" onPress={() => router.push('/ngo/notifications')}><Text style={styles.seeAll}>See all</Text></Pressable></View>
+      <View style={[styles.card, styles.activityCard]}>{activities.map((item, index) => <Pressable key={item.id} style={[styles.activityItem, index < activities.length - 1 && styles.activityDivider]} onPress={() => router.push(item.rejected ? '/ngo/notifications' : { pathname: '/ngo/activecollection', params: { id: item.donationId } })}>
+        <View style={[styles.activityIcon, { backgroundColor: item.rejected ? C.redTint : C.tint }]}><Icon name={item.icon} size={18} color={item.rejected ? C.red : C.primary} /></View><View style={{ flex: 1 }}><Text style={styles.activityTitle}>{item.title}</Text><Text style={styles.activitySub}>{item.detail}</Text></View><Text style={styles.activityTime}>{relativeTime(item.createdAt)}</Text>
+      </Pressable>)}{!isLoading && activities.length === 0 ? <Text style={[styles.activitySub, { paddingVertical: 20 }]}>Your donation activity will appear here.</Text> : null}</View>
+    </ScrollView>
+    <NgoDesignNav active="home" />
+    <Modal visible={menuOpen} transparent animationType="fade" onRequestClose={() => setMenuOpen(false)}>
+      <View style={{ flex: 1, backgroundColor: 'rgba(11,30,22,0.55)', justifyContent: 'center', padding: 24 }}><View style={[styles.card, { padding: 24, gap: 16, width: '100%', maxWidth: 360, alignSelf: 'center' }]}><Text style={styles.sectionTitle}>{user?.name}</Text><Text style={styles.donationSub}>NGO account</Text><NgoGradientButton title={signingOut ? 'Signing out...' : 'Sign out'} loading={signingOut} onPress={() => { void signOut(); }} /><Pressable onPress={() => setMenuOpen(false)}><Text style={[styles.seeAll, { textAlign: 'center' }]}>Close</Text></Pressable></View></View>
+    </Modal>
+  </View>;
 }
 
 const styles = StyleSheet.create({
@@ -195,7 +80,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: C.white },
+  headerTitle: { flex: 1, paddingHorizontal: 8, textAlign: 'center', fontSize: 17, fontWeight: '700', color: C.white },
   badge: {
     position: 'absolute',
     top: 8,

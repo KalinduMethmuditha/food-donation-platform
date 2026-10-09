@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 
 import { Colors } from '@/constants/colors';
+import { LinearGradient } from 'expo-linear-gradient';
 
 type PrimaryButtonProps = TouchableOpacityProps & {
   title: string;
@@ -20,6 +21,8 @@ export default function PrimaryButton({
   disabled,
   ...props
 }: PrimaryButtonProps) {
+  const background = StyleSheet.flatten(style)?.backgroundColor;
+  const customBackground = background && background !== Colors.primary && background !== Colors.primaryDark;
   return (
     <TouchableOpacity
       accessibilityRole="button"
@@ -29,6 +32,8 @@ export default function PrimaryButton({
       activeOpacity={0.8}
       {...props}
     >
+      <LinearGradient pointerEvents="none" colors={customBackground ? [background, background] : [Colors.gradientTop, Colors.gradientBottom]}
+        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
       {loading && <ActivityIndicator color={Colors.white} size="small" />}
       <Text style={styles.text}>{title}</Text>
     </TouchableOpacity>
@@ -38,8 +43,9 @@ export default function PrimaryButton({
 const styles = StyleSheet.create({
   button: {
     backgroundColor: Colors.primary,
-    borderRadius: 12,
-    minHeight: 48,
+    borderRadius: 16,
+    overflow: 'hidden',
+    minHeight: 52,
     paddingHorizontal: 16,
     flexDirection: 'row',
     gap: 8,
@@ -50,8 +56,8 @@ const styles = StyleSheet.create({
 
   text: {
     color: Colors.white,
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '800',
   },
   disabled: { opacity: 0.55 },
 });

@@ -1,220 +1,62 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '@/components/ui/Icon';
-import { donations } from '@/constants/donations';
-
-// ---------- Colour palette (same as other screens) ----------
-const C = {
-  gradientTop: '#2FB584',
-  gradientBottom: '#14855A',
-  primary: '#1E9E6A',
-  primaryDark: '#14855A',
-  tint: '#E3F4EA',
-  bg: '#F2F6F4',
-  card: '#FFFFFF',
-  border: '#E6ECE8',
-  text: '#1B2B24',
-  muted: '#8A9A93',
-  busy: '#B5BFBA',
-  white: '#FFFFFF',
-};
-
-type Volunteer = {
-  id: string;
-  name: string;
-  status: 'Available' | 'Busy';
-  distance: string;
-  color: string; // avatar colour
-};
-
-// Mock data - replace with your API later
-const volunteers: Volunteer[] = [
-  { id: '1', name: 'Ayesha Perera', status: 'Available', distance: '1.2 km away', color: '#2FB584' },
-  { id: '2', name: 'Ravi Kumar', status: 'Available', distance: '2.5 km away', color: '#3B82F6' },
-  { id: '3', name: 'Nimal Silva', status: 'Busy', distance: '3.1 km away', color: '#9CA3AF' },
-  { id: '4', name: 'Tharindu Fernando', status: 'Available', distance: '4.0 km away', color: '#F59E0B' },
-];
-
-const getInitials = (name: string) =>
-  name
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
+import { C, NgoFooter, NgoGradientButton, NgoLoadState, NgoTitleBar } from '@/components/ngo/NgoDesign';
+import { useNgoDonation, useNgoDonations } from '@/store/ngoDonations.store';
+import { foodVisual, initials } from '@/utils/ngoPresentation';
 
 export default function AssignVolunteer() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const donation = donations.find((d) => d.id === id) ?? donations[0];
-
-  const [selectedId, setSelectedId] = useState<string | null>('1');
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const donation = useNgoDonation(id);
+  const { volunteers, loadDonation, loadVolunteers, assign, isSaving } = useNgoDonations();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [success, setSuccess] = useState(false);
-  const selected = volunteers.find((v) => v.id === selectedId);
-
-  const handleAssign = () => {
-    if (!selected) return;
-    // TODO: call your API here (assign `selected.id` to `donation.id`)
-    setSuccess(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  useFocusEffect(useCallback(() => {
+    let active = true;
+    setLoading(true); setError(null);
+    if (!id) { setLoading(false); setError('Donation not found.'); return; }
+    void Promise.all([loadDonation(id), loadVolunteers()]).then(() => {
+      if (active) setSelectedId(useNgoDonations.getState().volunteers[0]?.id ?? null);
+    }).catch(() => { if (active) setError(useNgoDonations.getState().error ?? 'Could not load volunteers.'); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [id, loadDonation, loadVolunteers]));
+  const selected = volunteers.find((item) => item.id === selectedId);
+  const refreshVolunteers = async () => {
+    setLoading(true); setError(null);
+    try { await loadVolunteers(); } catch { setError(useNgoDonations.getState().error); }
+    finally { setLoading(false); }
   };
-
-  const handleDone = () => {
-    setSuccess(false);
-    router.dismissTo('/ngo/dashboard' as any);
+  const handleAssign = async () => {
+    if (!id || !selected || isSaving) return;
+    setError(null);
+    try { await assign(id, selected.id); setSuccess(true); }
+    catch { setError(useNgoDonations.getState().error); void loadVolunteers().catch(() => undefined); }
   };
-
-  return (
-    <View style={styles.root}>
-      <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 190 }}>
-          {/* ================= TOP BAR ================= */}
-          <View style={styles.topBar}>
-            <TouchableOpacity style={styles.backRow} onPress={() => router.back()} hitSlop={10}>
-              <Text style={styles.backText}>‹ BACK</Text>
-            </TouchableOpacity>
-            <Text style={styles.topTitle}>Assign Volunteer</Text>
-            <View style={styles.backRow} />
-          </View>
-
-          {/* ================= DONATION BANNER ================= */}
-          <View style={styles.banner}>
-            <View style={styles.bannerIcon}>
-              <Text style={{ fontSize: 26 }}>{donation.emoji}</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.bannerTitle}>
-                {donation.title} · {donation.quantity}
-              </Text>
-              <Text style={styles.bannerSub}>Ready for volunteer pickup</Text>
-            </View>
-          </View>
-
-          {/* ================= DROPDOWN ================= */}
-          <Text style={styles.label}>Choose a volunteer</Text>
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() => setOpen((o) => !o)}
-            style={[styles.card, styles.dropdown, open && styles.dropdownOpen]}
-          >
-            <Icon name="user" size={18} color={C.muted} />
-            <Text style={[styles.dropdownText, selected && { color: C.text, fontWeight: '700' }]}>
-              {selected ? selected.name : 'Select Volunteer'}
-            </Text>
-            <Text style={styles.dropdownArrow}>{open ? '⌃' : '⌄'}</Text>
-          </TouchableOpacity>
-
-          {open && (
-            <View style={[styles.card, styles.menu]}>
-              {volunteers.map((v, i) => {
-                const busy = v.status === 'Busy';
-                const active = v.id === selectedId;
-                return (
-                  <TouchableOpacity
-                    key={v.id}
-                    disabled={busy}
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      setSelectedId(v.id);
-                      setOpen(false);
-                    }}
-                    style={[styles.menuItem, i < volunteers.length - 1 && styles.menuDivider, active && styles.menuItemActive]}
-                  >
-                    <View style={[styles.menuDot, { backgroundColor: busy ? C.busy : C.primary }]} />
-                    <Text style={[styles.menuText, busy && { color: C.muted }]}>{v.name}</Text>
-                    <Text style={styles.menuStatus}>{busy ? 'Busy' : v.distance}</Text>
-                    {active && <Text style={styles.menuCheck}>✓</Text>}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          )}
-
-          {/* ================= VOLUNTEER LIST ================= */}
-          <View style={styles.list}>
-            {volunteers.map((v) => {
-              const busy = v.status === 'Busy';
-              const active = v.id === selectedId;
-              return (
-                <TouchableOpacity
-                  key={v.id}
-                  disabled={busy}
-                  activeOpacity={0.85}
-                  onPress={() => setSelectedId(v.id)}
-                  style={[styles.card, styles.item, active && styles.itemActive]}
-                >
-                  <View style={[styles.avatar, { backgroundColor: busy ? C.busy : v.color }]}>
-                    <Text style={styles.avatarText}>{getInitials(v.name)}</Text>
-                  </View>
-
-                  <View style={{ flex: 1, marginLeft: 12 }}>
-                    <Text style={[styles.name, busy && styles.nameBusy]}>{v.name}</Text>
-                    <View style={styles.metaRow}>
-                      <View style={[styles.dot, { backgroundColor: busy ? C.busy : C.primary }]} />
-                      <Text style={[styles.status, { color: busy ? C.muted : C.primary }]}>{v.status}</Text>
-                      <Text style={styles.distance}>·  {v.distance}</Text>
-                    </View>
-                  </View>
-
-                  <View style={[styles.radio, active && styles.radioActive, busy && styles.radioBusy]}>
-                    {active && <View style={styles.radioDot} />}
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </ScrollView>
-
-        {/* ================= BOTTOM BAR ================= */}
-        <SafeAreaView edges={['bottom']} style={styles.actionBar}>
-          <View style={styles.notice}>
-            <Icon name="check-circle" size={16} color={C.primary} />
-            <Text style={styles.noticeText}>The selected volunteer is notified instantly</Text>
-          </View>
-
-          <TouchableOpacity activeOpacity={0.85} disabled={!selected} onPress={handleAssign}>
-            <LinearGradient
-              colors={selected ? [C.gradientTop, C.gradientBottom] : ['#BFD8CC', '#A9C7B8']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.assignBtn}
-            >
-              <Icon name="user" size={18} color={C.white} />
-              <Text style={styles.assignText}>Assign Volunteer</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        </SafeAreaView>
-      </SafeAreaView>
-      {/* ================= SUCCESS MESSAGE ================= */}
-      <Modal visible={success} transparent animationType="fade" onRequestClose={handleDone}>
-        <View style={styles.overlay}>
-          <View style={styles.successCard}>
-            <LinearGradient colors={[C.gradientTop, C.gradientBottom]} style={styles.successCircle}>
-              <Text style={styles.successTick}>✓</Text>
-            </LinearGradient>
-
-            <Text style={styles.successTitle}>Volunteer Assigned!</Text>
-            <Text style={styles.successText}>
-              {selected?.name} has been notified and will pick up {donation.title} ({donation.quantity}).
-            </Text>
-
-            <TouchableOpacity activeOpacity={0.85} style={{ alignSelf: 'stretch' }} onPress={handleDone}>
-              <LinearGradient
-                colors={[C.gradientTop, C.gradientBottom]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.successBtn}
-              >
-                <Text style={styles.successBtnText}>Back to Dashboard</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    </View>
-  );
+  const handleDone = () => { setSuccess(false); router.replace({ pathname: '/ngo/activecollection', params: { id } }); };
+  const colors = [C.gradientTop, '#3B82F6', '#F59E0B', '#8B5CF6'];
+  const canAssign = donation?.status === 'accepted';
+  return <View style={styles.root}><SafeAreaView edges={['top']} style={{ flex: 1 }}>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 200 }}>
+      <NgoTitleBar title="Assign Volunteer" /><NgoLoadState loading={loading} error={error} />
+      {donation ? <View style={styles.banner}><View style={styles.bannerIcon}><Text style={{ fontSize: 26 }}>{foodVisual(donation.foodType).emoji}</Text></View><View style={{ flex: 1 }}><Text style={styles.bannerTitle}>{donation.foodType} · {donation.quantity} {donation.unit}</Text><Text style={styles.bannerSub}>{canAssign ? 'Ready for volunteer pickup' : 'Volunteer assigned'}</Text></View></View> : null}
+      {canAssign ? <>
+        <Text style={styles.label}>Choose a volunteer</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="Choose a volunteer" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={[styles.card, styles.dropdown, open && styles.dropdownOpen]}><Icon name="user" size={18} color={C.muted} /><Text style={[styles.dropdownText, selected && { color: C.text, fontWeight: '700' }]}>{selected?.name ?? 'Select Volunteer'}</Text><Text style={styles.dropdownArrow}>{open ? '⌃' : '⌄'}</Text></Pressable>
+        {open ? <View style={[styles.card, styles.menu]}>{volunteers.map((item, index) => <Pressable key={item.id} onPress={() => { setSelectedId(item.id); setOpen(false); }} style={[styles.menuItem, index < volunteers.length - 1 && styles.menuDivider, item.id === selectedId && styles.menuItemActive]}><View style={[styles.menuDot, { backgroundColor: C.primary }]} /><Text style={styles.menuText}>{item.name}</Text><Text style={styles.menuStatus}>Available</Text>{item.id === selectedId ? <Text style={styles.menuCheck}>✓</Text> : null}</Pressable>)}</View> : null}
+        <View style={styles.list}>{volunteers.map((item, index) => <Pressable key={item.id} accessibilityRole="radio" accessibilityState={{ checked: item.id === selectedId }} onPress={() => setSelectedId(item.id)} style={[styles.card, styles.item, item.id === selectedId && styles.itemActive]}><View style={[styles.avatar, { backgroundColor: colors[index % colors.length] }]}><Text style={styles.avatarText}>{initials(item.name)}</Text></View><View style={{ flex: 1, marginLeft: 12 }}><Text style={styles.name}>{item.name}</Text><View style={styles.metaRow}><View style={[styles.dot, { backgroundColor: C.primary }]} /><Text style={[styles.status, { color: C.primary }]}>Available</Text></View></View><View style={[styles.radio, item.id === selectedId && styles.radioActive]}>{item.id === selectedId ? <View style={styles.radioDot} /> : null}</View></Pressable>)}{!loading && !error && volunteers.length === 0 ? <Text style={styles.distance}>No volunteers are available. Volunteers must turn on “Available for pickups” in their dashboard.</Text> : null}</View>
+        <Pressable disabled={loading || isSaving} onPress={() => { void refreshVolunteers(); }} style={{ margin: 20 }}><Text style={[styles.status, { color: C.primaryDark }]}>Refresh volunteers</Text></Pressable>
+      </> : donation && !success ? <Text style={[styles.distance, { margin: 20 }]}>This donation is already {donation.status}.</Text> : null}
+    </ScrollView>
+    {canAssign ? <NgoFooter><View style={styles.notice}><Icon name="check-circle" size={16} color={C.primary} /><Text style={styles.noticeText}>The assignment appears in the selected volunteer&apos;s pickups.</Text></View><NgoGradientButton title={isSaving ? 'Assigning...' : 'Assign Volunteer'} icon="user" disabled={!selected || loading} loading={isSaving} onPress={() => { void handleAssign(); }} /></NgoFooter> : null}
+  </SafeAreaView>
+  <Modal visible={success} transparent animationType="fade" onRequestClose={handleDone}><View style={styles.overlay}><View style={styles.successCard}><View style={[styles.successCircle, { backgroundColor: C.primary }]}><Text style={styles.successTick}>✓</Text></View><Text style={styles.successTitle}>Volunteer Assigned!</Text><Text style={styles.successText}>{selected?.name} will pick up {donation?.foodType} ({donation?.quantity} {donation?.unit}).</Text><View style={{ alignSelf: 'stretch' }}><NgoGradientButton title="Track Collection" onPress={handleDone} /></View></View></View></Modal>
+  </View>;
 }
 
 const styles = StyleSheet.create({

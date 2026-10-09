@@ -60,10 +60,10 @@ const styles = StyleSheet.create({
   },
 
   input: {
-    minHeight: 48,
+    minHeight: 52,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: 12,
+    borderRadius: 16,
     backgroundColor: Colors.surface,
     paddingHorizontal: 14,
     paddingVertical: 12,

@@ -15,7 +15,7 @@ class DonationController extends Controller
     {
         $donations = $request->user()
             ->donations()
-            ->with('statusLogs')
+            ->with(['statusLogs', 'acceptedByNgo:id,name', 'assignedVolunteer:id,name'])
             ->latest()
             ->get();
 
@@ -51,7 +51,7 @@ class DonationController extends Controller
 
         return response()->json([
             'message' => 'Donation published successfully.',
-            'donation' => $donation->load('statusLogs'),
+            'donation' => $donation->load(['statusLogs', 'acceptedByNgo:id,name', 'assignedVolunteer:id,name']),
         ], 201);
     }
 
@@ -64,7 +64,54 @@ class DonationController extends Controller
         }
 
         return response()->json([
-            'donation' => $donation->load('statusLogs'),
+            'donation' => $donation->load(['statusLogs', 'acceptedByNgo:id,name', 'assignedVolunteer:id,name']),
         ]);
+    }
+
+    public function update(StoreDonationRequest $request, Donation $donation): JsonResponse
+    {
+        if ($donation->user_id !== $request->user()->id ||
+            ! in_array($request->user()->role, ['restaurant', 'household'])) {
+            return response()->json(['message' => 'You are not allowed to edit this donation.'], 403);
+        }
+
+        return DB::transaction(function () use ($request, $donation): JsonResponse {
+            $lockedDonation = Donation::query()->whereKey($donation->id)->lockForUpdate()->firstOrFail();
+
+            if ($lockedDonation->status !== 'published') {
+                return response()->json(['message' => 'Only published donations can be edited.'], 409);
+            }
+
+            $lockedDonation->update($request->validated());
+
+            return response()->json([
+                'message' => 'Donation updated successfully.',
+                'donation' => $lockedDonation->refresh()->load([
+                    'statusLogs',
+                    'acceptedByNgo:id,name',
+                    'assignedVolunteer:id,name',
+                ]),
+            ]);
+        });
+    }
+
+    public function destroy(Request $request, Donation $donation): JsonResponse
+    {
+        if ($donation->user_id !== $request->user()->id ||
+            ! in_array($request->user()->role, ['restaurant', 'household'])) {
+            return response()->json(['message' => 'You are not allowed to delete this donation.'], 403);
+        }
+
+        return DB::transaction(function () use ($donation): JsonResponse {
+            $lockedDonation = Donation::query()->whereKey($donation->id)->lockForUpdate()->firstOrFail();
+
+            if ($lockedDonation->status !== 'published') {
+                return response()->json(['message' => 'Only published donations can be deleted.'], 409);
+            }
+
+            $lockedDonation->delete();
+
+            return response()->json(['message' => 'Donation deleted successfully.']);
+        });
     }
 }

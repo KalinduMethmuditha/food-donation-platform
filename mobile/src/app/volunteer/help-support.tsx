@@ -1,717 +1,110 @@
-import { router } from 'expo-router';
-import {
-  Alert,
-  Linking,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
 
-import Icon from '@/components/ui/Icon';
-import { Colors } from '@/constants/colors';
 import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
-import { useVolunteerStore } from '@/store/volunteerStore';
+import Card from '@/components/ui/Card';
+import PrimaryButton from '@/components/ui/PrimaryButton';
+import { Colors } from '@/constants/colors';
+import { getApiErrorMessage } from '@/services/apiErrors';
+import { createVolunteerSupportRequest, getVolunteerSupportRequests, type VolunteerSupportRequest } from '@/services/volunteerSupport';
+import { formatDateTime } from '@/utils/dateTime';
 
-const FAQ_DATA = [
-  {
-    id: '1',
-    question: 'How do I start a pickup?',
-    answer:
-      'To start a pickup, go to your Dashboard and tap "View Details" on the Active Pickup card. Then tap "Start Route" to begin navigating to the pickup location.',
-  },
-  {
-    id: '2',
-    question: 'How do I update a pickup status?',
-    answer:
-      'Go to Collection Status from your Dashboard or Quick Actions. Tap any status step to update your current progress. Each update is saved locally and reflected across the app.',
-  },
-  {
-    id: '3',
-    question: 'How do I report an issue?',
-    answer:
-      'On the Collection Status screen, tap "Report Issue". Select the type of issue, add a description if needed, and tap Submit. The issue will be recorded locally.',
-  },
-  {
-    id: '4',
-    question: 'What should I do if the donor is unavailable?',
-    answer:
-      'If the donor is unavailable, use the Report Issue feature on the Collection Status screen and select "Donor unavailable". Contact our support team if you need further help.',
-  },
-  {
-    id: '5',
-    question: 'How do I change my pickup preferences?',
-    answer:
-      'Go to Profile > Pickup Preferences. You can set your preferred pickup time, area, radius, and food types. Changes are saved immediately.',
-  },
-  {
-    id: '6',
-    question: 'How do I update my profile?',
-    answer:
-      'Go to Profile > Edit Profile. Update your details and tap Save Changes. Your profile is updated instantly for the current session.',
-  },
+const faq = [
+  ['How do I start a pickup?', 'Open an assigned pickup from Home or Pickups and tap Start Route.'],
+  ['How do I update pickup status?', 'Open Collection Status and complete each step in order. Your progress is saved on the server.'],
+  ['How do I report a pickup issue?', 'Open Collection Status and use Report Issue. The note is saved with that donation.'],
+  ['How do I change availability?', 'Open Profile, then Pickup Preferences. Save your availability so NGOs can assign you.'],
 ];
-
-const ISSUE_TYPES = [
-  'App Problem',
-  'Pickup Problem',
-  'Route Problem',
-  'Donor Problem',
-  'Notification Problem',
-  'Profile Problem',
-  'Other',
-];
+const issueTypes = ['App Problem', 'Pickup Problem', 'Route Problem', 'Notification Problem', 'Profile Problem', 'Other'];
 
 export default function HelpSupportScreen() {
-  const [expandedFaq, setExpandedFaq] = useState<string | null>(null);
-  const [showReportModal, setShowReportModal] = useState(false);
-  const [reportType, setReportType] = useState('');
-  const [reportDescription, setReportDescription] = useState('');
-  const [reportTypeError, setReportTypeError] = useState('');
-  const [reportDescError, setReportDescError] = useState('');
+  const [type, setType] = useState('');
+  const [description, setDescription] = useState('');
+  const [requests, setRequests] = useState<VolunteerSupportRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-  const {
-    addActivity,
-    addNotification,
-    addSupportRequest,
-  } = useVolunteerStore();
-
-  const handleCallSupport = () => {
-    Linking.openURL('tel:+94112345678');
-  };
-
-  const handleEmailSupport = () => {
-    Linking.openURL(
-      'mailto:support@fooddonation.lk?subject=Support Request'
-    );
-  };
-
-  const handleMessageSupport = () => {
-    Linking.openURL('sms:+94112345678');
-  };
-
-  const handleSubmitReport = () => {
-    setReportTypeError('');
-    setReportDescError('');
-
-    let valid = true;
-
-    if (!reportType) {
-      setReportTypeError('Please select an issue type');
-      valid = false;
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      setRequests(await getVolunteerSupportRequests());
+      setError('');
+    } catch (cause) {
+      setError(getApiErrorMessage(cause, 'load'));
+    } finally {
+      setLoading(false);
     }
+  }, []);
+  useFocusEffect(useCallback(() => { void load(); }, [load]));
 
-    if (reportDescription.trim().length < 10) {
-      setReportDescError('Description must be at least 10 characters');
-      valid = false;
-    }
-
-    if (!valid) {
+  const submit = async () => {
+    if (!type || description.trim().length < 10 || saving) {
+      setError('Choose an issue type and enter at least 10 characters.');
       return;
     }
-
-    addSupportRequest(reportType, reportDescription);
-
-    addActivity({
-      icon: 'alert-triangle',
-      title: 'Support Request Submitted',
-      description: `Reported issue: ${reportType}`,
-      timestamp: new Date().toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true,
-      }),
-    });
-
-    addNotification({
-      type: 'issue',
-      title: 'Support request submitted',
-      description: 'Your issue has been recorded.',
-      time: 'Just now',
-      read: false,
-      navigateTo: '/volunteer/help-support',
-    });
-
-    setShowReportModal(false);
-    setReportType('');
-    setReportDescription('');
-    setReportTypeError('');
-    setReportDescError('');
-
-    Alert.alert(
-      'Report Submitted',
-      'Our support team will review your report shortly.'
-    );
+    setSaving(true);
+    setError('');
+    setSuccess('');
+    try {
+      await createVolunteerSupportRequest(type, description.trim());
+      setType('');
+      setDescription('');
+      setSuccess('Your support request was saved.');
+      await load();
+    } catch (cause) {
+      setError(getApiErrorMessage(cause, 'load'));
+    } finally {
+      setSaving(false);
+    }
   };
 
-  return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <VolunteerScreenHeader
-        title="Help & Support"
-        onBack={() => router.back()}
-      />
-
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* FAQ Section */}
-        <Text style={styles.sectionTitle}>
-          Frequently Asked Questions
-        </Text>
-
-        <View style={styles.card}>
-          {FAQ_DATA.map((faq, index) => (
-            <View key={faq.id}>
-              <Pressable
-                style={styles.faqRow}
-                onPress={() =>
-                  setExpandedFaq(
-                    faq.id === expandedFaq ? null : faq.id
-                  )
-                }
-              >
-                <Text style={styles.faqQuestion}>
-                  {faq.question}
-                </Text>
-
-                <Icon
-                  name="chevron-right"
-                  size={20}
-                  color={Colors.textMuted}
-                />
-              </Pressable>
-
-              {faq.id === expandedFaq && (
-                <View style={styles.faqAnswerContainer}>
-                  <Text style={styles.faqAnswer}>
-                    {faq.answer}
-                  </Text>
-                </View>
-              )}
-
-              {index < FAQ_DATA.length - 1 && (
-                <View style={styles.divider} />
-              )}
-            </View>
-          ))}
-        </View>
-
-        {/* Contact Support Section */}
-        <Text style={styles.sectionTitle}>Contact Support</Text>
-
-        <View style={styles.card}>
-          <Pressable
-            style={styles.contactRow}
-            onPress={handleCallSupport}
-          >
-            <View style={styles.contactIconBox}>
-              <Icon
-                name="phone"
-                size={20}
-                color={Colors.primaryDark}
-              />
-            </View>
-
-            <View style={styles.contactInfo}>
-              <Text style={styles.contactLabel}>
-                Call Support
-              </Text>
-              <Text style={styles.contactDesc}>
-                Support Hotline: +94 11 234 5678
-              </Text>
-            </View>
-
-            <Icon
-              name="chevron-right"
-              size={20}
-              color={Colors.textMuted}
-            />
-          </Pressable>
-
-          <View style={styles.divider} />
-
-          <Pressable
-            style={styles.contactRow}
-            onPress={handleEmailSupport}
-          >
-            <View style={styles.contactIconBox}>
-              <Icon
-                name="message"
-                size={20}
-                color={Colors.primaryDark}
-              />
-            </View>
-
-            <View style={styles.contactInfo}>
-              <Text style={styles.contactLabel}>
-                Email Support
-              </Text>
-              <Text style={styles.contactDesc}>
-                support@fooddonation.lk
-              </Text>
-            </View>
-
-            <Icon
-              name="chevron-right"
-              size={20}
-              color={Colors.textMuted}
-            />
-          </Pressable>
-
-          <View style={styles.divider} />
-
-          <Pressable
-            style={styles.contactRow}
-            onPress={handleMessageSupport}
-          >
-            <View style={styles.contactIconBox}>
-              <Icon
-                name="message"
-                size={20}
-                color={Colors.primaryDark}
-              />
-            </View>
-
-            <View style={styles.contactInfo}>
-              <Text style={styles.contactLabel}>
-                Message Support
-              </Text>
-              <Text style={styles.contactDesc}>
-                Send us a message
-              </Text>
-            </View>
-
-            <Icon
-              name="chevron-right"
-              size={20}
-              color={Colors.textMuted}
-            />
-          </Pressable>
-        </View>
-
-        {/* Report Problem Button */}
-        <TouchableOpacity
-          style={styles.reportBtn}
-          onPress={() => setShowReportModal(true)}
-        >
-          <Text style={styles.reportBtnText}>
-            Report a Problem
-          </Text>
-        </TouchableOpacity>
-
-        {/* App Information */}
-        <Text style={styles.sectionTitle}>App Information</Text>
-
-        <View style={styles.card}>
-          <View style={styles.appInfo}>
-            <Text style={styles.appName}>
-              Food Donation Platform - Volunteer App
-            </Text>
-
-            <Text style={styles.appVersion}>
-              Version 1.0.0
-            </Text>
-
-            <Text style={styles.appDescription}>
-              For volunteer pickup coordination
-            </Text>
-          </View>
-        </View>
-      </ScrollView>
-
-      {/* Report Modal */}
-      <Modal
-        visible={showReportModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowReportModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalSheet}>
-            <View style={styles.modalHandle} />
-
-            <Text style={styles.modalTitle}>
-              Report a Problem
-            </Text>
-
-            <Text style={styles.inputLabel}>
-              Issue Type *
-            </Text>
-
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.typeScroll}
-            >
-              {ISSUE_TYPES.map((type) => (
-                <TouchableOpacity
-                  key={type}
-                  style={[
-                    styles.typeChip,
-                    reportType === type &&
-                      styles.typeChipActive,
-                  ]}
-                  onPress={() => {
-                    setReportType(type);
-                    setReportTypeError('');
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.typeChipText,
-                      reportType === type &&
-                        styles.typeChipTextActive,
-                    ]}
-                  >
-                    {type}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            {reportTypeError ? (
-              <Text style={styles.errorText}>
-                {reportTypeError}
-              </Text>
-            ) : (
-              <View style={styles.errorSpacer} />
-            )}
-
-            <Text style={styles.inputLabel}>
-              Description *
-            </Text>
-
-            <TextInput
-              style={[
-                styles.inputArea,
-                reportDescError && styles.inputAreaError,
-              ]}
-              placeholder="Describe the issue..."
-              multiline
-              numberOfLines={4}
-              value={reportDescription}
-              onChangeText={(text) => {
-                setReportDescription(text);
-
-                if (reportDescError) {
-                  setReportDescError('');
-                }
-              }}
-              textAlignVertical="top"
-            />
-
-            {reportDescError ? (
-              <Text style={styles.errorText}>
-                {reportDescError}
-              </Text>
-            ) : (
-              <View style={styles.errorSpacer} />
-            )}
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.cancelBtn}
-                onPress={() => {
-                  setShowReportModal(false);
-                  setReportTypeError('');
-                  setReportDescError('');
-                }}
-              >
-                <Text style={styles.cancelBtnText}>
-                  Cancel
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.submitBtn}
-                onPress={handleSubmitReport}
-              >
-                <Text style={styles.submitBtnText}>
-                  Submit Report
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-    </SafeAreaView>
-  );
+  return <SafeAreaView style={styles.safe} edges={['top']}>
+    <VolunteerScreenHeader title="Help & Support" onBack={() => router.back()} />
+    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <Text style={styles.section}>Frequently Asked Questions</Text>
+      {faq.map(([question, answer]) => <Card key={question} style={styles.card}>
+        <Text style={styles.title}>{question}</Text>
+        <Text style={styles.body}>{answer}</Text>
+      </Card>)}
+      <Text style={styles.section}>Send a Support Request</Text>
+      <Card style={styles.card}>
+        <Text style={styles.body}>Issue type</Text>
+        <View style={styles.types}>{issueTypes.map((option) =>
+          <Text key={option} accessibilityRole="button" onPress={() => setType(option)}
+            style={[styles.type, type === option && styles.selected]}>{option}</Text>)}</View>
+        <TextInput style={styles.input} multiline maxLength={2000} placeholder="Describe the issue..."
+          value={description} onChangeText={setDescription} />
+        {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
+        {success ? <Text style={styles.success}>{success}</Text> : null}
+        <PrimaryButton title="Submit Request" loading={saving} onPress={() => void submit()} />
+      </Card>
+      <Text style={styles.section}>My Requests</Text>
+      {loading ? <ActivityIndicator color={Colors.primary} /> : null}
+      {!loading && requests.length === 0 ? <Text style={styles.body}>No support requests yet.</Text> : null}
+      {requests.map((request) => <Card key={request.id} style={styles.card}>
+        <Text style={styles.title}>{request.type}</Text>
+        <Text style={styles.body}>{request.description}</Text>
+        <Text style={styles.body}>{formatDateTime(request.created_at)}</Text>
+      </Card>)}
+    </ScrollView>
+  </SafeAreaView>;
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-
-  content: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: Colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 8,
-    marginTop: 16,
-    marginLeft: 4,
-  },
-
-  card: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    overflow: 'hidden',
-  },
-
-  divider: {
-    height: 1,
-    backgroundColor: Colors.border,
-  },
-
-  /* FAQ */
-
-  faqRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-  },
-
-  faqQuestion: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-    paddingRight: 16,
-  },
-
-  faqAnswerContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-
-  faqAnswer: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    lineHeight: 20,
-  },
-
-  /* Contact */
-
-  contactRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-  },
-
-  contactIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: Colors.primaryWash,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-
-  contactInfo: {
-    flex: 1,
-  },
-
-  contactLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-  },
-
-  contactDesc: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    marginTop: 2,
-  },
-
-  /* Report Button */
-
-  reportBtn: {
-    marginTop: 24,
-    marginBottom: 8,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.primaryDark,
-    alignItems: 'center',
-    backgroundColor: Colors.primaryWash,
-  },
-
-  reportBtnText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: Colors.primaryDark,
-  },
-
-  /* App Information */
-
-  appInfo: {
-    padding: 16,
-  },
-
-  appName: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-
-  appVersion: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    marginTop: 4,
-  },
-
-  appDescription: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    marginTop: 2,
-  },
-
-  /* Modal */
-
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    justifyContent: 'flex-end',
-  },
-
-  modalSheet: {
-    backgroundColor: Colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    paddingBottom: 40,
-  },
-
-  modalHandle: {
-    width: 40,
-    height: 4,
-    backgroundColor: Colors.border,
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
-
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: Colors.textPrimary,
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-    marginBottom: 8,
-  },
-
-  typeScroll: {
-    marginBottom: 4,
-  },
-
-  typeChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-
-  typeChipActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-
-  typeChipText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: Colors.textPrimary,
-  },
-
-  typeChipTextActive: {
-    color: Colors.white,
-  },
-
-  inputArea: {
-    backgroundColor: Colors.background,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 12,
-    padding: 12,
-    height: 100,
-    fontSize: 15,
-    color: Colors.textPrimary,
-  },
-
-  inputAreaError: {
-    borderColor: Colors.danger,
-  },
-
-  errorText: {
-    fontSize: 12,
-    color: Colors.danger,
-    marginTop: 4,
-  },
-
-  errorSpacer: {
-    height: 16,
-  },
-
-  modalActions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
-  },
-
-  cancelBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: 'center',
-  },
-
-  cancelBtnText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-  },
-
-  submitBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: Colors.primaryDark,
-    alignItems: 'center',
-  },
-
-  submitBtnText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: Colors.white,
-  },
+  safe: { flex: 1, backgroundColor: Colors.background },
+  content: { padding: 20, gap: 12, paddingBottom: 30 },
+  section: { color: Colors.textPrimary, fontSize: 17, fontWeight: '800', marginTop: 10 },
+  card: { gap: 9 },
+  title: { color: Colors.textPrimary, fontSize: 14, fontWeight: '800' },
+  body: { color: Colors.textSecondary, fontSize: 13, lineHeight: 20 },
+  types: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
+  type: { paddingHorizontal: 10, paddingVertical: 8, borderRadius: 9, borderWidth: 1, borderColor: Colors.border, color: Colors.textPrimary },
+  selected: { borderColor: Colors.primary, backgroundColor: Colors.primaryLight },
+  input: { minHeight: 95, borderWidth: 1, borderColor: Colors.border, borderRadius: 16, padding: 12, textAlignVertical: 'top' },
+  error: { color: Colors.danger },
+  success: { color: Colors.primaryDark },
 });

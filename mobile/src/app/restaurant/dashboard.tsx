@@ -1,4 +1,5 @@
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import AppHeader from '@/components/restaurant/AppHeader';
 import BottomNavigation from '@/components/restaurant/BottomNavigation';
@@ -8,31 +9,28 @@ import ActivityItem from '@/components/shared/ActivityItem';
 import DonationCard from '@/components/shared/DonationCard';
 import EmptyState from '@/components/shared/EmptyState';
 import Screen from '@/components/shared/Screen';
-import Icon from '@/components/ui/Icon';
+import DashboardHero from '@/components/shared/DashboardHero';
 import PrimaryButton from '@/components/ui/PrimaryButton';
 import SecondaryButton from '@/components/ui/SecondaryButton';
 import { Colors } from '@/constants/colors';
 import { formatDateTime } from '@/utils/dateTime';
 import { getDonationActivity } from '@/utils/donation';
+import useDashboardGreeting from '@/hooks/useDashboardGreeting';
 
 export default function RestaurantDashboard() {
+  const greeting = useDashboardGreeting();
   const { donations, isLoading, loadError, refreshDonations } = useRestaurantData();
+  useFocusEffect(useCallback(() => { void refreshDonations(); }, [refreshDonations]));
   const latestDonation = donations[0];
-  const activeCount = donations.filter((donation) => donation.status !== 'collected' && donation.status !== 'cancelled').length;
-  const completedCount = donations.filter((donation) => donation.status === 'collected').length;
+  const activeCount = donations.filter((donation) => !['collected', 'delivered', 'cancelled'].includes(donation.status)).length;
+  const completedCount = donations.filter((donation) => donation.status === 'collected' || donation.status === 'delivered').length;
   const activities = getDonationActivity(donations).slice(0, 4);
 
-  return <Screen>
-    <AppHeader title="Restaurant Dashboard" />
+  return <Screen navigation={<BottomNavigation activeTab="Home" />}>
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <View style={styles.welcomeRow}>
-        <View style={styles.welcomeText}>
-          <Text style={styles.welcome}>Welcome back!</Text>
-          <Text style={styles.subtitle}>Manage your surplus food donations</Text>
-        </View>
-        <View style={styles.leaf}><Icon name="leaf" size={28} /></View>
-      </View>
-
+      <DashboardHero header={<AppHeader title="Serve With Purpose" variant="hero" />}
+        greeting={greeting} subtitle="Manage your surplus food donations" emoji="🧺" />
+      <View style={styles.main}>
       <View style={styles.actionCard}>
         <Text style={styles.actionTitle}>Surplus food available?</Text>
         <Text style={styles.actionDescription}>Publish a donation in just a few steps</Text>
@@ -64,19 +62,15 @@ export default function RestaurantDashboard() {
         {!isLoading && !loadError && activities.length === 0 ?
           <Text style={styles.emptyActivity}>No recent activity yet.</Text> : null}
       </View>
+      </View>
     </ScrollView>
-    <BottomNavigation activeTab="Home" />
   </Screen>;
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 16, paddingBottom: 28 },
-  welcomeRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6 },
-  welcomeText: { flex: 1 },
-  welcome: { fontSize: 25, fontWeight: '800', color: Colors.textPrimary },
-  subtitle: { marginTop: 6, fontSize: 13, lineHeight: 20, color: Colors.textSecondary },
-  leaf: { width: 48, height: 48, borderRadius: 24, backgroundColor: Colors.primaryLight, alignItems: 'center', justifyContent: 'center' },
-  actionCard: { marginTop: 22, padding: 18, borderRadius: 16, backgroundColor: Colors.primaryLight },
+  content: { paddingBottom: 28 },
+  main: { marginTop: -36, paddingHorizontal: 16 },
+  actionCard: { padding: 18, borderRadius: 20, backgroundColor: Colors.surface, boxShadow: '0 4px 10px rgba(11,61,42,0.08)' },
   actionTitle: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary },
   actionDescription: { marginTop: 5, fontSize: 13, lineHeight: 20, color: Colors.textSecondary },
   createButton: { marginTop: 16 },

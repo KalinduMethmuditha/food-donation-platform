@@ -6,7 +6,9 @@ const statusLabels: Record<DonationStatus, string> = {
   accepted: 'Accepted',
   assigned: 'Volunteer Assigned',
   pickup: 'Pickup in Progress',
+  arrived: 'Volunteer Arrived',
   collected: 'Collected',
+  delivered: 'Delivered',
   cancelled: 'Cancelled',
 };
 
@@ -15,6 +17,10 @@ export function getDonationStatusLabel(status: DonationStatus): string {
 }
 
 export function getDonationTimeLabel(donation: Donation): string {
+  if (donation.status === 'delivered') {
+    const deliveredAt = formatDateTime(donation.deliveredAt);
+    return deliveredAt === 'Time unavailable' ? 'Delivery complete' : `Delivered ${deliveredAt}`;
+  }
   if (donation.status === 'collected') {
     if (!donation.collectedAt) return 'Collection complete';
     const collectedAt = formatDateTime(donation.collectedAt);
@@ -30,7 +36,9 @@ const stages: { status: DonationStatus; title: string }[] = [
   { status: 'accepted', title: 'NGO Accepted' },
   { status: 'assigned', title: 'Volunteer Assigned' },
   { status: 'pickup', title: 'Pickup in Progress' },
+  { status: 'arrived', title: 'Volunteer Arrived' },
   { status: 'collected', title: 'Food Collected' },
+  { status: 'delivered', title: 'Food Delivered' },
 ];
 
 export function getDonationTimeline(status: DonationStatus, logs: DonationStatusLog[] = []): DonationTimelineItem[] {
@@ -49,7 +57,7 @@ export function getDonationTimeline(status: DonationStatus, logs: DonationStatus
     return {
       title: stage.title,
       time: logTime ? formatDateTime(logTime) : undefined,
-      status: status === 'collected' || index < currentStage
+      status: status === 'delivered' || index < currentStage
         ? 'completed'
         : index === currentStage ? 'current' : 'pending',
     };
@@ -61,7 +69,9 @@ export const donationActivity: Record<DonationStatus, { title: string; icon: 'ar
   accepted: { title: 'Donation accepted', icon: 'check' },
   assigned: { title: 'Volunteer assigned', icon: 'users' },
   pickup: { title: 'Pickup started', icon: 'truck' },
+  arrived: { title: 'Volunteer arrived', icon: 'truck' },
   collected: { title: 'Food collected', icon: 'gift' },
+  delivered: { title: 'Food delivered', icon: 'gift' },
   cancelled: { title: 'Donation cancelled', icon: 'check' },
 };
 

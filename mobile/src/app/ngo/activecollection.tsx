@@ -1,253 +1,61 @@
-import { router, useLocalSearchParams } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
-import {
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '@/components/ui/Icon';
-import { donations } from '@/constants/donations';
-
-// ---------- Colour palette (same as other screens) ----------
-const C = {
-  gradientTop: '#2FB584',
-  gradientBottom: '#14855A',
-  primary: '#1E9E6A',
-  primaryDark: '#14855A',
-  tint: '#E3F4EA',
-  bg: '#F2F6F4',
-  card: '#FFFFFF',
-  border: '#E6ECE8',
-  text: '#1B2B24',
-  muted: '#8A9A93',
-  pending: '#C9D3CE',
-  white: '#FFFFFF',
-};
-
-const timeNow = () => {
-  const d = new Date();
-  let h = d.getHours();
-  const m = d.getMinutes().toString().padStart(2, '0');
-  const ap = h >= 12 ? 'PM' : 'AM';
-  h = h % 12 || 12;
-  return `Today, ${h}:${m} ${ap}`;
-};
+import { C, NgoDesignNav, NgoFooter, NgoGradientButton, NgoLoadState, NgoPickupPreview, NgoTitleBar } from '@/components/ngo/NgoDesign';
+import { useNgoDonation, useNgoDonations } from '@/store/ngoDonations.store';
+import type { NgoDonation } from '@/services/ngoDonations';
+import { foodVisual, initials } from '@/utils/ngoPresentation';
+import { formatDateTime } from '@/utils/dateTime';
+import { getDonationStatusLabel } from '@/utils/donation';
 
 export default function ActiveCollection() {
-  const { id, volunteer } = useLocalSearchParams<{ id?: string; volunteer?: string }>();
-  const donation = donations.find((d) => d.id === id) ?? donations[0];
-  const volunteerName = volunteer || 'Ayesha Perera';
-  const initials = volunteerName
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-
-  // stage: 0 Assigned, 1 Picked up, 2 In transit, 3 Completed
-  const [stage, setStage] = useState(2);
-  const [times, setTimes] = useState<string[]>(['Today, 9:30 AM', 'Today, 11:30 AM', '', '']);
-  const [note, setNote] = useState('');
-
-  const steps = [
-    { title: 'Assigned' },
-    { title: 'Picked up' },
-    { title: 'In transit' },
-    { title: 'Completed' },
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const donation = useNgoDonation(id);
+  const { mine, refresh, loadDonation, error } = useNgoDonations();
+  const [loading, setLoading] = useState(false);
+  const refreshStatus = useCallback(async () => {
+    setLoading(true);
+    try { await refresh(); if (id) await loadDonation(id); }
+    catch { /* The store exposes the API error. */ }
+    finally { setLoading(false); }
+  }, [id, refresh, loadDonation]);
+  useFocusEffect(useCallback(() => { void refreshStatus(); }, [refreshStatus]));
+  const stages = [
+    { status: 'assigned', title: 'Assigned' }, { status: 'pickup', title: 'On the way' },
+    { status: 'arrived', title: 'Arrived at pickup' }, { status: 'collected', title: 'Picked up / In transit' },
+    { status: 'delivered', title: 'Completed' },
   ];
-
-  const finished = stage >= 3;
-
-  const handleUpdate = () => {
-    if (finished) {
-      router.dismissTo('/ngo/dashboard' as any);
-      return;
-    }
-    // TODO: call your API here with `note`
-    setTimes((t) => {
-      const copy = [...t];
-      copy[stage] = copy[stage] || timeNow();
-      return copy;
-    });
-    setStage(stage + 1);
-  };
-
-  const subtitle = (i: number) => {
-    if (i < stage) return times[i] || 'Done';
-    if (i === stage) return i === 3 ? timeNow() : 'In progress';
-    return 'Pending';
-  };
-
-  return (
-    <View style={styles.root}>
-      <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ paddingBottom: 130 }}
-          >
-            {/* ================= TOP BAR ================= */}
-            <View style={styles.topBar}>
-              <TouchableOpacity style={styles.backRow} onPress={() => router.back()} hitSlop={10}>
-                <Text style={styles.backText}>‹ BACK</Text>
-              </TouchableOpacity>
-              <Text style={styles.topTitle}>Active Collection</Text>
-              <View style={styles.backRow} />
-            </View>
-
-            {/* ================= SUMMARY CARD ================= */}
-            <View style={[styles.card, styles.summary]}>
-              {donation.image ? (
-                <Image source={donation.image} style={styles.thumb} />
-              ) : (
-                <View style={[styles.thumb, styles.thumbPlaceholder]}>
-                  <Text style={{ fontSize: 30 }}>{donation.emoji}</Text>
-                </View>
-              )}
-
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={styles.summaryTitle} numberOfLines={1}>
-                  {donation.title} · {donation.quantity}
-                </Text>
-                <Text style={styles.summarySub}>Volunteer: {volunteerName}</Text>
-              </View>
-
-              <LinearGradient colors={[C.gradientTop, C.gradientBottom]} style={styles.volAvatar}>
-                <Text style={styles.volAvatarText}>{initials}</Text>
-              </LinearGradient>
-            </View>
-
-            {/* ================= MAP ================= */}
-            <View style={[styles.card, styles.mapCard]}>
-              <View style={styles.mapBg}>
-                {/* roads */}
-                <View style={[styles.road, { top: 28, left: 0, right: 0, height: 10 }]} />
-                <View style={[styles.road, { top: 96, left: 0, right: 0, height: 8 }]} />
-                <View style={[styles.road, { left: '22%', top: 0, bottom: 0, width: 10 }]} />
-                <View style={[styles.road, { left: '72%', top: 0, bottom: 0, width: 8 }]} />
-                {/* water + parks */}
-                <View style={[styles.water, { left: 0, bottom: 0, width: 70, height: 36 }]} />
-                <View style={[styles.park, { top: 50, left: '56%', width: 60, height: 30 }]} />
-
-                {/* route: solid part (bottom to arrow) */}
-                <View style={styles.routeSolidV} />
-                <View style={styles.routeSolidH} />
-
-                {/* route: dotted part (arrow to home) */}
-                <View style={styles.dotsRow}>
-                  {Array.from({ length: 9 }).map((_, i) => (
-                    <View key={i} style={styles.dot} />
-                  ))}
-                </View>
-
-                {/* current position arrow */}
-                <View style={styles.arrowPos}>
-                  <View style={styles.arrowOuter}>
-                    <Text style={styles.arrowText}>▲</Text>
-                  </View>
-                </View>
-
-                {/* destination (home) */}
-                <View style={styles.homePos}>
-                  <View style={styles.homeOuter}>
-                    <View style={styles.homeInner}>
-                      <Text style={styles.homeText}>⌂</Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.eta}>
-                <Icon name="clock" size={13} color={C.primaryDark} />
-                <Text style={styles.etaText}>{finished ? 'Collected' : 'Arriving in 12 min'}</Text>
-              </View>
-            </View>
-
-            {/* ================= PROGRESS ================= */}
-            <View style={[styles.card, styles.progressCard]}>
-              <Text style={styles.progressTitle}>Collection Progress</Text>
-
-              {steps.map((s, i) => {
-                const done = i < stage || (i === 3 && finished);
-                const current = i === stage && !done;
-                const last = i === steps.length - 1;
-                return (
-                  <View key={s.title} style={styles.stepRow}>
-                    {/* indicator column */}
-                    <View style={styles.indCol}>
-                      <View
-                        style={[
-                          styles.circle,
-                          done && styles.circleDone,
-                          current && styles.circleCurrent,
-                          !done && !current && styles.circlePending,
-                        ]}
-                      >
-                        {done && <Text style={styles.tick}>✓</Text>}
-                        {current && <View style={styles.currentDot} />}
-                      </View>
-                      {!last && <View style={[styles.line, i < stage && styles.lineDone]} />}
-                    </View>
-
-                    {/* text */}
-                    <View style={styles.stepText}>
-                      <Text style={[styles.stepTitle, !done && !current && { color: C.muted }]}>{s.title}</Text>
-                      <Text
-                        style={[
-                          styles.stepSub,
-                          current && { color: C.primary, fontWeight: '700' },
-                        ]}
-                      >
-                        {subtitle(i)}
-                      </Text>
-                    </View>
-                  </View>
-                );
-              })}
-            </View>
-
-            {/* ================= NOTES ================= */}
-            <Text style={styles.notesLabel}>Notes</Text>
-            <View style={[styles.card, styles.notesBox]}>
-              <Icon name="info" size={16} color={C.muted} />
-              <TextInput
-                value={note}
-                onChangeText={setNote}
-                placeholder="Add a note about this collection..."
-                placeholderTextColor={C.muted}
-                style={styles.notesInput}
-                multiline
-              />
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
-
-        {/* ================= BOTTOM BUTTON ================= */}
-        <SafeAreaView edges={['bottom']} style={styles.actionBar}>
-          <TouchableOpacity activeOpacity={0.85} onPress={handleUpdate}>
-            <LinearGradient
-              colors={[C.gradientTop, C.gradientBottom]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.updateBtn}
-            >
-              <Text style={styles.updateTick}>✓</Text>
-              <Text style={styles.updateText}>{finished ? 'Back to Dashboard' : 'Update Status'}</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-        </SafeAreaView>
-      </SafeAreaView>
-    </View>
-  );
+  const currentIndex = stages.findIndex((stage) => stage.status === donation?.status);
+  const notes = donation?.statusLogs?.filter((log) => log.note) ?? [];
+  const summary = (item: NgoDonation) => <View style={[styles.card, styles.summary]}>
+    <View style={[styles.thumb, styles.thumbPlaceholder]}><Text style={{ fontSize: 30 }}>{foodVisual(item.foodType).emoji}</Text></View><View style={{ flex: 1, marginLeft: 12 }}><Text style={styles.summaryTitle}>{item.foodType} · {item.quantity} {item.unit}</Text><Text style={styles.summarySub}>Volunteer: {item.volunteerName ?? 'Awaiting assignment'}</Text>{!id ? <Text style={styles.summarySub}>{getDonationStatusLabel(item.status)}</Text> : null}</View>{item.volunteerName ? <View style={[styles.volAvatar, { backgroundColor: C.primary }]}><Text style={styles.volAvatarText}>{initials(item.volunteerName)}</Text></View> : <Icon name="chevron-right" size={18} color={C.primaryDark} />}
+  </View>;
+  return <View style={styles.root}><SafeAreaView edges={['top']} style={{ flex: 1 }}>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 140 }}>
+      <NgoTitleBar title={id ? 'Active Collection' : 'My Collections'} /><NgoLoadState loading={loading} error={error} retry={() => { void refreshStatus(); }} />
+      {id ? donation ? <>
+        {summary(donation)}<NgoPickupPreview donation={donation} />
+        <View style={[styles.card, styles.progressCard]}><Text style={styles.progressTitle}>Collection Progress</Text>
+          {stages.map((stage, index) => {
+            const done = index < currentIndex || donation.status === 'delivered';
+            const current = index === currentIndex && !done;
+            const log = donation.statusLogs?.find((item) => item.status === stage.status);
+            return <View key={stage.status} style={styles.stepRow}><View style={styles.indCol}><View style={[styles.circle, done ? styles.circleDone : current ? styles.circleCurrent : styles.circlePending]}>{done ? <Text style={styles.tick}>✓</Text> : current ? <View style={styles.currentDot} /> : null}</View>{index < stages.length - 1 ? <View style={[styles.line, done && styles.lineDone]} /> : null}</View><View style={styles.stepText}><Text style={[styles.stepTitle, !done && !current && { color: C.muted }]}>{stage.title}</Text><Text style={[styles.stepSub, current && { color: C.primary, fontWeight: '700' }]}>{log ? formatDateTime(log.createdAt) : current ? 'In progress' : done ? 'Completed' : 'Pending'}</Text></View></View>;
+          })}
+          {donation.status === 'accepted' ? <NgoGradientButton title="Assign Volunteer" onPress={() => router.push({ pathname: '/ngo/assignvolunteer', params: { id: donation.id } })} /> : null}
+        </View>
+        <Text style={styles.notesLabel}>Notes</Text><View style={[styles.card, styles.notesBox, { alignItems: 'flex-start', paddingVertical: 14 }]}><Icon name="info" size={16} color={C.muted} /><View style={{ flex: 1, gap: 10 }}>{notes.length ? notes.map((log) => <View key={log.id}><Text style={styles.summaryTitle}>{log.note}</Text><Text style={styles.summarySub}>{formatDateTime(log.createdAt)}</Text></View>) : <Text style={styles.summarySub}>No collection notes yet.</Text>}</View></View>
+      </> : !loading && !error ? <Text style={[styles.summarySub, { margin: 20 }]}>Collection not found.</Text> : null : <>
+        {['Active collections', 'Completed'].map((section) => {
+          const items = mine.filter((item) => section === 'Completed' ? item.status === 'delivered' : !['delivered', 'cancelled'].includes(item.status));
+          return <View key={section}><Text style={styles.notesLabel}>{section} ({items.length})</Text>{items.map((item) => <Pressable key={item.id} accessibilityRole="button" onPress={() => router.push({ pathname: '/ngo/activecollection', params: { id: item.id } })}>{summary(item)}</Pressable>)}{!loading && items.length === 0 ? <Text style={[styles.summarySub, { marginHorizontal: 20 }]}>No {section.toLowerCase()} yet.</Text> : null}</View>;
+        })}
+      </>}
+    </ScrollView>
+    {id ? <NgoFooter><Text style={[styles.summarySub, { marginBottom: 5, textAlign: 'center' }]}>The volunteer updates this collection&apos;s status.</Text><NgoGradientButton title="Refresh Status" icon="check" loading={loading} onPress={() => { void refreshStatus(); }} /></NgoFooter> : <NgoDesignNav active="collections" />}
+  </SafeAreaView></View>;
 }
 
 const styles = StyleSheet.create({

@@ -1,356 +1,48 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import {
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { useState } from 'react';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 import Icon from '@/components/ui/Icon';
-import { donations } from '@/constants/donations';
-
-// ---------- Colour palette ----------
-const C = {
-  gradientTop: '#2FB584',
-  gradientBottom: '#14855A',
-  primary: '#1E9E6A',
-  primaryDark: '#14855A',
-  tint: '#E3F4EA',
-  bg: '#F2F6F4',
-  card: '#FFFFFF',
-  border: '#E6ECE8',
-  text: '#1B2B24',
-  muted: '#8A9A93',
-  red: '#E5484D',
-  redTint: '#FDE4E4',
-  white: '#FFFFFF',
-};
+import { C, NgoFooter, NgoGradientButton, NgoLoadState, NgoPickupPreview, NgoTitleBar } from '@/components/ngo/NgoDesign';
+import { useNgoDetail } from '@/hooks/useNgoDetail';
+import { useNgoDonations } from '@/store/ngoDonations.store';
+import { formatDateTime } from '@/utils/dateTime';
+import { relativeTime } from '@/utils/ngoPresentation';
+import { getDonationStatusLabel } from '@/utils/donation';
 
 export default function DonationDetails() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-
-  const donation = donations.find((d) => d.id === id);
-
-  // If the id is wrong / missing
-  if (!donation) {
-    return (
-      <SafeAreaView style={[styles.root, styles.center]}>
-        <Text style={{ fontSize: 40 }}>🍽️</Text>
-
-        <Text style={styles.notFound}>
-          Donation not found
-        </Text>
-
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.notFoundBtn}
-        >
-          <Text style={styles.notFoundBtnText}>
-            Go back
-          </Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
-
-  const infoRows = [
-    {
-      icon: 'package',
-      label: 'Quantity',
-      value: donation.quantity,
-    },
-    {
-      icon: 'map',
-      label: 'Location',
-      value: donation.location,
-    },
-    {
-      icon: 'clock',
-      label: 'Pickup by',
-      value: donation.pickupBy,
-    },
-  ];
-
-  // Accept -> Donation Request page
-  const handleAccept = () => {
-    router.push({
-      pathname: '/ngo/donationrequest' as any,
-      params: {
-        id: donation.id,
-      },
-    });
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { donation, loading, error } = useNgoDetail(id);
+  const { reject, isSaving } = useNgoDonations();
+  const [actionError, setActionError] = useState<string | null>(null);
+  const decline = async () => {
+    if (!donation || isSaving) return;
+    try { await reject(donation.id); router.replace('/ngo/donations'); }
+    catch { setActionError(useNgoDonations.getState().error); }
   };
-
-  // Reject -> back to Available Donations page
-  const handleReject = () => {
-    router.dismissTo('/ngo/donations' as any);
-  };
-
-  return (
-    <View style={styles.root}>
-      <SafeAreaView
-        edges={['top']}
-        style={{ flex: 1 }}
-      >
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{
-            paddingBottom: 150,
-          }}
-        >
-
-          {/* ================= BACK ================= */}
-          <View style={styles.topBar}>
-            <TouchableOpacity
-              style={styles.backRow}
-              onPress={() => router.back()}
-              hitSlop={10}
-            >
-              <Text style={styles.backText}>
-                ‹ BACK
-              </Text>
-            </TouchableOpacity>
-
-            <Text style={styles.topTitle}>
-              Donation Details
-            </Text>
-
-            <View style={styles.backRow} />
-          </View>
-
-          {/* ================= BANNER ================= */}
-          <View style={styles.bannerWrap}>
-            <Image
-              source={require('../../../assets/images/donation-banner.jpg')}
-              style={styles.banner}
-              resizeMode="cover"
-            />
-          </View>
-
-          {/* ================= TITLE ================= */}
-          <View style={styles.titleRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.title}>
-                {donation.title}
-              </Text>
-
-              <View style={styles.postedRow}>
-                <Icon
-                  name="clock"
-                  size={12}
-                  color={C.muted}
-                />
-
-                <Text style={styles.posted}>
-                  {donation.postedAgo}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.foodTag}>
-              <Text style={styles.foodTagText}>
-                FOOD
-              </Text>
-            </View>
-          </View>
-
-          {/* ================= INFO CARD ================= */}
-          <View style={[styles.card, styles.infoCard]}>
-            {infoRows.map((r, i) => (
-              <View
-                key={r.label}
-                style={[
-                  styles.infoRow,
-                  i < infoRows.length - 1 &&
-                    styles.infoDivider,
-                ]}
-              >
-                <View style={styles.infoIcon}>
-                  <Icon
-                    name={r.icon as any}
-                    size={16}
-                    color={C.primaryDark}
-                  />
-                </View>
-
-                <Text style={styles.infoLabel}>
-                  {r.label}
-                </Text>
-
-                <Text
-                  style={styles.infoValue}
-                  numberOfLines={1}
-                >
-                  {r.value}
-                </Text>
-              </View>
-            ))}
-          </View>
-
-          {/* ================= DESCRIPTION ================= */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>
-              Description
-            </Text>
-
-            <Text style={styles.description}>
-              {donation.description}
-            </Text>
-          </View>
-
-          {/* ================= MAP PREVIEW ================= */}
-          <View
-            style={[
-              styles.card,
-              styles.mapCard,
-            ]}
-          >
-            <View style={styles.mapBg}>
-
-              {/* Roads */}
-              <View
-                style={[
-                  styles.road,
-                  {
-                    top: 26,
-                    left: 0,
-                    right: 0,
-                    height: 10,
-                  },
-                ]}
-              />
-
-              <View
-                style={[
-                  styles.road,
-                  {
-                    top: 70,
-                    left: 0,
-                    right: 0,
-                    height: 8,
-                  },
-                ]}
-              />
-
-              <View
-                style={[
-                  styles.road,
-                  {
-                    left: 70,
-                    top: 0,
-                    bottom: 0,
-                    width: 10,
-                  },
-                ]}
-              />
-
-              <View
-                style={[
-                  styles.road,
-                  {
-                    left: 190,
-                    top: 0,
-                    bottom: 0,
-                    width: 8,
-                  },
-                ]}
-              />
-
-              {/* Parks */}
-              <View
-                style={[
-                  styles.park,
-                  {
-                    top: 40,
-                    left: 90,
-                    width: 70,
-                    height: 24,
-                  },
-                ]}
-              />
-
-              <View
-                style={[
-                  styles.park,
-                  {
-                    top: 84,
-                    left: 210,
-                    width: 60,
-                    height: 20,
-                  },
-                ]}
-              />
-
-              {/* Pin */}
-              <View style={styles.pinWrap}>
-                <View style={styles.pinOuter}>
-                  <View style={styles.pinInner} />
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.mapLabel}>
-              <Icon
-                name="map"
-                size={12}
-                color={C.primaryDark}
-              />
-
-              <Text style={styles.mapLabelText}>
-                Pickup · {donation.location}
-              </Text>
-            </View>
-          </View>
-        </ScrollView>
-
-        {/* ================= BOTTOM ACTIONS ================= */}
-        <SafeAreaView
-          edges={['bottom']}
-          style={styles.actionBar}
-        >
-          <View style={styles.actionRow}>
-
-            {/* Reject */}
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={styles.rejectBtn}
-              onPress={handleReject}
-            >
-              <Text style={styles.rejectText}>
-                Reject
-              </Text>
-            </TouchableOpacity>
-
-            {/* Accept */}
-            <TouchableOpacity
-              activeOpacity={0.85}
-              style={{ flex: 1 }}
-              onPress={handleAccept}
-            >
-              <LinearGradient
-                colors={[
-                  C.gradientTop,
-                  C.gradientBottom,
-                ]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.acceptBtn}
-              >
-                <Text style={styles.acceptText}>
-                  Accept
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>
-
-          </View>
-        </SafeAreaView>
-      </SafeAreaView>
-    </View>
-  );
+  const available = donation?.status === 'published' && !donation.rejectedByCurrentNgo;
+  return <View style={styles.root}><SafeAreaView edges={['top']} style={{ flex: 1 }}>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 150 }}>
+      <NgoTitleBar title="Donation Details" />
+      <NgoLoadState loading={loading && !donation} error={actionError ?? error} />
+      {donation ? <>
+        <View style={styles.bannerWrap}><Image source={require('../../../assets/images/donation-banner.jpg')} style={styles.banner} resizeMode="cover" /></View>
+        <View style={styles.titleRow}><View style={{ flex: 1 }}><Text style={styles.title}>{donation.foodType}</Text><View style={styles.postedRow}><Icon name="clock" size={12} color={C.muted} /><Text style={styles.posted}>Posted {relativeTime(donation.createdAt)}</Text></View></View><View style={styles.foodTag}><Text style={styles.foodTagText}>FOOD</Text></View></View>
+        <View style={[styles.card, styles.infoCard]}>{[
+          { icon: 'package' as const, label: 'Quantity', value: `${donation.quantity} ${donation.unit}` },
+          { icon: 'map' as const, label: 'Location', value: donation.pickupLocation },
+          { icon: 'clock' as const, label: 'Pickup by', value: formatDateTime(donation.pickupDeadline) },
+        ].map((row, index) => <View key={row.label} style={[styles.infoRow, index < 2 && styles.infoDivider]}><View style={styles.infoIcon}><Icon name={row.icon} size={16} color={C.primaryDark} /></View><Text style={styles.infoLabel}>{row.label}</Text><Text style={styles.infoValue}>{row.value}</Text></View>)}</View>
+        <View style={styles.section}><Text style={styles.sectionTitle}>Description</Text><Text style={styles.description}>{donation.description || 'No additional description provided.'}</Text></View>
+        <NgoPickupPreview donation={donation} />
+        {!available ? <Text style={[styles.description, { marginHorizontal: 20, marginTop: 16 }]}>{getDonationStatusLabel(donation.status)}{donation.volunteerName ? ` · Volunteer: ${donation.volunteerName}` : ''}</Text> : null}
+      </> : !loading && !error ? <Text style={styles.notFound}>Donation not found</Text> : null}
+    </ScrollView>
+    {donation ? <NgoFooter>{available ? <View style={styles.actionRow}>
+      <Pressable disabled={isSaving || loading} style={styles.rejectBtn} onPress={() => { void decline(); }}><Text style={styles.rejectText}>Reject</Text></Pressable>
+      <View style={{ flex: 1 }}><NgoGradientButton title="Accept" disabled={isSaving || loading} onPress={() => router.push({ pathname: '/ngo/donationrequest', params: { id: donation.id } })} /></View>
+    </View> : <NgoGradientButton title={donation.status === 'accepted' ? 'Assign Volunteer' : 'Track Collection'} onPress={() => router.push({ pathname: donation.status === 'accepted' ? '/ngo/assignvolunteer' : '/ngo/activecollection', params: { id: donation.id } })} />}</NgoFooter> : null}
+  </SafeAreaView></View>;
 }
 
 const styles = StyleSheet.create({

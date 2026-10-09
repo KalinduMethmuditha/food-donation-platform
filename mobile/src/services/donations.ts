@@ -2,7 +2,7 @@ import { api } from '@/services/api';
 import type { Donation, DonationDraft, DonationStatus } from '@/types/donation';
 import { isValidPickupCoordinates, parsePickupCoordinate } from '@/utils/pickupCoordinates';
 
-type ApiDonation = {
+export type ApiDonation = {
   id: number;
   food_type: string;
   quantity: string | number;
@@ -14,6 +14,8 @@ type ApiDonation = {
   pickup_deadline: string;
   status: DonationStatus;
   created_at?: string;
+  accepted_by_ngo?: { id: number; name: string } | null;
+  assigned_volunteer?: { id: number; name: string } | null;
   status_logs?: {
     id: number;
     status: DonationStatus;
@@ -42,6 +44,9 @@ export function mapApiDonationToDonation(donation: ApiDonation): Donation {
       createdAt: log.created_at,
     })),
     collectedAt: donation.status_logs?.find((log) => log.status === 'collected')?.created_at,
+    deliveredAt: donation.status_logs?.find((log) => log.status === 'delivered')?.created_at,
+    ngoName: donation.accepted_by_ngo?.name,
+    volunteerName: donation.assigned_volunteer?.name,
   };
 }
 
@@ -55,7 +60,7 @@ export async function getDonation(id: string): Promise<Donation> {
   return mapApiDonationToDonation(data.donation);
 }
 
-export async function createDonation(draft: DonationDraft): Promise<Donation> {
+function donationPayload(draft: DonationDraft) {
   const quantity = Number(draft.quantity);
 
   if (!draft.foodType.trim() || !Number.isFinite(quantity) || quantity <= 0) {
@@ -71,7 +76,7 @@ export async function createDonation(draft: DonationDraft): Promise<Donation> {
     throw new Error('Please select a valid pickup point.');
   }
 
-  const { data } = await api.post<{ donation: ApiDonation }>('/donations', {
+  return {
     food_type: draft.foodType.trim(),
     quantity,
     unit: draft.unit.trim() || 'portions',
@@ -80,7 +85,24 @@ export async function createDonation(draft: DonationDraft): Promise<Donation> {
     pickup_latitude: draft.pickupLatitude,
     pickup_longitude: draft.pickupLongitude,
     pickup_deadline: draft.pickupDeadline.trim(),
-  });
+  };
+}
+
+export async function createDonation(draft: DonationDraft): Promise<Donation> {
+  const { data } = await api.post<{ donation: ApiDonation }>('/donations', donationPayload(draft));
 
   return mapApiDonationToDonation(data.donation);
+}
+
+export async function updateDonation(id: string, draft: DonationDraft): Promise<Donation> {
+  const { data } = await api.put<{ donation: ApiDonation }>(
+    `/donations/${encodeURIComponent(id)}`,
+    donationPayload(draft),
+  );
+
+  return mapApiDonationToDonation(data.donation);
+}
+
+export async function deleteDonation(id: string): Promise<void> {
+  await api.delete(`/donations/${encodeURIComponent(id)}`);
 }

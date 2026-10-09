@@ -7,7 +7,7 @@ import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader'
 
 export default function AboutScreen() {
   return (
-    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <VolunteerScreenHeader
         title="About"
         onBack={() => router.back()}
@@ -21,7 +21,7 @@ export default function AboutScreen() {
         {/* App Logo Section */}
         <View style={styles.logoSection}>
           <View style={styles.logoCircle}>
-            <Icon name="leaf" size={34} color="#FFFFFF" />
+            <Icon name="leaf" size={34} color={Colors.white} />
           </View>
 
           <Text style={styles.appName}>
@@ -48,7 +48,7 @@ export default function AboutScreen() {
               <Icon
                 name="info"
                 size={18}
-                color="#10B981"
+                color={Colors.primary}
               />
             </View>
 
@@ -74,7 +74,7 @@ export default function AboutScreen() {
               <Icon
                 name="heart"
                 size={18}
-                color="#10B981"
+                color={Colors.primary}
               />
             </View>
 
@@ -97,7 +97,7 @@ export default function AboutScreen() {
               <Icon
                 name="info"
                 size={16}
-                color="#6B7280"
+                color={Colors.textSecondary}
               />
 
               <Text style={styles.legalLabel}>
@@ -117,7 +117,7 @@ export default function AboutScreen() {
               <Icon
                 name="check"
                 size={16}
-                color="#6B7280"
+                color={Colors.textSecondary}
               />
 
               <Text style={styles.legalLabel}>
@@ -143,7 +143,7 @@ export default function AboutScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F7F9F8',
+    backgroundColor: Colors.background,
   },
 
   scrollView: {
@@ -165,10 +165,10 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: '#10B981',
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#10B981',
+    shadowColor: Colors.primary,
     shadowOffset: {
       width: 0,
       height: 6,
@@ -182,21 +182,21 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#17221D',
+    color: Colors.textPrimary,
     letterSpacing: 0.2,
     textAlign: 'center',
   },
 
   appSubtitle: {
     fontSize: 13,
-    color: '#6B7280',
+    color: Colors.textSecondary,
     marginTop: 4,
     textAlign: 'center',
   },
 
   versionBadge: {
     marginTop: 10,
-    backgroundColor: '#DDF7EC',
+    backgroundColor: Colors.primaryLight,
     paddingHorizontal: 14,
     paddingVertical: 4,
     borderRadius: 20,
@@ -205,19 +205,19 @@ const styles = StyleSheet.create({
   versionText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#059669',
+    color: Colors.primaryDark,
   },
 
   /* Divider */
   divider: {
     height: 1,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: Colors.border,
     marginBottom: 20,
   },
 
   /* Card */
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.white,
     borderRadius: 16,
     padding: 18,
     marginBottom: 14,
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 8,
-    backgroundColor: '#F0FCF6',
+    backgroundColor: Colors.primaryWash,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -249,13 +249,13 @@ const styles = StyleSheet.create({
 
   cardTitle: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#17221D',
+    fontWeight: '800',
+    color: Colors.textPrimary,
   },
 
   cardBody: {
     fontSize: 14,
-    color: '#6B7280',
+    color: Colors.textSecondary,
     lineHeight: 22,
   },
 
@@ -276,18 +276,18 @@ const styles = StyleSheet.create({
   legalLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#17221D',
+    color: Colors.textPrimary,
   },
 
   legalAction: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#10B981',
+    color: Colors.primary,
   },
 
   legalDivider: {
     height: 1,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: Colors.border,
     marginVertical: 8,
   },
 
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
   footer: {
     textAlign: 'center',
     fontSize: 12,
-    color: '#9CA3AF',
+    color: Colors.textMuted,
     marginTop: 10,
     marginBottom: 4,
   },

@@ -1,164 +1,34 @@
-import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '@/components/ui/Icon';
-
-// ---------- Colour palette (same as other screens) ----------
-const C = {
-  gradientTop: '#2FB584',
-  gradientBottom: '#14855A',
-  primary: '#1E9E6A',
-  primaryDark: '#14855A',
-  tint: '#E3F4EA',
-  unreadBg: '#DFF2E7',
-  unreadBorder: '#BFE3CF',
-  bg: '#F2F6F4',
-  card: '#FFFFFF',
-  border: '#E6ECE8',
-  text: '#1B2B24',
-  muted: '#8A9A93',
-  red: '#E5484D',
-  redTint: '#FDE4E4',
-  white: '#FFFFFF',
-};
-
-type Notice = {
-  id: string;
-  icon: string;
-  danger?: boolean;
-  title: string;
-  subtitle: string;
-  time: string;
-  unread: boolean;
-};
-
-// Mock data - replace with your API later
-const initialNotices: Notice[] = [
-  { id: '1', icon: 'gift', title: 'New donation request', subtitle: 'Canned Food, 20 items · Liverpool', time: '2 hours ago', unread: true },
-  { id: '2', icon: 'check', title: 'Collection completed', subtitle: 'Ayesha delivered Clothes (3 bags)', time: '5 hours ago', unread: true },
-  { id: '3', icon: 'user', title: 'Volunteer assigned', subtitle: 'Ravi Kumar assigned to Furniture', time: '1 day ago', unread: false },
-  { id: '4', icon: 'x-circle', danger: true, title: 'Donation rejected', subtitle: 'Books (10 items) was declined', time: '2 days ago', unread: false },
-  { id: '5', icon: 'clock', title: 'Pickup reminder', subtitle: 'Nimal Silva arrives at 4:30 PM', time: '2 days ago', unread: false },
-  { id: '6', icon: 'truck', title: 'Item picked up', subtitle: 'Clothes are on the way to your NGO', time: '3 days ago', unread: false },
-];
-
-const navItems = [
-  { id: 'home', label: 'Home', icon: 'home', route: '/ngo/dashboard' },
-  { id: 'donations', label: 'Donations', icon: 'package', route: '/ngo/donations' },
-  { id: 'collections', label: 'Collections', icon: 'truck', route: '/ngo/activecollection' },
-  { id: 'notifications', label: 'Notifications', icon: 'bell', route: null },
-];
+import { C, NgoDesignNav, NgoLoadState, NgoTitleBar } from '@/components/ngo/NgoDesign';
+import { useNgoDonations } from '@/store/ngoDonations.store';
+import { ngoNotices, relativeTime } from '@/utils/ngoPresentation';
 
 export default function Notifications() {
-  const [notices, setNotices] = useState<Notice[]>(initialNotices);
+  const { available, mine, rejected, readNoticeIds, markNoticesRead, refresh, isLoading, error } = useNgoDonations();
   const [tab, setTab] = useState<'all' | 'unread'>('all');
-  const activeTab = 'notifications';
-
-  const unreadCount = notices.filter((n) => n.unread).length;
-
-  const visible = useMemo(
-    () => (tab === 'unread' ? notices.filter((n) => n.unread) : notices),
-    [notices, tab],
-  );
-
-  const markAllRead = () => setNotices((list) => list.map((n) => ({ ...n, unread: false })));
-  const markRead = (id: string) =>
-    setNotices((list) => list.map((n) => (n.id === id ? { ...n, unread: false } : n)));
-
-  return (
-    <View style={styles.root}>
-      <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-          {/* ================= TOP BAR ================= */}
-          <View style={styles.topBar}>
-            <TouchableOpacity style={styles.backRow} onPress={() => router.back()} hitSlop={10}>
-              <Text style={styles.backText}>‹ BACK</Text>
-            </TouchableOpacity>
-            <Text style={styles.topTitle}>Notifications</Text>
-            <View style={styles.backRow} />
-          </View>
-
-          {/* ================= TABS ================= */}
-          <View style={styles.tabsRow}>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => setTab('all')}
-              style={[styles.tab, tab === 'all' && styles.tabActive]}
-            >
-              <Text style={[styles.tabText, tab === 'all' && styles.tabTextActive]}>All</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => setTab('unread')}
-              style={[styles.tab, tab === 'unread' && styles.tabActive]}
-            >
-              <Text style={[styles.tabText, tab === 'unread' && styles.tabTextActive]}>
-                Unread ({unreadCount})
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.markAll} onPress={markAllRead} hitSlop={8}>
-              <Text style={styles.markAllText}>Mark all read</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* ================= LIST ================= */}
-          <View style={styles.list}>
-            {visible.map((n) => (
-              <TouchableOpacity
-                key={n.id}
-                activeOpacity={0.85}
-                onPress={() => markRead(n.id)}
-                style={[styles.card, n.unread && styles.cardUnread]}
-              >
-                <View style={[styles.iconWrap, n.danger && styles.iconWrapDanger, n.unread && styles.iconWrapUnread]}>
-                  <Icon name={n.icon as any} size={20} color={n.danger ? C.red : C.primaryDark} />
-                </View>
-
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={styles.title}>{n.title}</Text>
-                  <Text style={styles.subtitle}>{n.subtitle}</Text>
-                  <Text style={styles.time}>{n.time}</Text>
-                </View>
-
-                {n.unread && <View style={styles.unreadDot} />}
-              </TouchableOpacity>
-            ))}
-
-            {visible.length === 0 && (
-              <View style={styles.empty}>
-                <Text style={{ fontSize: 40 }}>🔔</Text>
-                <Text style={styles.emptyText}>No unread notifications</Text>
-              </View>
-            )}
-          </View>
-        </ScrollView>
-
-        {/* ================= BOTTOM NAV ================= */}
-        <SafeAreaView edges={['bottom']} style={styles.navWrap}>
-          <View style={styles.nav}>
-            {navItems.map((n) => {
-              const active = n.id === activeTab;
-              return (
-                <TouchableOpacity
-                  key={n.id}
-                  style={styles.navItem}
-                  onPress={() => n.route && router.push(n.route as any)}
-                >
-                  <View style={[styles.navIconWrap, active && styles.navIconActive]}>
-                    <Icon name={n.icon as any} size={20} color={active ? C.primaryDark : C.muted} />
-                  </View>
-                  <Text style={[styles.navLabel, active && styles.navLabelActive]}>{n.label}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </SafeAreaView>
-      </SafeAreaView>
-    </View>
-  );
+  useFocusEffect(useCallback(() => { void refresh(); }, [refresh]));
+  const notices = ngoNotices(available, mine, rejected);
+  const unreadCount = notices.filter((notice) => !readNoticeIds.includes(notice.id)).length;
+  const visible = tab === 'unread' ? notices.filter((notice) => !readNoticeIds.includes(notice.id)) : notices;
+  return <View style={styles.root}><SafeAreaView edges={['top']} style={{ flex: 1 }}>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+      <NgoTitleBar title="Notifications" />
+      <View style={styles.tabsRow}>{(['all', 'unread'] as const).map((item) => <Pressable key={item} accessibilityRole="tab" accessibilityState={{ selected: tab === item }} onPress={() => setTab(item)} style={[styles.tab, tab === item && styles.tabActive]}><Text style={[styles.tabText, tab === item && styles.tabTextActive]}>{item === 'all' ? 'All' : `Unread (${unreadCount})`}</Text></Pressable>)}<Pressable style={styles.markAll} accessibilityRole="button" onPress={() => markNoticesRead(notices.map((notice) => notice.id))}><Text style={styles.markAllText}>Mark all read</Text></Pressable></View>
+      <NgoLoadState loading={isLoading && notices.length === 0} error={error} retry={() => { void refresh(); }} />
+      <View style={styles.list}>{visible.map((notice) => {
+        const unread = !readNoticeIds.includes(notice.id);
+        return <Pressable key={notice.id} style={[styles.card, unread && styles.cardUnread]} onPress={() => {
+          markNoticesRead([notice.id]);
+          if (!notice.rejected) router.push({ pathname: notice.available ? '/ngo/donationdetails' : '/ngo/activecollection', params: { id: notice.donationId } });
+        }}><View style={[styles.iconWrap, notice.rejected && styles.iconWrapDanger, unread && styles.iconWrapUnread]}><Icon name={notice.icon} size={20} color={notice.rejected ? C.red : C.primaryDark} /></View><View style={{ flex: 1, marginLeft: 12 }}><Text style={styles.title}>{notice.title}</Text><Text style={styles.subtitle}>{notice.detail}</Text><Text style={styles.time}>{relativeTime(notice.createdAt)}</Text></View>{unread ? <View style={styles.unreadDot} /> : null}</Pressable>;
+      })}{!isLoading && !error && visible.length === 0 ? <View style={styles.empty}><Text style={{ fontSize: 40 }}>🔔</Text><Text style={styles.emptyText}>{tab === 'unread' ? 'No unread notifications' : 'No notifications yet'}</Text></View> : null}</View>
+    </ScrollView>
+    <NgoDesignNav active="notifications" />
+  </SafeAreaView></View>;
 }
 
 const styles = StyleSheet.create({

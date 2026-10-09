@@ -1,19 +1,21 @@
+import { cardSurface } from '@/constants/design';
+import PrimaryButton from '@/components/ui/PrimaryButton';
 import { router } from 'expo-router';
 import {
   ScrollView,
   StyleSheet,
   Switch,
   Text,
-  TouchableOpacity,
   View,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import { Colors } from '@/constants/colors';
 import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
 import { useVolunteerStore } from '@/store/volunteerStore';
+import { updateVolunteerPreferences } from '@/services/auth';
+import { getApiErrorMessage } from '@/services/apiErrors';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -71,18 +73,20 @@ export default function NotificationPreferencesScreen() {
     notificationPreferences,
     updateNotificationPreferences,
   } = useVolunteerStore();
+  const [saveError, setSaveError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSave = () => {
-    Alert.alert(
-      'Preferences saved',
-      'Your notification preferences have been updated.',
-      [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
-        },
-      ]
-    );
+  const handleSave = async () => {
+    setIsSaving(true);
+    setSaveError('');
+    try {
+      await updateVolunteerPreferences({ notification_preferences: notificationPreferences });
+      router.back();
+    } catch (error) {
+      setSaveError(getApiErrorMessage(error, 'load'));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -213,15 +217,8 @@ export default function NotificationPreferencesScreen() {
         </Section>
 
         {/* ── Save Button ── */}
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={handleSave}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.saveButtonText}>
-            Save Preferences
-          </Text>
-        </TouchableOpacity>
+        {saveError ? <Text accessibilityRole="alert" style={{ color: Colors.danger }}>{saveError}</Text> : null}
+        <PrimaryButton title="Save Preferences" onPress={() => void handleSave()} loading={isSaving} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -250,7 +247,7 @@ const styles = StyleSheet.create({
 
   sectionTitle: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
     color: Colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -258,22 +255,9 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    ...cardSurface,
     paddingHorizontal: 4,
     paddingVertical: 4,
-
-    // Subtle shadow
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
   },
 
   row: {
@@ -299,7 +283,7 @@ const styles = StyleSheet.create({
 
   saveButton: {
     backgroundColor: Colors.primaryDark,
-    borderRadius: 12,
+    borderRadius: 16,
     height: 52,
     alignItems: 'center',
     justifyContent: 'center',
