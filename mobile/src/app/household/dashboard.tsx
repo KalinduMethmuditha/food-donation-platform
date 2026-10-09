@@ -18,8 +18,10 @@ import { Colors } from '@/constants/colors';
 import { getDonationActivity, getDonationStatusLabel, getDonationTimeLabel } from '@/utils/donation';
 import { formatDateTime } from '@/utils/dateTime';
 import { useDonationDraftStore } from '@/stores/donationDraft.store';
+import useDashboardGreeting from '@/hooks/useDashboardGreeting';
 
 export default function HouseholdDashboard() {
+  const greeting = useDashboardGreeting();
   const { donations, isLoading, loadError, refreshDonations } = useHouseholdData();
   const resetDraft = useDonationDraftStore((state) => state.resetDraft);
 
@@ -37,9 +39,9 @@ export default function HouseholdDashboard() {
 
   return <Screen navigation={<HouseholdBottomNav activeTab="home" />}>
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <DashboardHero header={<AppHeader title="Household Dashboard" variant="hero"
+      <DashboardHero header={<AppHeader title="Serve With Purpose" variant="hero"
         onMenuPress={() => router.push('/household/profile')} />}
-        subtitle="Share extra food with people who need it" emoji="🧺" />
+        greeting={greeting} subtitle="Share extra food with people who need it" emoji="🧺" />
       <View style={styles.main}>
       <Card style={styles.actionCard}>
         <Text style={styles.actionTitle}>Have food to share?</Text>

@@ -35,10 +35,10 @@ export default function NgoDashboard() {
         <SafeAreaView edges={['top']}>
           <View style={styles.headerTop}>
             <Pressable accessibilityRole="button" accessibilityLabel="Account menu" style={styles.circleBtn} onPress={() => setMenuOpen(true)}><Icon name="menu" size={20} color={C.white} /></Pressable>
-            <Text style={styles.headerTitle}>NGO Dashboard</Text>
+            <Text style={styles.headerTitle}>Serve With Purpose</Text>
             <Pressable accessibilityRole="button" accessibilityLabel="Notifications" style={styles.circleBtn} onPress={() => router.push('/ngo/notifications')}><Icon name="bell" size={20} color={C.white} />{unread ? <View style={styles.badge} /> : null}</Pressable>
           </View>
-          <View style={styles.welcomeRow}><View style={{ flex: 1 }}><Text style={styles.welcomeTitle}>Welcome back!</Text><Text style={styles.welcomeSub}>Here&apos;s what&apos;s happening today</Text></View><View style={styles.basketBox}><Text style={styles.basketEmoji}>🧺</Text></View></View>
+          <View style={styles.welcomeRow}><View style={{ flex: 1 }}><Text style={styles.welcomeTitle}>{user?.name.trim() ? `Hi ${user.name.trim().split(/\s+/)[0]}!` : 'Welcome back!'}</Text><Text style={styles.welcomeSub}>Here&apos;s what&apos;s happening today</Text></View><View style={styles.basketBox}><Text style={styles.basketEmoji}>🧺</Text></View></View>
         </SafeAreaView>
       </LinearGradient>
       <View style={[styles.card, styles.donationCard]}>
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: C.white },
+  headerTitle: { flex: 1, paddingHorizontal: 8, textAlign: 'center', fontSize: 17, fontWeight: '700', color: C.white },
   badge: {
     position: 'absolute',
     top: 8,

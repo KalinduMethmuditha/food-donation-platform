@@ -1,45 +1,44 @@
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import BrandMark from '@/components/auth/BrandMark';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import WelcomeIllustration from '@/components/auth/WelcomeIllustration';
 import Screen from '@/components/shared/Screen';
-import Icon from '@/components/ui/Icon';
-import PrimaryButton from '@/components/ui/PrimaryButton';
-import SecondaryButton from '@/components/ui/SecondaryButton';
-import { Colors } from '@/constants/colors';
 
 export default function WelcomeScreen() {
   return <Screen>
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <View style={styles.top}>
-        <BrandMark compact />
-        <View style={styles.art}>
-          <View style={styles.outerCircle}>
-            <View style={styles.innerCircle}><Icon name="heart" size={48} color={Colors.white} /></View>
-          </View>
-          <View style={[styles.orbit, styles.orbitLeft]}><Icon name="leaf" size={28} /></View>
-          <View style={[styles.orbit, styles.orbitRight]}><Icon name="users" size={28} /></View>
-        </View>
+      <View style={styles.introduction}>
+        <WelcomeIllustration />
+        <Text style={styles.title}>Share Extra Food,{'\n'}<Text style={styles.highlight}>Nourish Your Community</Text></Text>
+        <Text style={styles.description}>{'Connect instantly with local shelters & neighbors.\nReduce waste, one meal at a time.'}</Text>
       </View>
-      <View style={styles.bottom}>
-        <Text style={styles.title}>Share food. Reduce waste.</Text>
-        <Text style={styles.description}>Connect surplus food with people and organizations that can put it to good use.</Text>
-        <PrimaryButton title="Get Started" onPress={() => router.push('/register')} />
-        <SecondaryButton title="I already have an account" onPress={() => router.push('/login')} />
+      <View style={styles.actions}>
+        <Pressable accessibilityRole="button" onPress={() => router.push('/register')}
+          style={({ pressed }) => [styles.startButton, pressed && styles.pressed]}>
+          <LinearGradient colors={['#10B981', '#008460']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.startGradient}>
+            <Text style={styles.startText}>Get Started</Text>
+          </LinearGradient>
+        </Pressable>
+        <Pressable accessibilityRole="button" onPress={() => router.push('/login')}
+          style={({ pressed }) => [styles.loginButton, pressed && styles.pressed]}>
+          <Text style={styles.loginText}>I Already Have an Account</Text>
+        </Pressable>
       </View>
     </ScrollView>
   </Screen>;
 }
 
 const styles = StyleSheet.create({
-  content: { flexGrow: 1, padding: 24, justifyContent: 'space-between', gap: 20 },
-  top: { gap: 24 },
-  art: { height: 260, backgroundColor: Colors.primaryLight, borderRadius: 28, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  outerCircle: { width: 186, height: 186, borderRadius: 93, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
-  innerCircle: { width: 92, height: 92, borderRadius: 46, backgroundColor: Colors.primaryDark, alignItems: 'center', justifyContent: 'center' },
-  orbit: { position: 'absolute', width: 56, height: 56, borderRadius: 28, backgroundColor: Colors.surface, alignItems: 'center', justifyContent: 'center' },
-  orbitLeft: { left: 20, bottom: 32 },
-  orbitRight: { right: 20, top: 32 },
-  bottom: { gap: 12, paddingBottom: 10 },
-  title: { fontSize: 30, lineHeight: 36, fontWeight: '800', color: Colors.textPrimary },
-  description: { fontSize: 15, lineHeight: 23, color: Colors.textSecondary, marginBottom: 14 },
+  content: { flexGrow: 1, paddingHorizontal: 6, paddingTop: 24, paddingBottom: 54, justifyContent: 'space-between', gap: 48, backgroundColor: '#F5F8FA' },
+  introduction: { width: '100%', maxWidth: 380, alignSelf: 'center' },
+  title: { marginTop: 10, fontSize: 24, lineHeight: 31, fontWeight: '800', color: '#0F172A', textAlign: 'center' },
+  highlight: { color: '#10B981' },
+  description: { marginTop: 16, fontSize: 14, lineHeight: 22, color: '#53647E', textAlign: 'center' },
+  actions: { width: '100%', maxWidth: 380, alignSelf: 'center', gap: 10 },
+  startButton: { borderRadius: 8, overflow: 'hidden' },
+  startGradient: { minHeight: 52, paddingVertical: 12, alignItems: 'center', justifyContent: 'center' },
+  startText: { fontSize: 16, fontWeight: '800', color: '#FFFFFF' },
+  loginButton: { minHeight: 52, paddingVertical: 12, borderWidth: 1, borderColor: '#DFE7EF', backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12 },
+  loginText: { fontSize: 16, fontWeight: '700', color: '#17243A', textAlign: 'center' },
+  pressed: { opacity: 0.7 },
 });

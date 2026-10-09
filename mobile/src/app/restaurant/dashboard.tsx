@@ -15,8 +15,10 @@ import SecondaryButton from '@/components/ui/SecondaryButton';
 import { Colors } from '@/constants/colors';
 import { formatDateTime } from '@/utils/dateTime';
 import { getDonationActivity } from '@/utils/donation';
+import useDashboardGreeting from '@/hooks/useDashboardGreeting';
 
 export default function RestaurantDashboard() {
+  const greeting = useDashboardGreeting();
   const { donations, isLoading, loadError, refreshDonations } = useRestaurantData();
   useFocusEffect(useCallback(() => { void refreshDonations(); }, [refreshDonations]));
   const latestDonation = donations[0];
@@ -26,8 +28,8 @@ export default function RestaurantDashboard() {
 
   return <Screen navigation={<BottomNavigation activeTab="Home" />}>
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <DashboardHero header={<AppHeader title="Restaurant Dashboard" variant="hero" />}
-        subtitle="Manage your surplus food donations" emoji="🧺" />
+      <DashboardHero header={<AppHeader title="Serve With Purpose" variant="hero" />}
+        greeting={greeting} subtitle="Manage your surplus food donations" emoji="🧺" />
       <View style={styles.main}>
       <View style={styles.actionCard}>
         <Text style={styles.actionTitle}>Surplus food available?</Text>

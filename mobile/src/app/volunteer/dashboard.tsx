@@ -43,7 +43,7 @@ export default function VolunteerDashboard() {
   return <SafeAreaView style={styles.safe} edges={['top']}>
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <DashboardHero header={<AppHeader title="Volunteer Dashboard" variant="hero"
+        <DashboardHero header={<AppHeader title="Serve With Purpose" variant="hero"
           onMenuPress={() => router.push('/volunteer/profile')}
           onNotificationPress={() => router.push('/volunteer/notifications')} />}
           greeting={`Hi ${profile.fullName.split(' ')[0] || 'Volunteer'}!`}

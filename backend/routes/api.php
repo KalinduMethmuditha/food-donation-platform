@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DonationController;
 use App\Http\Controllers\Api\NgoDonationController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\VolunteerController;
 use Illuminate\Support\Facades\Route;
 
@@ -12,6 +13,8 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::patch('/notifications/read', [NotificationController::class, 'markRead']);
 
     Route::get('/donations', [DonationController::class, 'index']);
     Route::post('/donations', [DonationController::class, 'store']);
