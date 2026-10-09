@@ -1,8 +1,17 @@
 import { isAxiosError } from 'axios';
 
 type ValidationResponse = {
+  message?: string;
   errors?: Record<string, string[]>;
 };
+
+export function getAccountErrorMessage(error: unknown): string {
+  if (isAxiosError<ValidationResponse>(error) && error.response && error.response.status !== 401) {
+    const firstError = Object.values(error.response.data?.errors ?? {})[0]?.[0];
+    return firstError ?? error.response.data?.message ?? getApiErrorMessage(error, 'load');
+  }
+  return getApiErrorMessage(error, 'load');
+}
 
 export function getApiErrorMessage(
   error: unknown,

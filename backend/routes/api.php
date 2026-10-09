@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DonationController;
 use App\Http\Controllers\Api\NgoDonationController;
@@ -9,10 +10,18 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::get('/profile-photos/{user}', [AccountController::class, 'photo'])->name('account.photo');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/account/profile', [AccountController::class, 'show']);
+    Route::patch('/account/profile', [AccountController::class, 'update']);
+    Route::patch('/account/preferences', [AccountController::class, 'preferences']);
+    Route::post('/account/photo', [AccountController::class, 'uploadPhoto']);
+    Route::delete('/account/photo', [AccountController::class, 'removePhoto']);
+    Route::post('/account/support-requests', [AccountController::class, 'support']);
+    Route::delete('/account', [AccountController::class, 'destroy']);
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::patch('/notifications/read', [NotificationController::class, 'markRead']);
 

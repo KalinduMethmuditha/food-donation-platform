@@ -26,17 +26,17 @@ class Donation extends Model
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
 
     public function acceptedByNgo(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'accepted_by_ngo_id');
+        return $this->belongsTo(User::class, 'accepted_by_ngo_id')->withTrashed();
     }
 
     public function assignedVolunteer(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'assigned_volunteer_id');
+        return $this->belongsTo(User::class, 'assigned_volunteer_id')->withTrashed();
     }
 
     public function statusLogs(): HasMany

@@ -41,12 +41,13 @@ export function NgoFooter({ children }: { children: ReactNode }) {
   return <SafeAreaView edges={['bottom']} style={styles.footer}>{children}</SafeAreaView>;
 }
 
-export function NgoDesignNav({ active }: { active: 'home' | 'donations' | 'collections' | 'notifications' }) {
-  const items: { id: typeof active; label: string; icon: IconName; route: '/ngo/dashboard' | '/ngo/donations' | '/ngo/activecollection' | '/ngo/notifications' }[] = [
+export function NgoDesignNav({ active }: { active: 'home' | 'donations' | 'collections' | 'notifications' | 'profile' }) {
+  const items: { id: typeof active; label: string; icon: IconName; route: '/ngo/dashboard' | '/ngo/donations' | '/ngo/activecollection' | '/ngo/notifications' | '/ngo/profile' }[] = [
     { id: 'home', label: 'Home', icon: 'home', route: '/ngo/dashboard' },
     { id: 'donations', label: 'Donations', icon: 'package', route: '/ngo/donations' },
     { id: 'collections', label: 'Collections', icon: 'truck', route: '/ngo/activecollection' },
     { id: 'notifications', label: 'Notifications', icon: 'bell', route: '/ngo/notifications' },
+    { id: 'profile', label: 'Profile', icon: 'user', route: '/ngo/profile' },
   ];
   return <SafeAreaView edges={['bottom']} style={styles.navWrap}><View style={styles.nav}>
     {items.map((item) => <Pressable key={item.id} accessibilityRole="button" accessibilityLabel={item.label}

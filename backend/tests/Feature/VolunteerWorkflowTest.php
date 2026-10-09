@@ -35,6 +35,7 @@ class VolunteerWorkflowTest extends TestCase
             ->patchJson("/api/volunteer/assignments/{$donation->id}/status", ['status' => 'pickup'])
             ->assertForbidden();
 
+        $this->app['auth']->forgetGuards();
         $this->withToken($volunteer->createToken('test')->plainTextToken);
         $this->patchJson("/api/volunteer/assignments/{$donation->id}/status", ['status' => 'collected'])
             ->assertStatus(409);

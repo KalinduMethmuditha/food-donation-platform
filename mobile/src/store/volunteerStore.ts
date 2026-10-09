@@ -40,6 +40,7 @@ type AuthenticatedVolunteer = {
   created_at?: string;
   phone?: string | null;
   location?: string | null;
+  avatar_url?: string | null;
   pickup_preferences?: Partial<PickupPreferences> | null;
   notification_preferences?: Partial<NotificationPreferences> | null;
 };
@@ -89,14 +90,14 @@ export const useVolunteerStore = create<VolunteerState>((set) => ({
   },
   pickupPreferences: defaultPickupPreferences,
   notificationPreferences: defaultNotificationPreferences,
-  setAuthenticatedVolunteer: (user) => set((state) => ({
+  setAuthenticatedVolunteer: (user) => set(() => ({
     profile: {
       volunteerId: String(user.id),
       fullName: user.name,
       phone: user.phone ?? '',
       email: user.email,
       location: user.location ?? '',
-      avatarUrl: state.profile.volunteerId === String(user.id) ? state.profile.avatarUrl : null,
+      avatarUrl: user.avatar_url ?? null,
       joinedDate: user.created_at
         ? new Date(user.created_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
         : '',

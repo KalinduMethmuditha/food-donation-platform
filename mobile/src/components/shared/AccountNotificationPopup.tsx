@@ -5,12 +5,13 @@ import Icon from '@/components/ui/Icon';
 import PrimaryButton from '@/components/ui/PrimaryButton';
 import SecondaryButton from '@/components/ui/SecondaryButton';
 import { Colors } from '@/constants/colors';
-import type { UserRole } from '@/services/auth';
+import { getCurrentUser, type UserRole } from '@/services/auth';
 import { getUnreadNotifications, markAccountNotificationsRead, type AccountNotification } from '@/services/notifications';
 import { useVolunteerAssignments } from '@/store/volunteerAssignments.store';
 import { useVolunteerStore } from '@/store/volunteerStore';
 import { useNgoDonations } from '@/store/ngoDonations.store';
 import { formatDateTime } from '@/utils/dateTime';
+import { useAccountStore } from '@/store/account.store';
 
 const destinations = {
   ngo: '/ngo/donations', volunteer: '/volunteer/pickup-details',
@@ -25,7 +26,13 @@ export default function AccountNotificationPopup({ role }: { role: UserRole }) {
   const busy = useRef(false);
   const acknowledged = useRef(new Set<number>());
   const preferences = useVolunteerStore((state) => state.notificationPreferences);
-  const enabled = role !== 'volunteer' || (preferences.generalNotifications && preferences.newPickupAssigned);
+  const account = useAccountStore((state) => state.user);
+  const enabled = account?.role === role && (role === 'volunteer' ? preferences.generalNotifications && preferences.newPickupAssigned
+    : account.notification_preferences?.generalNotifications !== false);
+
+  useEffect(() => {
+    if (!useAccountStore.getState().user) void getCurrentUser().catch(() => undefined);
+  }, []);
 
   useEffect(() => {
     const requestController = new AbortController();

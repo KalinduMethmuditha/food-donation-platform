@@ -34,6 +34,11 @@
         }
       ],
       "expo-secure-store",
+      ["expo-image-picker", {
+        "photosPermission": "Choose a profile photo for your FoodShare account.",
+        "cameraPermission": false,
+        "microphonePermission": false
+      }],
       [
         "expo-location",
         {

@@ -71,6 +71,8 @@ export default function NgoLayout() {
           <Stack.Screen name="donations" options={{ animation: 'fade' }} />
           <Stack.Screen name="activecollection" options={{ animation: 'fade' }} />
           <Stack.Screen name="notifications" options={{ animation: 'fade' }} />
+          <Stack.Screen name="profile" options={{ animation: 'fade' }} />
+          <Stack.Screen name="edit-profile" />
 
           {/* Flow screens - slide in from the right */}
           <Stack.Screen name="donationdetails" />

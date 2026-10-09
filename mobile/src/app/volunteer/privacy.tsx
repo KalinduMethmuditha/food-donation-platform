@@ -33,7 +33,7 @@ export default function PrivacyScreen() {
           </Text>
 
           <Text style={styles.cardText}>
-            Your name, email, optional phone and location, and account ID
+            Your name, email, optional phone and location, profile photo, and account ID
             are saved with your account on the server. The sign-in token
             is stored on your device.
           </Text>
