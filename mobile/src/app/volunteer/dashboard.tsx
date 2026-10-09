@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import VolunteerBottomNav from '@/components/volunteer/VolunteerBottomNav';
@@ -16,8 +16,15 @@ import { getDonationStatusLabel } from '@/utils/donation';
 
 export default function VolunteerDashboard() {
   const { profile } = useVolunteerStore();
-  const { assignments, selectAssignment, isLoading, error, refresh } = useVolunteerAssignments();
+  const { assignments, selectAssignment, isAvailable, isLoading, isSaving, error, refresh, setAvailability } = useVolunteerAssignments();
+  const [availabilityError, setAvailabilityError] = useState<string | null>(null);
   useFocusEffect(useCallback(() => { void refresh(); }, [refresh]));
+  const changeAvailability = (value: boolean) => {
+    setAvailabilityError(null);
+    void setAvailability(value).catch(() => {
+      setAvailabilityError(useVolunteerAssignments.getState().error ?? 'Could not update availability.');
+    });
+  };
   const active = assignments.filter((item) => !['collected', 'delivered', 'cancelled'].includes(item.status));
   const latestLogs = assignments.flatMap((item) => item.statusLogs
     .filter((log) => ['assigned', 'pickup', 'arrived', 'collected', 'delivered'].includes(log.status))
@@ -48,11 +55,28 @@ export default function VolunteerDashboard() {
           <Text style={styles.summaryCount}>{active.length} Active</Text>
           <Text style={styles.summaryText}>{assignments.length} total assigned donations</Text>
         </Card>
+        <Card style={styles.availabilityCard}>
+          <View style={styles.availabilityRow}>
+            <View style={styles.availabilityCopy}>
+              <Text style={styles.cardTitle}>Available for pickups</Text>
+              <Text style={styles.sub}>{isAvailable ? 'NGOs can find and assign you.' : 'Turn this on to appear in the NGO volunteer list.'}</Text>
+            </View>
+            <Switch
+              value={isAvailable}
+              onValueChange={changeAvailability}
+              disabled={isLoading || isSaving}
+              accessibilityLabel="Available for pickups"
+              trackColor={{ false: Colors.border, true: Colors.primary }}
+              thumbColor={Colors.white}
+            />
+          </View>
+          {availabilityError ? <Text accessibilityRole="alert" style={styles.error}>{availabilityError}</Text> : null}
+        </Card>
         {isLoading && assignments.length === 0 ? <ActivityIndicator color={Colors.primary} /> : null}
         {error ? <Card style={styles.gap}><Text accessibilityRole="alert" style={styles.error}>{error}</Text>
           <SecondaryButton title="Try Again" onPress={() => void refresh()} /></Card> : null}
         <Text style={styles.section}>Assigned Pickups</Text>
-        {!isLoading && assignments.length === 0 ? <Card><Text style={styles.sub}>No pickups have been assigned yet. Set your availability in Pickup Preferences so NGOs can find you.</Text></Card> : null}
+        {!isLoading && assignments.length === 0 ? <Card><Text style={styles.sub}>No pickups have been assigned yet.</Text></Card> : null}
         {assignments.map((item) => <Pressable key={item.id} onPress={() => open(item.id)}>
           <Card style={styles.gap}>
             <View style={styles.row}><Text style={styles.cardTitle}>{item.donorName}</Text>
@@ -98,6 +122,9 @@ const styles = StyleSheet.create({
   summaryLabel: { fontSize: 11, color: Colors.white, fontWeight: '700' },
   summaryCount: { fontSize: 28, color: Colors.white, fontWeight: '800', marginTop: 4 },
   summaryText: { fontSize: 13, color: Colors.white, marginTop: 5 },
+  availabilityCard: { gap: 8 },
+  availabilityRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  availabilityCopy: { flex: 1 },
   section: { fontSize: 17, fontWeight: '700', color: Colors.textPrimary, marginTop: 12 },
   gap: { gap: 7 },
   error: { color: Colors.danger },

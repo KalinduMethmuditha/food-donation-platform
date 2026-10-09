@@ -38,6 +38,18 @@ export default function AssignVolunteer() {
 
   const selected = volunteers.find((item) => item.id === selectedId);
 
+  const refreshVolunteers = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await loadVolunteers();
+    } catch {
+      setError(useNgoDonations.getState().error ?? 'Could not load available volunteers.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleAssign = async () => {
     if (!id || !selectedId || isSaving) return;
     setError(null);
@@ -67,8 +79,8 @@ export default function AssignVolunteer() {
         {donation?.status === 'accepted' ? (
           <>
             <Text style={styles.sectionTitle}>Available volunteers</Text>
-            <Text style={styles.body}>Only volunteers who marked themselves available appear here.</Text>
-            {volunteers.length === 0 && !isLoading ? <NgoCard><Text style={styles.body}>No volunteers are available right now. Try again later.</Text></NgoCard> : null}
+            <Text style={styles.body}>Volunteers appear after turning on “Available for pickups” in their dashboard.</Text>
+            {volunteers.length === 0 && !isLoading && !error ? <NgoCard><Text style={styles.body}>No volunteers are available right now. Ask a volunteer to turn on availability, then refresh this list.</Text></NgoCard> : null}
             <View style={styles.list}>
               {volunteers.map((volunteer) => (
                 <Pressable key={volunteer.id} onPress={() => setSelectedId(volunteer.id)} accessibilityRole="radio" accessibilityState={{ checked: selectedId === volunteer.id }} style={[styles.volunteer, selectedId === volunteer.id && styles.selected]}>
@@ -78,6 +90,7 @@ export default function AssignVolunteer() {
                 </Pressable>
               ))}
             </View>
+            <NgoAction label={isLoading ? 'Refreshing...' : 'Refresh volunteers'} disabled={isLoading || isSaving} onPress={() => { void refreshVolunteers(); }} />
             <NgoAction label={isSaving ? 'Assigning...' : selected ? `Assign ${selected.name}` : 'Select a Volunteer'} disabled={!selected || isSaving || isLoading} onPress={() => { void handleAssign(); }} />
           </>
         ) : donation ? <NgoCard><Text style={styles.body}>This donation is already {donation.status}. It cannot be assigned again.</Text></NgoCard> : null}
