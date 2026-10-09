@@ -8,7 +8,7 @@ export default function SecondaryButton({ title, style, disabled, ...props }: To
   </TouchableOpacity>;
 }
 const styles = StyleSheet.create({
-  button: { minHeight: 48, padding: 13, borderRadius: 12, borderWidth: 1, borderColor: Colors.border, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface },
+  button: { minHeight: 52, padding: 13, borderRadius: 16, borderWidth: 1, borderColor: Colors.border, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface },
   text: { fontSize: 14, fontWeight: '700', color: Colors.primaryDark },
   disabled: { opacity: 0.5 },
 });

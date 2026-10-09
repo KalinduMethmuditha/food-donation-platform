@@ -1,3 +1,5 @@
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import AppHeader from '@/components/restaurant/AppHeader';
 import BottomNavigation from '@/components/restaurant/BottomNavigation';
@@ -13,7 +15,7 @@ import { formatDateTime } from '@/utils/dateTime';
 import { getDonationActivity } from '@/utils/donation';
 
 const notificationIcons: Record<NotificationItem['kind'], IconName> = {
-  assigned: 'users', accepted: 'check', published: 'arrow-up', pickup: 'truck', collected: 'gift', cancelled: 'check',
+  assigned: 'users', accepted: 'check', published: 'arrow-up', pickup: 'truck', arrived: 'pin', collected: 'gift', delivered: 'check', cancelled: 'check',
 };
 
 const notificationText: Record<NotificationItem['kind'], { title: string; message: (food: string) => string }> = {
@@ -21,12 +23,15 @@ const notificationText: Record<NotificationItem['kind'], { title: string; messag
   accepted: { title: 'Donation Accepted', message: (food) => `${food} was accepted by an NGO.` },
   assigned: { title: 'Volunteer Assigned', message: (food) => `A volunteer was assigned to ${food}.` },
   pickup: { title: 'Pickup Started', message: (food) => `Collection has started for ${food}.` },
+  arrived: { title: 'Volunteer Arrived', message: (food) => `The volunteer arrived to collect ${food}.` },
   collected: { title: 'Food Collected', message: (food) => `${food} was successfully collected.` },
+  delivered: { title: 'Food Delivered', message: (food) => `${food} was delivered successfully.` },
   cancelled: { title: 'Donation Cancelled', message: (food) => `${food} was cancelled.` },
 };
 
 export default function NotificationsScreen() {
   const { donations, isLoading, loadError, refreshDonations } = useRestaurantData();
+  useFocusEffect(useCallback(() => { void refreshDonations(); }, [refreshDonations]));
   const visibleNotifications: NotificationItem[] = getDonationActivity(donations).map((activity) => ({
     id: activity.id,
     donationId: activity.donationId,
@@ -36,8 +41,8 @@ export default function NotificationsScreen() {
     time: formatDateTime(activity.createdAt),
   }));
 
-  return <Screen>
-    <AppHeader title="Notifications" />
+  return <Screen navigation={<BottomNavigation activeTab="Notifications" />}>
+    <AppHeader title="Notifications" variant="plain" showBack onBackPress={() => router.replace('/restaurant/dashboard')} />
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <Text style={styles.sectionTitle}>RECENT UPDATES</Text>
       {isLoading ? <ActivityIndicator color={Colors.primary} /> : null}
@@ -61,7 +66,6 @@ export default function NotificationsScreen() {
       {!isLoading && !loadError && visibleNotifications.length === 0 &&
         <EmptyState icon="bell" title="No updates yet" description="Donation updates will appear here." />}
     </ScrollView>
-    <BottomNavigation activeTab="Notifications" />
   </Screen>;
 }
 
@@ -69,7 +73,7 @@ const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 30, gap: 16 },
   sectionTitle: { fontSize: 11, fontWeight: '700', letterSpacing: 0.7, color: Colors.textSecondary, marginTop: 4 },
   list: { gap: 12 },
-  notification: { flexDirection: 'row', gap: 12, padding: 14 },
+  notification: { flexDirection: 'row', gap: 12, padding: 14, backgroundColor: Colors.primaryLight },
   icon: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.primaryLight, alignItems: 'center', justifyContent: 'center' },
   notificationContent: { flex: 1, gap: 7 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },

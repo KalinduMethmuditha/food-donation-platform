@@ -1,187 +1,42 @@
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useMemo, useState } from 'react';
-import {
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { useCallback, useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '@/components/ui/Icon';
-import { donations } from '@/constants/donations';
-
-// ---------- Colour palette (same as dashboard) ----------
-const C = {
-  gradientTop: '#2FB584',
-  gradientBottom: '#14855A',
-  primary: '#1E9E6A',
-  primaryDark: '#14855A',
-  tint: '#E3F4EA',
-  bg: '#F2F6F4',
-  card: '#FFFFFF',
-  border: '#E6ECE8',
-  text: '#1B2B24',
-  muted: '#8A9A93',
-  white: '#FFFFFF',
-};
-
-const categories = ['All', 'Rice', 'Bread', 'Fruits', 'Vegetables'] as const;
-
-const navItems = [
-  { id: 'home', label: 'Home', icon: 'home', route: '/ngo/dashboard' },
-  { id: 'donations', label: 'Donations', icon: 'package', route: null },
-  { id: 'collections', label: 'Collections', icon: 'truck', route: '/ngo/activecollection' },
-  { id: 'notifications', label: 'Notifications', icon: 'bell', route: '/ngo/notifications' },
-];
+import { C, NgoDesignNav, NgoGradientButton, NgoLoadState } from '@/components/ngo/NgoDesign';
+import { useNgoDonations } from '@/store/ngoDonations.store';
+import { foodVisual, ngoCategories } from '@/utils/ngoPresentation';
 
 export default function NgoDonations() {
+  const { available, refresh, isLoading, error } = useNgoDonations();
   const [query, setQuery] = useState('');
-  const [category, setCategory] = useState<(typeof categories)[number]>('All');
-  const activeTab = 'donations';
-
-  const filtered = useMemo(
-    () =>
-      donations.filter((d) => {
-        const matchCat = category === 'All' || d.category === category;
-        const matchText = d.title.toLowerCase().includes(query.trim().toLowerCase());
-        return matchCat && matchText;
-      }),
-    [query, category],
-  );
-
-  return (
-    <View style={styles.root}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingBottom: 120 }}
-      >
-        {/* ================= HEADER ================= */}
-        <LinearGradient colors={[C.gradientTop, C.gradientBottom]} style={styles.header}>
-          <SafeAreaView edges={['top']}>
-            <View style={styles.headerTop}>
-              <TouchableOpacity style={styles.circleBtn} onPress={() => router.back()}>
-                <Icon name="arrow-left" size={20} color={C.white} />
-              </TouchableOpacity>
-              <Text style={styles.headerTitle}>Available Donations</Text>
-            </View>
-          </SafeAreaView>
-        </LinearGradient>
-
-        {/* ================= SEARCH + FILTER (overlaps header) ================= */}
-        <View style={styles.searchRow}>
-          <View style={[styles.card, styles.searchBox]}>
-            <Icon name="search" size={18} color={C.muted} />
-            <TextInput
-              value={query}
-              onChangeText={setQuery}
-              placeholder="Search donations..."
-              placeholderTextColor={C.muted}
-              style={styles.searchInput}
-            />
-          </View>
-          <TouchableOpacity style={[styles.card, styles.filterBtn]}>
-            <View style={{ gap: 4, alignItems: 'center' }}>
-              <View style={{ width: 20, height: 2.5, borderRadius: 2, backgroundColor: C.primaryDark }} />
-              <View style={{ width: 14, height: 2.5, borderRadius: 2, backgroundColor: C.primaryDark }} />
-              <View style={{ width: 8, height: 2.5, borderRadius: 2, backgroundColor: C.primaryDark }} />
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* ================= CATEGORY CHIPS ================= */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipsRow}
-        >
-          {categories.map((c) => {
-            const active = c === category;
-            return (
-              <TouchableOpacity
-                key={c}
-                activeOpacity={0.8}
-                onPress={() => setCategory(c)}
-                style={[styles.chip, active && styles.chipActive]}
-              >
-                <Text style={[styles.chipText, active && styles.chipTextActive]}>{c}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-
-        {/* ================= DONATION LIST ================= */}
-        <View style={styles.list}>
-          {filtered.map((d) => (
-            <TouchableOpacity
-              key={d.id}
-              activeOpacity={0.85}
-              style={[styles.card, styles.item]}
-              onPress={() => router.push({ pathname: '/ngo/donationdetails' as any, params: { id: d.id } })}
-            >
-              {d.image ? (
-                <Image source={d.image} style={styles.thumb} />
-              ) : (
-                <View style={[styles.thumb, styles.thumbPlaceholder]}>
-                  <Text style={{ fontSize: 38 }}>{d.emoji}</Text>
-                </View>
-              )}
-
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={styles.itemTitle}>{d.title}</Text>
-                <Text style={styles.itemQty}>Quantity: {d.quantity}</Text>
-
-                <View style={styles.distRow}>
-                  <Icon name="map" size={12} color={C.primary} />
-                  <Text style={styles.distText}>{d.distance}</Text>
-                </View>
-
-                <View style={styles.tag}>
-                  <Text style={styles.tagText}>{d.category.toUpperCase()}</Text>
-                </View>
-              </View>
-
-              <View style={styles.arrowBtn}>
-                <Icon name="chevron-right" size={16} color={C.primaryDark} />
-              </View>
-            </TouchableOpacity>
-          ))}
-
-          {filtered.length === 0 && (
-            <View style={styles.empty}>
-              <Text style={{ fontSize: 40 }}>🍽️</Text>
-              <Text style={styles.emptyText}>No donations found</Text>
-            </View>
-          )}
-        </View>
-      </ScrollView>
-
-      {/* ================= BOTTOM NAV ================= */}
-      <SafeAreaView edges={['bottom']} style={styles.navWrap}>
-        <View style={styles.nav}>
-          {navItems.map((n) => {
-            const active = n.id === activeTab;
-            return (
-              <TouchableOpacity
-                key={n.id}
-                style={styles.navItem}
-                onPress={() => n.route && router.push(n.route as any)}
-              >
-                <View style={[styles.navIconWrap, active && styles.navIconActive]}>
-                  <Icon name={n.icon as any} size={20} color={active ? C.primaryDark : C.muted} />
-                </View>
-                <Text style={[styles.navLabel, active && styles.navLabelActive]}>{n.label}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </SafeAreaView>
-    </View>
-  );
+  const [category, setCategory] = useState<string>('All');
+  const [donorRole, setDonorRole] = useState('all');
+  const [filterOpen, setFilterOpen] = useState(false);
+  useFocusEffect(useCallback(() => { void refresh(); }, [refresh]));
+  const filtered = available.filter((item) => (category === 'All' || foodVisual(item.foodType).category === category)
+    && (donorRole === 'all' || item.donorRole === donorRole)
+    && `${item.foodType} ${item.donorName} ${item.pickupLocation}`.toLowerCase().includes(query.trim().toLowerCase()));
+  return <View style={styles.root}>
+    <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 120 }}>
+      <LinearGradient colors={[C.gradientTop, C.gradientBottom]} style={styles.header}><SafeAreaView edges={['top']}><View style={styles.headerTop}>
+        <Pressable style={styles.circleBtn} accessibilityRole="button" accessibilityLabel="Back to dashboard" onPress={() => router.replace('/ngo/dashboard')}><Icon name="arrow-left" size={20} color={C.white} /></Pressable><Text style={styles.headerTitle}>Available Donations</Text>
+      </View></SafeAreaView></LinearGradient>
+      <View style={styles.searchRow}><View style={[styles.card, styles.searchBox]}><Icon name="search" size={18} color={C.muted} /><TextInput accessibilityLabel="Search donations" value={query} onChangeText={setQuery} placeholder="Search donations..." placeholderTextColor={C.muted} style={styles.searchInput} /></View>
+        <Pressable accessibilityRole="button" accessibilityLabel="Filter donations" onPress={() => setFilterOpen(true)} style={[styles.card, styles.filterBtn]}><View style={{ gap: 4, alignItems: 'center' }}>{[20, 14, 8].map((width) => <View key={width} style={{ width, height: 2.5, borderRadius: 2, backgroundColor: C.primaryDark }} />)}</View></Pressable>
+      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>{ngoCategories.map((item) => <Pressable key={item} accessibilityRole="button" accessibilityState={{ selected: category === item }} onPress={() => setCategory(item)} style={[styles.chip, category === item && styles.chipActive]}><Text style={[styles.chipText, category === item && styles.chipTextActive]}>{item}</Text></Pressable>)}</ScrollView>
+      <NgoLoadState loading={isLoading && available.length === 0} error={error} retry={() => { void refresh(); }} />
+      <View style={styles.list}>{filtered.map((item) => <Pressable key={item.id} style={[styles.card, styles.item]} accessibilityRole="button" onPress={() => router.push({ pathname: '/ngo/donationdetails', params: { id: item.id } })}>
+        <View style={[styles.thumb, styles.thumbPlaceholder]}><Text style={{ fontSize: 38 }}>{foodVisual(item.foodType).emoji}</Text></View>
+        <View style={{ flex: 1, marginLeft: 12 }}><Text style={styles.itemTitle}>{item.foodType}</Text><Text style={styles.itemQty}>Quantity: {item.quantity} {item.unit}</Text><View style={styles.distRow}><Icon name="map" size={12} color={C.primary} /><Text numberOfLines={2} style={[styles.distText, { flex: 1 }]}>{item.pickupLocation}</Text></View><View style={styles.tag}><Text style={styles.tagText}>{foodVisual(item.foodType).category.toUpperCase()}</Text></View><Text style={styles.itemQty}>{item.donorRole === 'restaurant' ? 'Restaurant' : 'Household'} · {item.donorName}</Text></View>
+        <View style={styles.arrowBtn}><Icon name="chevron-right" size={16} color={C.primaryDark} /></View>
+      </Pressable>)}{!isLoading && !error && filtered.length === 0 ? <View style={styles.empty}><Text style={{ fontSize: 40 }}>🍽️</Text><Text style={styles.emptyText}>No donations found</Text></View> : null}</View>
+    </ScrollView>
+    <NgoDesignNav active="donations" />
+    <Modal visible={filterOpen} transparent animationType="fade" onRequestClose={() => setFilterOpen(false)}><View style={{ flex: 1, backgroundColor: 'rgba(11,30,22,0.55)', justifyContent: 'center', padding: 24 }}><View style={[styles.card, { padding: 24, gap: 14, maxWidth: 360, width: '100%', alignSelf: 'center' }]}><Text style={styles.itemTitle}>Filter by donor</Text>{[['all', 'All donors'], ['restaurant', 'Restaurants'], ['household', 'Households']].map(([value, label]) => <Pressable key={value} accessibilityRole="radio" accessibilityState={{ checked: donorRole === value }} onPress={() => setDonorRole(value)}><Text style={[styles.chipText, { paddingVertical: 8, color: donorRole === value ? C.primaryDark : C.text }]}>{donorRole === value ? '●' : '○'} {label}</Text></Pressable>)}<NgoGradientButton title="Apply filters" onPress={() => setFilterOpen(false)} /><Pressable onPress={() => { setFilterOpen(false); void refresh(); }}><Text style={[styles.tagText, { textAlign: 'center', fontSize: 13 }]}>Refresh donations</Text></Pressable></View></View></Modal>
+  </View>;
 }
 
 const styles = StyleSheet.create({

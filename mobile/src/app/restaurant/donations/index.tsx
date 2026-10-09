@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import AppHeader from '@/components/restaurant/AppHeader';
 import BottomNavigation from '@/components/restaurant/BottomNavigation';
@@ -16,13 +16,14 @@ const tabs = [{ label: 'Active', value: 'active' }, { label: 'Completed', value:
 
 export default function DonationsScreen() {
   const { donations, isLoading, loadError, refreshDonations } = useRestaurantData();
+  useFocusEffect(useCallback(() => { void refreshDonations(); }, [refreshDonations]));
   const [selectedTab, setSelectedTab] = useState<'active' | 'completed'>('active');
   const [search, setSearch] = useState('');
   const filteredDonations = donations.filter((donation) =>
-    (selectedTab === 'completed' ? donation.status === 'collected' : donation.status !== 'collected' && donation.status !== 'cancelled') &&
+    (selectedTab === 'completed' ? ['collected', 'delivered'].includes(donation.status) : !['collected', 'delivered', 'cancelled'].includes(donation.status)) &&
     donation.foodType.toLowerCase().includes(search.trim().toLowerCase()));
 
-  return <Screen>
+  return <Screen navigation={<BottomNavigation activeTab="Donations" />}>
     <AppHeader title="My Donations" />
     <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
       <SegmentedControl options={tabs} value={selectedTab} onChange={setSelectedTab} />
@@ -49,7 +50,6 @@ export default function DonationsScreen() {
       {!isLoading && !loadError && filteredDonations.length === 0 && <EmptyState title="No donations found"
         description={search.trim() ? 'Try another food name or clear your search.' : 'Your donations will appear here.'} />}
     </ScrollView>
-    <BottomNavigation activeTab="Donations" />
   </Screen>;
 }
 

@@ -1,8 +1,17 @@
 import { isAxiosError } from 'axios';
 
 type ValidationResponse = {
+  message?: string;
   errors?: Record<string, string[]>;
 };
+
+export function getAccountErrorMessage(error: unknown): string {
+  if (isAxiosError<ValidationResponse>(error) && error.response && error.response.status !== 401) {
+    const firstError = Object.values(error.response.data?.errors ?? {})[0]?.[0];
+    return firstError ?? error.response.data?.message ?? getApiErrorMessage(error, 'load');
+  }
+  return getApiErrorMessage(error, 'load');
+}
 
 export function getApiErrorMessage(
   error: unknown,
@@ -28,6 +37,7 @@ export function getApiErrorMessage(
       : 'You do not have permission to view these donations.';
   }
   if (status === 404 && action === 'load') return 'Donation not found.';
+  if (status === 409) return 'This donation can no longer be edited or deleted.';
   if (status === 422) {
     if (action === 'login') return 'Email or password is incorrect.';
     if (action === 'register') {

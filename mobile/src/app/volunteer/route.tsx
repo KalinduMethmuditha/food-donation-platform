@@ -1,521 +1,94 @@
 import { router } from 'expo-router';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  Linking,
-  Platform,
-  Alert,
-} from 'react-native';
+import { Linking, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Icon from '@/components/ui/Icon';
-import { Colors } from '@/constants/colors';
-import { mockActivePickup } from '@/data/mockVolunteerData';
-import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
-import { useVolunteerStore } from '@/store/volunteerStore';
-import { useEffect, useState } from 'react';
-import * as Location from 'expo-location';
 
-// Conditionally load react-native-maps so web does not crash.
+import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
+import Card from '@/components/ui/Card';
+import Icon from '@/components/ui/Icon';
+import PrimaryButton from '@/components/ui/PrimaryButton';
+import SecondaryButton from '@/components/ui/SecondaryButton';
+import { Colors } from '@/constants/colors';
+import { useSelectedAssignment, useVolunteerAssignments } from '@/store/volunteerAssignments.store';
+import { formatDateTime } from '@/utils/dateTime';
+
 let MapView: any = null;
 let Marker: any = null;
-let Polyline: any = null;
-
-try {
-  if (Platform.OS !== 'web') {
-    const Maps = require('react-native-maps');
-    MapView = Maps.default;
-    Marker = Maps.Marker;
-    Polyline = Maps.Polyline;
+if (Platform.OS !== 'web') {
+  try {
+    const maps = require('react-native-maps');
+    MapView = maps.default;
+    Marker = maps.Marker;
+  } catch {
+    // The address and external map link remain available.
   }
-} catch (e) {
-  // Map is unavailable in the current environment.
 }
 
 export default function RouteScreen() {
-  const pickup = mockActivePickup;
-  const { setPickupStatus, pickupStatus } = useVolunteerStore();
+  const assignment = useSelectedAssignment();
+  const { advance, isSaving, error } = useVolunteerAssignments();
+  const latitude = assignment?.pickupLatitude;
+  const longitude = assignment?.pickupLongitude;
+  const hasCoordinates = latitude !== undefined && longitude !== undefined;
 
-  const [currentLocation, setCurrentLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
-
-  // Destination coordinates for Green Leaf Bakery, Negombo.
-  const destinationCoords = {
-    latitude: 7.2088,
-    longitude: 79.8362,
+  const openMap = async () => {
+    if (!assignment) return;
+    const query = hasCoordinates ? String(latitude) + ',' + String(longitude) : assignment.pickupLocation;
+    const url = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(query);
+    await Linking.openURL(url);
   };
 
-  useEffect(() => {
-    (async () => {
-      // Native location is not used on web.
-      if (Platform.OS === 'web') return;
-
-      try {
-        const { status } =
-          await Location.requestForegroundPermissionsAsync();
-
-        if (status !== 'granted') {
-          // Frontend fallback location if permission is denied.
-          setCurrentLocation({
-            latitude: 7.2,
-            longitude: 79.84,
-          });
-          return;
-        }
-
-        const location = await Location.getCurrentPositionAsync({});
-
-        setCurrentLocation({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        });
-      } catch (error) {
-        // Frontend fallback if location cannot be obtained.
-        setCurrentLocation({
-          latitude: 7.2,
-          longitude: 79.84,
-        });
-      }
-    })();
-  }, []);
-
-  const handleOpenMap = () => {
-    const url = Platform.select({
-      ios: `maps:0,0?q=${encodeURIComponent(pickup.address)}`,
-      android: `geo:0,0?q=${encodeURIComponent(pickup.address)}`,
-      web: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-        pickup.address
-      )}`,
-      default: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-        pickup.address
-      )}`,
-    });
-
-    if (!url) {
-      Alert.alert('Map Unavailable', 'Could not create a map link.');
-      return;
+  const arrived = async () => {
+    if (!assignment) return;
+    if (assignment.status === 'pickup') {
+      try { await advance(assignment.id, 'arrived'); } catch { return; }
     }
-
-    Linking.canOpenURL(url)
-      .then((supported) => {
-        if (supported) {
-          return Linking.openURL(url);
-        }
-
-        Alert.alert(
-          'Map Unavailable',
-          'Could not open the map application.'
-        );
-      })
-      .catch(() => {
-        Alert.alert(
-          'Map Unavailable',
-          'Could not open the map application.'
-        );
-      });
-  };
-
-  const handleArrived = () => {
-    setPickupStatus('ARRIVED');
     router.push('/volunteer/collection-status');
   };
 
-  const isMapSupported = MapView && Platform.OS !== 'web';
-
-  const fallbackLocation = currentLocation || {
-    latitude: 7.2,
-    longitude: 79.84,
-  };
-
-  const isArrived = pickupStatus === 'ARRIVED';
-
-  return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <VolunteerScreenHeader
-        title="Route to Pickup"
-        onBack={() => router.back()}
-      />
-
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* MAP SECTION */}
-        <View style={styles.mapContainer}>
-          {isMapSupported ? (
-            <MapView
-              style={styles.map}
-              initialRegion={{
-                latitude:
-                  (fallbackLocation.latitude +
-                    destinationCoords.latitude) /
-                  2,
-                longitude:
-                  (fallbackLocation.longitude +
-                    destinationCoords.longitude) /
-                  2,
-                latitudeDelta: 0.05,
-                longitudeDelta: 0.05,
-              }}
-              showsUserLocation
-            >
-              <Marker
-                coordinate={fallbackLocation}
-                title="You"
-                pinColor={Colors.primary}
-              />
-
-              <Marker
-                coordinate={destinationCoords}
-                title={pickup.donor}
-                description={pickup.address}
-                pinColor={Colors.danger}
-              />
-
-              <Polyline
-                coordinates={[
-                  fallbackLocation,
-                  destinationCoords,
-                ]}
-                strokeColor={Colors.primaryDark}
-                strokeWidth={3}
-                lineDashPattern={[5, 5]}
-              />
-            </MapView>
-          ) : (
-            <View style={styles.mockMap}>
-              <Icon
-                name="map"
-                size={40}
-                color={Colors.primaryLight}
-              />
-              <Text style={styles.mockMapText}>
-                Interactive map available on mobile
-              </Text>
-            </View>
-          )}
+  return <SafeAreaView style={styles.safe} edges={['top']}>
+    <VolunteerScreenHeader title="Route to Pickup" onBack={() => router.back()} />
+    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
+      {!assignment ? <Card><Text style={styles.title}>No pickup selected</Text>
+        <SecondaryButton title="View Pickups" onPress={() => router.replace('/volunteer/pickup-details')} /></Card> : <>
+        {hasCoordinates && MapView ? <View style={styles.map}>
+          <MapView style={StyleSheet.absoluteFill} initialRegion={{
+            latitude, longitude, latitudeDelta: 0.02, longitudeDelta: 0.02,
+          }}>
+            <Marker coordinate={{ latitude, longitude }} title={assignment.donorName} description={assignment.pickupLocation} />
+          </MapView>
+        </View> : <Card style={styles.mapPlaceholder}>
+          <Icon name="map" size={42} />
+          <Text style={styles.body}>Use Open Map for directions to the pickup address.</Text>
+        </Card>}
+        <Card style={styles.card}>
+          <Text style={styles.label}>PICKUP FROM</Text>
+          <Text style={styles.title}>{assignment.donorName}</Text>
+          <Text style={styles.body}>{assignment.pickupLocation}</Text>
+          <Text style={styles.body}>Pickup before {formatDateTime(assignment.pickupDeadline)}</Text>
+          <Text style={styles.body}>Food: {assignment.foodType} · {assignment.quantity} {assignment.unit}</Text>
+          <Text style={styles.body}>Status: {assignment.status === 'arrived' ? 'Arrived' : 'On the way'}</Text>
+        </Card>
+        <View style={styles.actions}>
+          <SecondaryButton title="Open Map" style={styles.button} onPress={() => void openMap()} />
+          <PrimaryButton title={assignment.status === 'arrived' ? 'Continue' : 'Arrived'}
+            style={styles.button} loading={isSaving} onPress={() => void arrived()} />
         </View>
-
-        {/* LIVE ROUTE TRACKING CARD */}
-        <View style={styles.trackingCard}>
-          <View style={styles.trackingTop}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.trackingLabel}>
-                Pickup From
-              </Text>
-
-              <Text style={styles.trackingDonor}>
-                {pickup.donor}
-              </Text>
-
-              <View style={styles.addrRow}>
-                <Icon
-                  name="pin"
-                  size={13}
-                  color={Colors.textSecondary}
-                />
-                <Text style={styles.addrText}>
-                  {pickup.address}
-                </Text>
-              </View>
-            </View>
-
-            <View
-              style={[
-                styles.statusBadge,
-                isArrived && styles.statusBadgeArrived,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.statusText,
-                  isArrived && styles.statusTextArrived,
-                ]}
-              >
-                {isArrived ? 'ARRIVED' : 'ON THE WAY'}
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.divider} />
-
-          <Text style={styles.currentStatusLabel}>
-            Current Status
-          </Text>
-
-          <Text style={styles.currentStatus}>
-            {isArrived
-              ? 'Arrived at pickup location'
-              : 'On the way to pickup location'}
-          </Text>
-
-          <View style={styles.statsRow}>
-            <View style={styles.statBox}>
-              <Text style={styles.statLabel}>
-                DISTANCE
-              </Text>
-
-              <Text style={styles.statValue}>
-                {pickup.distance}
-              </Text>
-            </View>
-
-            <View style={styles.statDivider} />
-
-            <View style={styles.statBox}>
-              <Text style={styles.statLabel}>
-                ESTIMATED TIME
-              </Text>
-
-              <Text style={styles.statValue}>
-                {pickup.estimatedTime}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* ACTION BUTTONS */}
-        <View style={styles.btnRow}>
-          <TouchableOpacity
-            onPress={handleOpenMap}
-            style={styles.outlineBtn}
-            accessibilityRole="button"
-            accessibilityLabel="Open Map"
-          >
-            <Icon
-              name="map"
-              size={17}
-              color={Colors.primaryDark}
-            />
-
-            <Text style={styles.outlineBtnText}>
-              Open Map
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={handleArrived}
-            style={[
-              styles.arrivedBtn,
-              isArrived && {
-                backgroundColor: Colors.textMuted,
-              },
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="Arrived at pickup location"
-            disabled={isArrived}
-          >
-            <Icon
-              name="check-circle"
-              size={17}
-              color={Colors.white}
-            />
-
-            <Text style={styles.arrivedBtnText}>
-              Arrived
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
+      </>}
+    </ScrollView>
+  </SafeAreaView>;
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-
-  content: {
-    padding: 20,
-    gap: 14,
-    paddingBottom: 32,
-  },
-
-  mapContainer: {
-    height: 220,
-    backgroundColor: Colors.surfaceMuted,
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-
-  map: {
-    flex: 1,
-  },
-
-  mockMap: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#E8F5E9',
-    gap: 8,
-  },
-
-  mockMapText: {
-    fontSize: 13,
-    color: Colors.primaryDark,
-    fontWeight: '600',
-  },
-
-  trackingCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: 16,
-    gap: 10,
-  },
-
-  trackingTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-
-  trackingLabel: {
-    fontSize: 11,
-    color: Colors.textSecondary,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-
-  trackingDonor: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    marginTop: 2,
-  },
-
-  addrRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 3,
-  },
-
-  addrText: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
-
-  statusBadge: {
-    backgroundColor: Colors.primaryLight,
-    borderRadius: 8,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-  },
-
-  statusBadgeArrived: {
-    backgroundColor: '#DBEAFE',
-  },
-
-  statusText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: Colors.primaryDark,
-    letterSpacing: 0.5,
-  },
-
-  statusTextArrived: {
-    color: '#1E40AF',
-  },
-
-  divider: {
-    height: 1,
-    backgroundColor: Colors.border,
-  },
-
-  currentStatusLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-
-  currentStatus: {
-    fontSize: 14,
-    color: Colors.textPrimary,
-    fontWeight: '500',
-  },
-
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  statBox: {
-    flex: 1,
-    gap: 3,
-  },
-
-  statLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-
-  statValue: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: Colors.textPrimary,
-  },
-
-  statDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: Colors.border,
-    marginHorizontal: 16,
-  },
-
-  btnRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-
-  outlineBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 7,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
-  },
-
-  outlineBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.primaryDark,
-  },
-
-  arrivedBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 7,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: Colors.primaryDark,
-  },
-
-  arrivedBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.white,
-  },
+  safe: { flex: 1, backgroundColor: Colors.background },
+  content: { padding: 20, gap: 16, paddingBottom: 30 },
+  map: { height: 280, borderRadius: 16, overflow: 'hidden' },
+  mapPlaceholder: { minHeight: 180, alignItems: 'center', justifyContent: 'center', gap: 10 },
+  card: { gap: 10 },
+  title: { fontSize: 18, fontWeight: '800', color: Colors.textPrimary },
+  label: { fontSize: 11, fontWeight: '700', color: Colors.textSecondary },
+  body: { fontSize: 13, lineHeight: 20, color: Colors.textSecondary },
+  actions: { flexDirection: 'row', gap: 10 },
+  button: { flex: 1 },
+  error: { color: Colors.danger },
 });

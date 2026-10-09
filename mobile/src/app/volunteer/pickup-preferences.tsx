@@ -1,6 +1,7 @@
+import { cardSurface, actionFooter } from '@/constants/design';
+import PrimaryButton from '@/components/ui/PrimaryButton';
 import { router } from 'expo-router';
 import {
-  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -18,6 +19,9 @@ import Icon from '@/components/ui/Icon';
 import { Colors } from '@/constants/colors';
 import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
 import { useVolunteerStore } from '@/store/volunteerStore';
+import { useVolunteerAssignments } from '@/store/volunteerAssignments.store';
+import { updateVolunteerPreferences } from '@/services/auth';
+import { getApiErrorMessage } from '@/services/apiErrors';
 
 const FOOD_TYPES: string[] = [
   'Cooked Meals',
@@ -76,6 +80,9 @@ export default function PickupPreferencesScreen() {
     pickupPreferences,
     updatePickupPreferences,
   } = useVolunteerStore();
+  const { isAvailable, isLoading, setAvailability } = useVolunteerAssignments();
+  const [saveError, setSaveError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   const [startTime, setStartTime] = useState<string>(
     pickupPreferences?.preferredStartTime ?? '5:00 PM'
@@ -98,10 +105,9 @@ export default function PickupPreferencesScreen() {
       pickupPreferences?.foodTypes ?? []
     );
 
-  const [availableToday, setAvailableToday] =
-    useState<boolean>(
-      pickupPreferences?.availableToday ?? false
-    );
+  const [availabilityDraft, setAvailableToday] = useState<boolean | null>(null);
+  const availableToday = availabilityDraft
+    ?? (isLoading ? pickupPreferences?.availableToday ?? false : isAvailable);
 
   const [availableDays, setAvailableDays] =
     useState<string[]>(
@@ -162,16 +168,13 @@ export default function PickupPreferencesScreen() {
     setShowAreaModal(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!area.trim()) {
-      Alert.alert(
-        'Validation',
-        'Please set a preferred pickup area.'
-      );
+      setSaveError('Please set a preferred pickup area.');
       return;
     }
 
-    updatePickupPreferences({
+    const preferences = {
       preferredStartTime: startTime,
       preferredEndTime: endTime,
       preferredArea: area,
@@ -179,18 +182,19 @@ export default function PickupPreferencesScreen() {
       foodTypes: selectedFoodTypes,
       availableToday,
       availableDays,
-    });
-
-    Alert.alert(
-      'Saved',
-      'Pickup preferences updated.',
-      [
-        {
-          text: 'OK',
-          onPress: () => router.back(),
-        },
-      ]
-    );
+    };
+    setIsSaving(true);
+    setSaveError('');
+    try {
+      await updateVolunteerPreferences({ pickup_preferences: preferences });
+      await setAvailability(availableToday);
+      updatePickupPreferences(preferences);
+      router.back();
+    } catch (error) {
+      setSaveError(getApiErrorMessage(error, 'load'));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -469,22 +473,9 @@ export default function PickupPreferencesScreen() {
       </ScrollView>
 
       {/* Save Button */}
+      {saveError ? <Text accessibilityRole="alert" style={{ color: Colors.danger, paddingHorizontal: 20 }}>{saveError}</Text> : null}
       <View style={styles.saveContainer}>
-        <TouchableOpacity
-          style={styles.saveBtn}
-          onPress={handleSave}
-          activeOpacity={0.85}
-        >
-          <Icon
-            name="check-circle"
-            size={20}
-            color={Colors.white}
-          />
-
-          <Text style={styles.saveBtnText}>
-            Save Preferences
-          </Text>
-        </TouchableOpacity>
+        <PrimaryButton title="Save Preferences" onPress={() => void handleSave()} loading={isSaving} />
       </View>
 
       {/* ── Start Time Picker Modal ── */}
@@ -758,10 +749,7 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    ...cardSurface,
     paddingHorizontal: 16,
     paddingVertical: 4,
     overflow: 'hidden',
@@ -822,7 +810,7 @@ const styles = StyleSheet.create({
   radiusBtn: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 16,
     borderWidth: 1.5,
     borderColor: Colors.border,
     backgroundColor: Colors.white,
@@ -938,11 +926,9 @@ const styles = StyleSheet.create({
   },
 
   saveContainer: {
+    ...actionFooter,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: Colors.background,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
   },
 
   saveBtn: {
@@ -950,7 +936,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.primary,
-    borderRadius: 14,
+    borderRadius: 16,
     paddingVertical: 16,
     gap: 8,
   },
@@ -988,7 +974,7 @@ const styles = StyleSheet.create({
 
   modalTitle: {
     fontSize: 17,
-    fontWeight: '700',
+    fontWeight: '800',
     color: Colors.textPrimary,
   },
 
@@ -1030,7 +1016,7 @@ const styles = StyleSheet.create({
   modalSaveBtn: {
     marginTop: 16,
     backgroundColor: Colors.primary,
-    borderRadius: 12,
+    borderRadius: 16,
     paddingVertical: 14,
     alignItems: 'center',
   },
@@ -1060,7 +1046,7 @@ const styles = StyleSheet.create({
   areaTextInput: {
     borderWidth: 1.5,
     borderColor: Colors.border,
-    borderRadius: 12,
+    borderRadius: 16,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
@@ -1069,12 +1055,12 @@ const styles = StyleSheet.create({
   },
 
   areaTextInputError: {
-    borderColor: '#EF4444',
+    borderColor: Colors.danger,
   },
 
   errorText: {
     fontSize: 12,
-    color: '#EF4444',
+    color: Colors.danger,
     marginTop: 6,
   },
 
@@ -1087,7 +1073,7 @@ const styles = StyleSheet.create({
   cancelBtn: {
     flex: 1,
     paddingVertical: 13,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1.5,
     borderColor: Colors.border,
     alignItems: 'center',

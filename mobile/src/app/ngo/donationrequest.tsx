@@ -1,188 +1,51 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '@/components/ui/Icon';
-import { donations } from '@/constants/donations';
-
-// ---------- Colour palette (same as other screens) ----------
-const C = {
-  gradientTop: '#2FB584',
-  gradientBottom: '#14855A',
-  primary: '#1E9E6A',
-  primaryDark: '#14855A',
-  tint: '#E3F4EA',
-  bg: '#F2F6F4',
-  card: '#FFFFFF',
-  border: '#E6ECE8',
-  text: '#1B2B24',
-  muted: '#8A9A93',
-  red: '#E5484D',
-  white: '#FFFFFF',
-};
+import { C, NgoFooter, NgoGradientButton, NgoLoadState, NgoPickupPreview, NgoTitleBar } from '@/components/ngo/NgoDesign';
+import { useNgoDetail } from '@/hooks/useNgoDetail';
+import { useNgoDonations } from '@/store/ngoDonations.store';
+import { foodVisual, initials } from '@/utils/ngoPresentation';
+import { formatDateTime } from '@/utils/dateTime';
 
 export default function DonationRequest() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const donation = donations.find((d) => d.id === id);
-
-  if (!donation) {
-    return (
-      <SafeAreaView style={[styles.root, styles.center]}>
-        <Text style={{ fontSize: 40 }}>🍽️</Text>
-        <Text style={styles.notFound}>Request not found</Text>
-        <TouchableOpacity onPress={() => router.back()} style={styles.notFoundBtn}>
-          <Text style={styles.notFoundBtnText}>Go back</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
-
-  const initials = donation.donorName
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-
-  const itemRows = [
-    { label: 'Item', value: donation.title },
-    { label: 'Quantity', value: donation.quantity },
-    { label: 'Pickup by', value: donation.pickupBy },
-  ];
-
-  // Accept -> Assign Volunteer page
-  const handleAccept = () => {
-    router.push({ pathname: '/ngo/assignvolunteer' as any, params: { id: donation.id } });
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const { donation, loading, error } = useNgoDetail(id);
+  const { accept, reject, isSaving } = useNgoDonations();
+  const [actionError, setActionError] = useState<string | null>(null);
+  const handleAccept = async () => {
+    if (!donation || isSaving) return;
+    setActionError(null);
+    try { await accept(donation.id); router.replace({ pathname: '/ngo/assignvolunteer', params: { id: donation.id } }); }
+    catch { setActionError(useNgoDonations.getState().error); }
   };
-
-  // Reject -> Available Donations page
-  const handleReject = () => {
-    router.dismissTo('/ngo/donations' as any);
+  const handleReject = async () => {
+    if (!donation || isSaving) return;
+    setActionError(null);
+    try { await reject(donation.id); router.replace('/ngo/donations'); }
+    catch { setActionError(useNgoDonations.getState().error); }
   };
-
-  return (
-    <View style={styles.root}>
-      <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 190 }}>
-          {/* ================= TOP BAR ================= */}
-          <View style={styles.topBar}>
-            <TouchableOpacity style={styles.backRow} onPress={() => router.back()} hitSlop={10}>
-              <Text style={styles.backText}>‹ BACK</Text>
-            </TouchableOpacity>
-            <Text style={styles.topTitle}>Donation Request</Text>
-            <View style={styles.backRow} />
-          </View>
-
-          {/* ================= DONOR CARD ================= */}
-          <View style={[styles.card, styles.donorCard]}>
-            {donation.donorImage ? (
-              <Image source={donation.donorImage} style={styles.avatar} />
-            ) : (
-              <LinearGradient colors={[C.gradientTop, C.gradientBottom]} style={styles.avatar}>
-                <Text style={styles.avatarText}>{initials}</Text>
-              </LinearGradient>
-            )}
-
-            <View style={{ flex: 1, marginLeft: 14 }}>
-              <View style={styles.nameRow}>
-                <Text style={styles.donorName} numberOfLines={1}>
-                  {donation.donorName}
-                </Text>
-                <View style={styles.verified}>
-                  <Text style={styles.verifiedText}>VERIFIED</Text>
-                </View>
-              </View>
-
-              <View style={styles.contactRow}>
-                <Text style={styles.contactIcon}>✉</Text>
-                <Text style={styles.contactText}>{donation.donorEmail}</Text>
-              </View>
-              <View style={styles.contactRow}>
-                <Text style={styles.contactIcon}>✆</Text>
-                <Text style={styles.contactText}>{donation.donorPhone}</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* ================= ITEM DETAILS ================= */}
-          <Text style={styles.sectionTitle}>Item Details</Text>
-          <View style={[styles.card, styles.itemCard]}>
-            {donation.image ? (
-              <Image source={donation.image} style={styles.thumb} />
-            ) : (
-              <View style={[styles.thumb, styles.thumbPlaceholder]}>
-                <Text style={{ fontSize: 44 }}>{donation.emoji}</Text>
-              </View>
-            )}
-
-            <View style={{ flex: 1, marginLeft: 12 }}>
-              {itemRows.map((r, i) => (
-                <View key={r.label} style={[styles.itemRow, i < itemRows.length - 1 && styles.itemDivider]}>
-                  <Text style={styles.itemLabel}>{r.label}</Text>
-                  <Text style={styles.itemValue} numberOfLines={1}>
-                    {r.value}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </View>
-
-          {/* ================= MESSAGE ================= */}
-          <Text style={styles.sectionTitle}>Message</Text>
-          <View style={styles.messageCard}>
-            <View style={styles.quoteCircle}>
-              <Text style={styles.quoteMark}>“</Text>
-            </View>
-            <Text style={styles.messageText}>{donation.message}</Text>
-          </View>
-
-          {/* ================= MAP PREVIEW ================= */}
-          <View style={[styles.card, styles.mapCard]}>
-            <View style={styles.mapBg}>
-              {/* roads */}
-              <View style={[styles.road, { top: 26, left: 0, right: 0, height: 10 }]} />
-              <View style={[styles.road, { top: 70, left: 0, right: 0, height: 8 }]} />
-              <View style={[styles.road, { left: 70, top: 0, bottom: 0, width: 10 }]} />
-              <View style={[styles.road, { left: 190, top: 0, bottom: 0, width: 8 }]} />
-              {/* parks */}
-              <View style={[styles.park, { top: 40, left: 90, width: 70, height: 24 }]} />
-              <View style={[styles.park, { top: 84, left: 210, width: 60, height: 20 }]} />
-
-              {/* pin */}
-              <View style={styles.pinWrap}>
-                <View style={styles.pinOuter}>
-                  <View style={styles.pinInner} />
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.mapLabel}>
-              <Icon name="map" size={12} color={C.primaryDark} />
-              <Text style={styles.mapLabelText}>Pickup · {donation.location}</Text>
-            </View>
-          </View>
-        </ScrollView>
-
-        {/* ================= BOTTOM ACTIONS ================= */}
-        <SafeAreaView edges={['bottom']} style={styles.actionBar}>
-          <TouchableOpacity activeOpacity={0.85} onPress={handleAccept}>
-            <LinearGradient
-              colors={[C.gradientTop, C.gradientBottom]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.acceptBtn}
-            >
-              <Text style={styles.acceptText}>Accept Donation</Text>
-            </LinearGradient>
-          </TouchableOpacity>
-
-          <TouchableOpacity activeOpacity={0.8} style={styles.rejectBtn} onPress={handleReject}>
-            <Text style={styles.rejectText}>Reject Donation</Text>
-          </TouchableOpacity>
-        </SafeAreaView>
-      </SafeAreaView>
-    </View>
-  );
+  return <View style={styles.root}><SafeAreaView edges={['top']} style={{ flex: 1 }}>
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 190 }}>
+      <NgoTitleBar title="Donation Request" /><NgoLoadState loading={loading && !donation} error={actionError ?? error} />
+      {donation ? <>
+        <View style={[styles.card, styles.donorCard]}><LinearGradient colors={[C.gradientTop, C.gradientBottom]} style={styles.avatar}><Text style={styles.avatarText}>{initials(donation.donorName)}</Text></LinearGradient>
+          <View style={{ flex: 1, marginLeft: 14 }}><View style={styles.nameRow}><Text style={styles.donorName}>{donation.donorName}</Text><View style={styles.verified}><Text style={styles.verifiedText}>{donation.donorRole === 'restaurant' ? 'RESTAURANT' : 'HOUSEHOLD'}</Text></View></View><View style={styles.contactRow}><Icon name="user" size={13} color={C.muted} /><Text style={styles.contactText}>{donation.donorRole === 'restaurant' ? 'Restaurant donor' : 'Household donor'}</Text></View><View style={styles.contactRow}><Icon name="pin" size={13} color={C.muted} /><Text style={[styles.contactText, { flex: 1 }]}>{donation.pickupLocation}</Text></View></View>
+        </View>
+        <Text style={styles.sectionTitle}>Item Details</Text><View style={[styles.card, styles.itemCard]}><View style={[styles.thumb, styles.thumbPlaceholder]}><Text style={{ fontSize: 44 }}>{foodVisual(donation.foodType).emoji}</Text></View><View style={{ flex: 1, marginLeft: 12 }}>{[
+          { label: 'Item', value: donation.foodType }, { label: 'Quantity', value: `${donation.quantity} ${donation.unit}` }, { label: 'Pickup by', value: formatDateTime(donation.pickupDeadline) },
+        ].map((row, index) => <View key={row.label} style={[styles.itemRow, index < 2 && styles.itemDivider]}><Text style={styles.itemLabel}>{row.label}</Text><Text style={styles.itemValue}>{row.value}</Text></View>)}</View></View>
+        <Text style={styles.sectionTitle}>Message</Text><View style={styles.messageCard}><View style={styles.quoteCircle}><Text style={styles.quoteMark}>“</Text></View><Text style={styles.messageText}>{donation.description || 'No additional message provided.'}</Text></View>
+        <NgoPickupPreview donation={donation} />
+      </> : !loading && !error ? <Text style={styles.notFound}>Request not found</Text> : null}
+    </ScrollView>
+    {donation ? <NgoFooter>{donation.status === 'published' ? <>
+      <NgoGradientButton title={isSaving ? 'Saving...' : 'Accept Donation'} disabled={loading || donation.rejectedByCurrentNgo} loading={isSaving} onPress={() => { void handleAccept(); }} />
+      <Pressable disabled={loading || isSaving || donation.rejectedByCurrentNgo} style={styles.rejectBtn} onPress={() => { void handleReject(); }}><Text style={styles.rejectText}>Reject Donation</Text></Pressable>
+    </> : <NgoGradientButton title={donation.status === 'accepted' ? 'Assign Volunteer' : 'Track Collection'} onPress={() => router.replace({ pathname: donation.status === 'accepted' ? '/ngo/assignvolunteer' : '/ngo/activecollection', params: { id: donation.id } })} />}</NgoFooter> : null}
+  </SafeAreaView></View>;
 }
 
 const styles = StyleSheet.create({

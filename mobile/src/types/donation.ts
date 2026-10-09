@@ -3,7 +3,9 @@ export type DonationStatus =
   | 'accepted'
   | 'assigned'
   | 'pickup'
+  | 'arrived'
   | 'collected'
+  | 'delivered'
   | 'cancelled';
 
 export type DonationStatusLog = {
@@ -31,6 +33,7 @@ export type Donation = Omit<DonationDraft, 'quantity'> & {
   createdAt?: string;
   statusLogs?: DonationStatusLog[];
   collectedAt?: string;
+  deliveredAt?: string;
   ngoName?: string;
   volunteerName?: string;
 };

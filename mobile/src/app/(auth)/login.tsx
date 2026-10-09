@@ -44,12 +44,6 @@ export default function LoginScreen() {
     setAuthError('');
 
     try {
-      // Mock bypass for specific credentials
-      if (email.trim() === 'kavindanimsara2050@gmail.com' && password === 'Kavinda@2050') {
-        router.replace('/volunteer/dashboard');
-        return;
-      }
-
       const result = await loginUser(
         email.trim(),
         password
