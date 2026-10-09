@@ -41,6 +41,7 @@ const symbols = {
   settings: { ios: 'gearshape', android: 'settings', web: 'settings' },
   'questionmark.circle': { ios: 'questionmark.circle', android: 'help_outline', web: 'help_outline' },
   'arrow.right.square': { ios: 'arrow.right.square', android: 'logout', web: 'logout' },
+  trash: { ios: 'trash', android: 'delete', web: 'delete' },
 } satisfies Record<string, SymbolViewProps['name']>;
 
 export type IconName = keyof typeof symbols;

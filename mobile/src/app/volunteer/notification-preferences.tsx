@@ -1,121 +1,325 @@
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View, Switch, TouchableOpacity, Alert } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
+  Alert,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
+import type { ReactNode } from 'react';
+
 import { Colors } from '@/constants/colors';
 import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
 import { useVolunteerStore } from '@/store/volunteerStore';
 
-export default function NotificationPreferencesScreen() {
-  const { notificationPreferences, updateNotificationPreferences } = useVolunteerStore();
-  const [prefs, setPrefs] = useState(notificationPreferences);
+// ─── Types ───────────────────────────────────────────────────────────────────
 
-  const handleToggle = (key: keyof typeof prefs) => {
-    setPrefs(prev => ({ ...prev, [key]: !prev[key] }));
-  };
+interface SwitchRowProps {
+  label: string;
+  value: boolean;
+  onChange: (val: boolean) => void;
+  isLast?: boolean;
+}
 
-  const handleSave = () => {
-    updateNotificationPreferences(prefs);
-    Alert.alert('Preferences Saved', 'Notification preferences updated.', [
-      { text: 'OK', onPress: () => router.back() }
-    ]);
-  };
+// ─── Sub-components ──────────────────────────────────────────────────────────
 
-  const renderRow = (title: string, desc: string, key: keyof typeof prefs) => (
-    <View style={styles.row}>
-      <View style={styles.textCol}>
-        <Text style={styles.rowTitle}>{title}</Text>
-        <Text style={styles.rowDesc}>{desc}</Text>
-      </View>
+function SwitchRow({
+  label,
+  value,
+  onChange,
+  isLast = false,
+}: SwitchRowProps) {
+  return (
+    <View style={[styles.row, !isLast && styles.rowDivider]}>
+      <Text style={styles.rowLabel}>{label}</Text>
+
       <Switch
-        value={prefs[key]}
-        onValueChange={() => handleToggle(key)}
-        trackColor={{ false: Colors.border, true: Colors.primary }}
+        value={value}
+        onValueChange={onChange}
         thumbColor={Colors.white}
+        trackColor={{
+          false: '#D1D5DB',
+          true: Colors.primary,
+        }}
+        ios_backgroundColor="#D1D5DB"
       />
     </View>
   );
+}
+
+interface SectionProps {
+  title: string;
+  children: ReactNode;
+}
+
+function Section({ title, children }: SectionProps) {
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      <View style={styles.card}>{children}</View>
+    </View>
+  );
+}
+
+// ─── Screen ──────────────────────────────────────────────────────────────────
+
+export default function NotificationPreferencesScreen() {
+  const {
+    notificationPreferences,
+    updateNotificationPreferences,
+  } = useVolunteerStore();
+
+  const handleSave = () => {
+    Alert.alert(
+      'Preferences saved',
+      'Your notification preferences have been updated.',
+      [
+        {
+          text: 'OK',
+          onPress: () => router.back(),
+        },
+      ]
+    );
+  };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <VolunteerScreenHeader title="Notification Preferences" onBack={() => router.back()} />
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={['top', 'bottom']}
+    >
+      <VolunteerScreenHeader
+        title="Notification Preferences"
+        onBack={() => router.back()}
+      />
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Pickup Notifications</Text>
-          <View style={styles.card}>
-            {renderRow('New pickup assigned', 'Notify when a new pickup is added', 'newPickupAssigned')}
-            <View style={styles.divider} />
-            {renderRow('Pickup reminder', 'Alert me 30 minutes before window', 'pickupReminder')}
-            <View style={styles.divider} />
-            {renderRow('Route updates', 'Live traffic and navigation alerts', 'routeUpdates')}
-            <View style={styles.divider} />
-            {renderRow('Pickup status updates', 'When status changes to Arrived or Collected', 'statusUpdates')}
-            <View style={styles.divider} />
-            {renderRow('Delivery completed', 'Confirmation of successful delivery', 'deliveryCompleted')}
-          </View>
-        </View>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── Section 1: Pickup Notifications ── */}
+        <Section title="Pickup Notifications">
+          <SwitchRow
+            label="New pickup assigned"
+            value={notificationPreferences.newPickupAssigned}
+            onChange={(val) =>
+              updateNotificationPreferences({
+                newPickupAssigned: val,
+              })
+            }
+          />
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Activity Notifications</Text>
-          <View style={styles.card}>
-            {renderRow('New activity', 'Notify on new activity timeline entries', 'activityUpdates')}
-            <View style={styles.divider} />
-            {renderRow('Issue updates', 'Updates on reported issues', 'issueUpdates')}
-            <View style={styles.divider} />
-            {renderRow('Volunteer announcements', 'System alerts and community news', 'announcements')}
-          </View>
-        </View>
+          <SwitchRow
+            label="Pickup reminder"
+            value={notificationPreferences.pickupReminder}
+            onChange={(val) =>
+              updateNotificationPreferences({
+                pickupReminder: val,
+              })
+            }
+          />
 
-      </ScrollView>
+          <SwitchRow
+            label="Route updates"
+            value={notificationPreferences.routeUpdates}
+            onChange={(val) =>
+              updateNotificationPreferences({
+                routeUpdates: val,
+              })
+            }
+          />
 
-      {/* Bottom Actions */}
-      <View style={styles.bottomBar}>
-        <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-          <Text style={styles.saveBtnText}>Save Preferences</Text>
+          <SwitchRow
+            label="Pickup status updates"
+            value={notificationPreferences.statusUpdates}
+            onChange={(val) =>
+              updateNotificationPreferences({
+                statusUpdates: val,
+              })
+            }
+          />
+
+          <SwitchRow
+            label="Delivery completed"
+            value={notificationPreferences.deliveryCompleted}
+            onChange={(val) =>
+              updateNotificationPreferences({
+                deliveryCompleted: val,
+              })
+            }
+            isLast
+          />
+        </Section>
+
+        {/* ── Section 2: Activity Notifications ── */}
+        <Section title="Activity Notifications">
+          <SwitchRow
+            label="New activity"
+            value={notificationPreferences.activityUpdates}
+            onChange={(val) =>
+              updateNotificationPreferences({
+                activityUpdates: val,
+              })
+            }
+          />
+
+          <SwitchRow
+            label="Collection updates"
+            value={notificationPreferences.issueUpdates}
+            onChange={(val) =>
+              updateNotificationPreferences({
+                issueUpdates: val,
+              })
+            }
+          />
+
+          <SwitchRow
+            label="Volunteer announcements"
+            value={notificationPreferences.announcements}
+            onChange={(val) =>
+              updateNotificationPreferences({
+                announcements: val,
+              })
+            }
+            isLast
+          />
+        </Section>
+
+        {/* ── Section 3: Other ── */}
+        <Section title="Other">
+          <SwitchRow
+            label="General notifications"
+            value={notificationPreferences.generalNotifications}
+            onChange={(val) =>
+              updateNotificationPreferences({
+                generalNotifications: val,
+              })
+            }
+          />
+
+          <SwitchRow
+            label="Important alerts"
+            value={notificationPreferences.importantAlerts}
+            onChange={(val) =>
+              updateNotificationPreferences({
+                importantAlerts: val,
+              })
+            }
+            isLast
+          />
+        </Section>
+
+        {/* ── Save Button ── */}
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={handleSave}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.saveButtonText}>
+            Save Preferences
+          </Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: 16, gap: 24, paddingBottom: 40 },
+// ─── Styles ──────────────────────────────────────────────────────────────────
 
-  section: { gap: 10 },
-  sectionTitle: { fontSize: 13, fontWeight: '700', color: Colors.textSecondary, textTransform: 'uppercase', letterSpacing: 0.5, marginLeft: 4 },
-  
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+
+  scrollView: {
+    flex: 1,
+  },
+
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+
+  section: {
+    marginBottom: 24,
+  },
+
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+
   card: {
     backgroundColor: Colors.surface,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: Colors.border,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+
+    // Subtle shadow
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
+
   row: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-  },
-  textCol: { flex: 1, marginRight: 16, gap: 2 },
-  rowTitle: { fontSize: 15, fontWeight: '600', color: Colors.textPrimary },
-  rowDesc: { fontSize: 12, color: Colors.textSecondary },
-  divider: { height: 1, backgroundColor: Colors.border, marginHorizontal: 16 },
-
-  bottomBar: {
-    padding: 16,
-    paddingBottom: 24,
-    backgroundColor: Colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-  },
-  saveBtn: {
+    paddingHorizontal: 16,
     paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: Colors.primaryDark,
-    alignItems: 'center',
   },
-  saveBtnText: { fontSize: 15, fontWeight: '700', color: Colors.white },
+
+  rowDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+
+  rowLabel: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '500',
+    color: Colors.textPrimary,
+    marginRight: 12,
+  },
+
+  saveButton: {
+    backgroundColor: Colors.primaryDark,
+    borderRadius: 12,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    marginTop: 8,
+
+    shadowColor: Colors.primaryDark,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+
+  saveButtonText: {
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
 });
