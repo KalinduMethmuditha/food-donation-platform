@@ -9,14 +9,17 @@ import {
   getAvailableVolunteers,
   getNgoDonation,
   getNgoDonations,
+  rejectNgoDonation,
   type AvailableVolunteer,
   type NgoDonation,
+  type NgoRejection,
 } from '@/services/ngoDonations';
 import { removeToken } from '@/services/tokenStorage';
 
 type State = {
   available: NgoDonation[];
   mine: NgoDonation[];
+  rejected: NgoRejection[];
   volunteers: AvailableVolunteer[];
   readNoticeIds: string[];
   isLoading: boolean;
@@ -26,6 +29,7 @@ type State = {
   loadDonation: (id: string) => Promise<NgoDonation>;
   loadVolunteers: () => Promise<void>;
   accept: (id: string) => Promise<NgoDonation>;
+  reject: (id: string) => Promise<void>;
   assign: (id: string, volunteerId: string) => Promise<NgoDonation>;
   markNoticesRead: (ids: string[]) => void;
   clear: () => void;
@@ -58,6 +62,7 @@ let requestId = 0;
 export const useNgoDonations = create<State>((set, get) => ({
   available: [],
   mine: [],
+  rejected: [],
   volunteers: [],
   readNoticeIds: [],
   isLoading: false,
@@ -66,7 +71,7 @@ export const useNgoDonations = create<State>((set, get) => ({
   clear: () => {
     revision += 1;
     requestId += 1;
-    set({ available: [], mine: [], volunteers: [], readNoticeIds: [], isLoading: false, isSaving: false, error: null });
+    set({ available: [], mine: [], rejected: [], volunteers: [], readNoticeIds: [], isLoading: false, isSaving: false, error: null });
   },
   markNoticesRead: (ids) => set((state) => ({
     readNoticeIds: Array.from(new Set([...state.readNoticeIds, ...ids])),
@@ -80,9 +85,12 @@ export const useNgoDonations = create<State>((set, get) => ({
       if (currentRequest === requestId && currentRevision === revision) {
         set((state) => ({
           available: result.available,
+          rejected: result.rejected,
           mine: result.mine.map((item) => {
             const previous = state.mine.find((old) => old.id === item.id);
-            return previous?.status === item.status ? { ...item, statusLogs: previous.statusLogs } : item;
+            return previous?.status === item.status
+              ? { ...item, statusLogs: item.statusLogs ?? previous.statusLogs }
+              : item;
           }),
         }));
       }
@@ -98,7 +106,7 @@ export const useNgoDonations = create<State>((set, get) => ({
       const donation = await getNgoDonation(id);
       set((state) => donation.status === 'published'
         ? {
-          available: upsertDonation(state.available, donation),
+          available: donation.rejectedByCurrentNgo ? state.available.filter((item) => item.id !== id) : upsertDonation(state.available, donation),
           mine: state.mine.filter((item) => item.id !== id),
         }
         : {
@@ -133,6 +141,24 @@ export const useNgoDonations = create<State>((set, get) => ({
         mine: [donation, ...state.mine.filter((item) => item.id !== id)],
       }));
       return donation;
+    } catch (error) {
+      set({ error: errorMessage(error) });
+      await handleUnauthorized(error);
+      throw error;
+    } finally {
+      set({ isSaving: false });
+    }
+  },
+  reject: async (id) => {
+    if (get().isSaving) throw new Error('Please wait for the current update.');
+    set({ isSaving: true, error: null });
+    try {
+      const rejection = await rejectNgoDonation(id);
+      revision += 1;
+      set((state) => ({
+        available: state.available.filter((item) => item.id !== id),
+        rejected: [rejection, ...state.rejected.filter((item) => item.id !== rejection.id)],
+      }));
     } catch (error) {
       set({ error: errorMessage(error) });
       await handleUnauthorized(error);

@@ -57,6 +57,8 @@ export default function PickupDetailsScreen() {
             loading={isSaving} onPress={() => void startRoute()} />
         ) : assignment.status === 'arrived' ? (
           <PrimaryButton title="Update Collection" onPress={() => router.push('/volunteer/collection-status')} />
+        ) : assignment.status === 'collected' ? (
+          <PrimaryButton title="Complete Delivery" onPress={() => router.push('/volunteer/confirmation')} />
         ) : (
           <PrimaryButton title="View Confirmation" onPress={() => router.push('/volunteer/confirmation')} />
         )}

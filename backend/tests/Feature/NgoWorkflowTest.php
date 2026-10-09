@@ -65,6 +65,45 @@ class NgoWorkflowTest extends TestCase
         $this->getJson('/api/ngo/donations')->assertForbidden();
     }
 
+    public function test_rejection_is_saved_for_one_ngo_and_other_ngos_can_still_accept(): void
+    {
+        $donor = User::factory()->create(['role' => 'household']);
+        $ngo = User::factory()->create(['role' => 'ngo']);
+        $otherNgo = User::factory()->create(['role' => 'ngo']);
+        $donation = $this->createDonation($donor);
+
+        $this->authenticate($donor);
+        $this->postJson("/api/ngo/donations/{$donation->id}/reject")->assertForbidden();
+
+        $this->authenticate($ngo);
+        $this->postJson("/api/ngo/donations/{$donation->id}/reject")
+            ->assertOk()->assertJsonPath('rejection.donation.id', $donation->id);
+        $this->postJson("/api/ngo/donations/{$donation->id}/reject")->assertOk();
+        $this->assertDatabaseCount('ngo_donation_rejections', 1);
+        $this->assertDatabaseHas('donations', ['id' => $donation->id, 'status' => 'published']);
+        $this->getJson('/api/ngo/donations')->assertOk()
+            ->assertJsonCount(0, 'available_donations')
+            ->assertJsonCount(1, 'rejected_donations');
+        $this->postJson("/api/ngo/donations/{$donation->id}/accept")->assertStatus(409);
+
+        $this->authenticate($otherNgo);
+        $this->getJson('/api/ngo/donations')->assertOk()
+            ->assertJsonCount(1, 'available_donations')
+            ->assertJsonCount(0, 'rejected_donations');
+        $this->postJson("/api/ngo/donations/{$donation->id}/accept")->assertOk();
+        $this->postJson("/api/ngo/donations/{$donation->id}/reject")->assertStatus(409);
+    }
+
+    public function test_expired_donation_cannot_be_rejected(): void
+    {
+        $donor = User::factory()->create(['role' => 'restaurant']);
+        $ngo = User::factory()->create(['role' => 'ngo']);
+        $donation = $this->createDonation($donor, ['pickup_deadline' => now()->subMinute()]);
+        $this->authenticate($ngo);
+        $this->postJson("/api/ngo/donations/{$donation->id}/reject")->assertStatus(409);
+        $this->assertDatabaseCount('ngo_donation_rejections', 0);
+    }
+
     public function test_only_one_ngo_can_accept_and_donor_sees_the_result(): void
     {
         $donor = User::factory()->create(['role' => 'household']);

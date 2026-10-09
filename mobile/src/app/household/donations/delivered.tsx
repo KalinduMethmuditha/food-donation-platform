@@ -55,12 +55,13 @@ export default function HouseholdDelivered() {
         {isCollected && donation ? (
           <>
             <View style={styles.check}><Icon name="check" size={36} color={Colors.white} /></View>
-            <Text style={styles.title}>Donation Collected!</Text>
-            <Text style={styles.subtitle}>Your donation of {donation.quantity} {donation.unit} of {donation.foodType} was collected.</Text>
+            <Text style={styles.title}>{donation.status === 'delivered' ? 'Donation Delivered!' : 'Donation Collected!'}</Text>
+            <Text style={styles.subtitle}>Your donation of {donation.quantity} {donation.unit} of {donation.foodType} was {donation.status === 'delivered' ? 'delivered successfully' : 'collected'}.</Text>
             <Card style={styles.receipt}>
               <Text style={styles.label}>DONATION RECEIPT</Text>
               <View style={styles.row}><Text style={styles.key}>Food Collected</Text><Text style={styles.value}>{donation.foodType} ({donation.quantity} {donation.unit})</Text></View>
               <View style={styles.row}><Text style={styles.key}>Date & Time</Text><Text style={styles.value}>{formatDateTime(collectedAt)}</Text></View>
+              {donation.status === 'delivered' ? <View style={styles.row}><Text style={styles.key}>Delivered</Text><Text style={styles.value}>{formatDateTime(donation.deliveredAt)}</Text></View> : null}
               <View style={styles.row}><Text style={styles.key}>Pickup Location</Text><Text style={styles.value}>{donation.pickupLocation}</Text></View>
               <View style={styles.row}><Text style={styles.key}>Partner NGO</Text><Text style={[styles.value, styles.green]}>{donation.ngoName || 'Unavailable'}</Text></View>
               <View style={styles.row}><Text style={styles.key}>Volunteer</Text><Text style={styles.value}>{donation.volunteerName || 'Unavailable'}</Text></View>

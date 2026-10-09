@@ -8,20 +8,31 @@ import Icon from '@/components/ui/Icon';
 import PrimaryButton from '@/components/ui/PrimaryButton';
 import SecondaryButton from '@/components/ui/SecondaryButton';
 import { Colors } from '@/constants/colors';
-import { useSelectedAssignment } from '@/store/volunteerAssignments.store';
+import { useSelectedAssignment, useVolunteerAssignments } from '@/store/volunteerAssignments.store';
 import { useVolunteerStore } from '@/store/volunteerStore';
 import { formatDateTime } from '@/utils/dateTime';
 
 export default function ConfirmationScreen() {
   const assignment = useSelectedAssignment();
+  const { advance, isSaving, error } = useVolunteerAssignments();
   const profile = useVolunteerStore((state) => state.profile);
   const collectedAt = assignment?.statusLogs.find((log) => log.status === 'collected')?.createdAt;
   const deliveredAt = assignment?.statusLogs.find((log) => log.status === 'delivered')?.createdAt;
   const complete = assignment?.status === 'collected' || assignment?.status === 'delivered';
 
+  const markDelivered = async () => {
+    if (!assignment || assignment.status !== 'collected') return;
+    try {
+      await advance(assignment.id, 'delivered');
+    } catch {
+      // The store displays the API error below.
+    }
+  };
+
   return <SafeAreaView style={styles.safe} edges={['top']}>
     <VolunteerScreenHeader title="Pickup Confirmation" onBack={() => router.back()} />
     <ScrollView contentContainerStyle={styles.content}>
+      {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
       {!assignment || !complete ? <Card style={styles.card}>
         <Text style={styles.title}>Confirmation not available</Text>
         <Text style={styles.body}>Record the collection before viewing its confirmation.</Text>
@@ -29,7 +40,7 @@ export default function ConfirmationScreen() {
       </Card> : <>
         <View style={styles.hero}><Icon name="check-circle" size={64} />
           <Text style={styles.title}>{deliveredAt ? 'Delivery Completed' : 'Food Collected'}</Text>
-          <Text style={styles.body}>This pickup is recorded in the donation history.</Text></View>
+          <Text style={styles.body}>{deliveredAt ? 'The NGO and donor can now see the delivery.' : 'Confirm delivery when the food reaches its destination.'}</Text></View>
         <Card style={styles.card}>
           <Text style={styles.label}>PICKUP CONFIRMATION</Text>
           <Text style={styles.body}>Reference: DN-{assignment.id}</Text>
@@ -41,6 +52,9 @@ export default function ConfirmationScreen() {
           {deliveredAt ? <Text style={styles.body}>Delivered: {formatDateTime(deliveredAt)}</Text> : null}
           <Text style={styles.body}>Partner NGO: {assignment.ngoName || 'Unavailable'}</Text>
         </Card>
+        {assignment.status === 'collected' ? (
+          <PrimaryButton title="Mark as Delivered" loading={isSaving} disabled={isSaving} onPress={() => { void markDelivered(); }} />
+        ) : null}
         <PrimaryButton title="Back to Dashboard" onPress={() => router.replace('/volunteer/dashboard')} />
         <SecondaryButton title="View Activity" onPress={() => router.push('/volunteer/activity')} />
       </>}
@@ -56,4 +70,5 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: '800', color: Colors.textPrimary, textAlign: 'center' },
   label: { fontSize: 11, fontWeight: '700', color: Colors.textSecondary },
   body: { fontSize: 14, lineHeight: 21, color: Colors.textSecondary },
+  error: { color: Colors.danger, fontSize: 13 },
 });

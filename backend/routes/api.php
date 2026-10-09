@@ -22,6 +22,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/ngo/donations', [NgoDonationController::class, 'index']);
     Route::get('/ngo/donations/{donation}', [NgoDonationController::class, 'show']);
     Route::post('/ngo/donations/{donation}/accept', [NgoDonationController::class, 'accept']);
+    Route::post('/ngo/donations/{donation}/reject', [NgoDonationController::class, 'reject']);
     Route::get('/ngo/volunteers', [NgoDonationController::class, 'volunteers']);
     Route::post('/ngo/donations/{donation}/assign', [NgoDonationController::class, 'assign']);
 

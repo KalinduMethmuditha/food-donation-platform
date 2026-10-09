@@ -44,6 +44,11 @@ class Donation extends Model
         return $this->hasMany(DonationStatusLog::class);
     }
 
+    public function ngoRejections(): HasMany
+    {
+        return $this->hasMany(NgoDonationRejection::class);
+    }
+
     protected function casts(): array
     {
         return [
