@@ -9,6 +9,7 @@ import AppHeader from '@/components/shared/AppHeader';
 import EmptyState from '@/components/shared/EmptyState';
 import Screen from '@/components/shared/Screen';
 import StatCard from '@/components/shared/StatCard';
+import DashboardHero from '@/components/shared/DashboardHero';
 import Card from '@/components/ui/Card';
 import PrimaryButton from '@/components/ui/PrimaryButton';
 import SecondaryButton from '@/components/ui/SecondaryButton';
@@ -34,10 +35,12 @@ export default function HouseholdDashboard() {
     router.push('/household/create-donation/food-details');
   };
 
-  return <Screen footer={<HouseholdBottomNav activeTab="home" />}>
-    <AppHeader title="Household Dashboard" />
+  return <Screen navigation={<HouseholdBottomNav activeTab="home" />}>
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <Text style={styles.heading}>Share extra food with people who need it</Text>
+      <DashboardHero header={<AppHeader title="Household Dashboard" variant="hero"
+        onMenuPress={() => router.push('/household/profile')} />}
+        subtitle="Share extra food with people who need it" emoji="🧺" />
+      <View style={styles.main}>
       <Card style={styles.actionCard}>
         <Text style={styles.actionTitle}>Have food to share?</Text>
         <Text style={styles.body}>Publish a household food donation in a few steps.</Text>
@@ -70,14 +73,15 @@ export default function HouseholdDashboard() {
       </> : null}
 
       <SecondaryButton title="View Donation History" onPress={() => router.push('/household/activity')} />
+      </View>
     </ScrollView>
   </Screen>;
 }
 
 const styles = StyleSheet.create({
-  content: { padding: 16, paddingBottom: 28, gap: 12 },
-  heading: { fontSize: 22, fontWeight: '800', color: Colors.textPrimary, marginVertical: 8 },
-  actionCard: { backgroundColor: Colors.primaryLight, gap: 7 },
+  content: { paddingBottom: 28 },
+  main: { marginTop: -36, paddingHorizontal: 16, gap: 12 },
+  actionCard: { gap: 7 },
   actionTitle: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary },
   actionButton: { marginTop: 8 },
   body: { fontSize: 13, lineHeight: 20, color: Colors.textSecondary, marginTop: 4 },

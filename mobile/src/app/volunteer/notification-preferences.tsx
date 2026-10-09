@@ -1,12 +1,12 @@
+import { cardSurface } from '@/constants/design';
+import PrimaryButton from '@/components/ui/PrimaryButton';
 import { router } from 'expo-router';
 import {
   ScrollView,
   StyleSheet,
   Switch,
   Text,
-  TouchableOpacity,
   View,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, type ReactNode } from 'react';
@@ -218,16 +218,7 @@ export default function NotificationPreferencesScreen() {
 
         {/* ── Save Button ── */}
         {saveError ? <Text accessibilityRole="alert" style={{ color: Colors.danger }}>{saveError}</Text> : null}
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={() => void handleSave()}
-          disabled={isSaving}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.saveButtonText}>
-            Save Preferences
-          </Text>
-        </TouchableOpacity>
+        <PrimaryButton title="Save Preferences" onPress={() => void handleSave()} loading={isSaving} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -256,7 +247,7 @@ const styles = StyleSheet.create({
 
   sectionTitle: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
     color: Colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -264,22 +255,9 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    ...cardSurface,
     paddingHorizontal: 4,
     paddingVertical: 4,
-
-    // Subtle shadow
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
   },
 
   row: {
@@ -305,7 +283,7 @@ const styles = StyleSheet.create({
 
   saveButton: {
     backgroundColor: Colors.primaryDark,
-    borderRadius: 12,
+    borderRadius: 16,
     height: 52,
     alignItems: 'center',
     justifyContent: 'center',

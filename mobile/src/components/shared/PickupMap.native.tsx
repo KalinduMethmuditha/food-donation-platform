@@ -26,7 +26,7 @@ export default function PickupMap({ latitude, longitude, onLocationChange }: Pic
     setError('');
   };
 
-  const useCurrentLocation = async () => {
+  const selectCurrentLocation = async () => {
     if (pendingLocation.current) return;
     pendingLocation.current = true;
     setIsLocating(true);
@@ -60,7 +60,7 @@ export default function PickupMap({ latitude, longitude, onLocationChange }: Pic
       </MapView>
     </View>
     <Text style={styles.hint}>{coordinate ? 'Pickup point selected. Tap the map or drag the pin to adjust.' : 'Tap the map to select a pickup point (optional).'}</Text>
-    <PrimaryButton title="Use My Current Location" loading={isLocating} onPress={() => void useCurrentLocation()} />
+    <PrimaryButton title="Use My Current Location" loading={isLocating} onPress={() => void selectCurrentLocation()} />
     {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
   </View>;
 }

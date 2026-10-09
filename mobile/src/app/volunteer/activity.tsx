@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   count: { color: Colors.primaryDark, fontWeight: '700' },
   content: { gap: 12, paddingBottom: 28 },
   card: { gap: 6 },
-  title: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
+  title: { fontSize: 16, fontWeight: '800', color: Colors.textPrimary },
   body: { fontSize: 13, lineHeight: 20, color: Colors.textSecondary },
   time: { fontSize: 11, color: Colors.textMuted },
   error: { color: Colors.danger },

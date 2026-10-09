@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   map: { height: 280, borderRadius: 16, overflow: 'hidden' },
   mapPlaceholder: { minHeight: 180, alignItems: 'center', justifyContent: 'center', gap: 10 },
   card: { gap: 10 },
-  title: { fontSize: 18, fontWeight: '700', color: Colors.textPrimary },
+  title: { fontSize: 18, fontWeight: '800', color: Colors.textPrimary },
   label: { fontSize: 11, fontWeight: '700', color: Colors.textSecondary },
   body: { fontSize: 13, lineHeight: 20, color: Colors.textSecondary },
   actions: { flexDirection: 'row', gap: 10 },

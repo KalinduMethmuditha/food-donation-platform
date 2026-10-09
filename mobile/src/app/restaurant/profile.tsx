@@ -62,8 +62,8 @@ export default function RestaurantProfileScreen() {
     }
   };
 
-  return <Screen>
-    <AppHeader title="Profile" />
+  return <Screen navigation={<BottomNavigation activeTab="Profile" />}>
+    <AppHeader title="Profile" variant="plain" showBack onBackPress={() => router.replace('/restaurant/dashboard')} />
     <ScrollView contentContainerStyle={styles.content}>
       <Card style={styles.profile}>
         <View style={styles.avatar}><Icon name="leaf" size={38} /></View>
@@ -86,7 +86,6 @@ export default function RestaurantProfileScreen() {
       </Card>
       <PrimaryButton title="Sign Out" loading={isSigningOut} onPress={() => void signOut()} />
     </ScrollView>
-    <BottomNavigation activeTab="Profile" />
   </Screen>;
 }
 const styles = StyleSheet.create({

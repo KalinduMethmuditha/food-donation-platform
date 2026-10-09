@@ -23,7 +23,7 @@ export default function DonationsScreen() {
     (selectedTab === 'completed' ? ['collected', 'delivered'].includes(donation.status) : !['collected', 'delivered', 'cancelled'].includes(donation.status)) &&
     donation.foodType.toLowerCase().includes(search.trim().toLowerCase()));
 
-  return <Screen>
+  return <Screen navigation={<BottomNavigation activeTab="Donations" />}>
     <AppHeader title="My Donations" />
     <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
       <SegmentedControl options={tabs} value={selectedTab} onChange={setSelectedTab} />
@@ -50,7 +50,6 @@ export default function DonationsScreen() {
       {!isLoading && !loadError && filteredDonations.length === 0 && <EmptyState title="No donations found"
         description={search.trim() ? 'Try another food name or clear your search.' : 'Your donations will appear here.'} />}
     </ScrollView>
-    <BottomNavigation activeTab="Donations" />
   </Screen>;
 }
 

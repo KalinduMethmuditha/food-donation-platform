@@ -1,3 +1,4 @@
+import { cardSurface } from '@/constants/design';
 import { router } from 'expo-router';
 import {
   ScrollView,
@@ -118,25 +119,14 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
+    ...cardSurface,
     padding: 16,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
   },
 
   cardTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
     color: Colors.textPrimary,
     marginBottom: 8,
   },

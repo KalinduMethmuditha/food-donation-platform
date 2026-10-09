@@ -17,7 +17,7 @@ export default function HouseholdActivity() {
   const { donations, isLoading, loadError, refreshDonations } = useHouseholdData();
   useFocusEffect(useCallback(() => { void refreshDonations(); }, [refreshDonations]));
 
-  return <Screen footer={<HouseholdBottomNav activeTab="history" />}>
+  return <Screen navigation={<HouseholdBottomNav activeTab="history" />}>
     <AppHeader title="Donation History" showBack onBackPress={() => router.replace('/household/dashboard')} />
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       {isLoading && donations.length === 0 ? <ActivityIndicator color={Colors.primary} /> : null}

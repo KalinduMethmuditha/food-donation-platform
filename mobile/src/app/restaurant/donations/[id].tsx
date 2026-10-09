@@ -1,3 +1,4 @@
+import DonationBanner from '@/components/shared/DonationBanner';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -46,6 +47,7 @@ export default function DonationDetailsScreen() {
     <Screen footer={<PrimaryButton title="My Donations" onPress={openDonations} />}>
       <AppHeader title="Donation Details" showBack onBackPress={goBack} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <DonationBanner />
         {!donation ? (
           isLoading || isFetching ? <ActivityIndicator color={Colors.primary} /> :
             fetchError ? <View>

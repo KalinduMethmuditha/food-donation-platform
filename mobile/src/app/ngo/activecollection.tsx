@@ -54,7 +54,7 @@ export default function ActiveCollection() {
         })}
       </>}
     </ScrollView>
-    {id ? <NgoFooter><Text style={[styles.summarySub, { marginBottom: 5, textAlign: 'center' }]}>The volunteer updates this collection's status.</Text><NgoGradientButton title="Refresh Status" icon="check" loading={loading} onPress={() => { void refreshStatus(); }} /></NgoFooter> : <NgoDesignNav active="collections" />}
+    {id ? <NgoFooter><Text style={[styles.summarySub, { marginBottom: 5, textAlign: 'center' }]}>The volunteer updates this collection&apos;s status.</Text><NgoGradientButton title="Refresh Status" icon="check" loading={loading} onPress={() => { void refreshStatus(); }} /></NgoFooter> : <NgoDesignNav active="collections" />}
   </SafeAreaView></View>;
 }
 

@@ -62,7 +62,10 @@ export default function HouseholdDataProvider({ children }: PropsWithChildren) {
     }
   }, [handleUnauthorized]);
 
-  useEffect(() => { void refreshDonations(); }, [refreshDonations]);
+  useEffect(() => {
+    const timer = setTimeout(() => { void refreshDonations(); }, 0);
+    return () => clearTimeout(timer);
+  }, [refreshDonations]);
 
   const getDonationById = useCallback(async (id: string) => {
     try {

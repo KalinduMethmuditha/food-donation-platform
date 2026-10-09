@@ -28,14 +28,16 @@ export default function NotificationsScreen() {
 
   return <SafeAreaView style={styles.safe} edges={['top']}>
     <VolunteerScreenHeader title="Notifications" onBack={() => router.back()}
-      rightLabel="Mark all read" onRightPress={() => {
-        if (notifications.length > 0) void markRead(notifications.map((item) => item.logId));
-      }} />
+      />
     <View style={styles.tabs}>
       <Pressable onPress={() => setTab('all')} style={[styles.tab, tab === 'all' && styles.activeTab]}>
-        <Text style={styles.tabText}>All</Text></Pressable>
+        <Text style={[styles.tabText, tab === 'all' && styles.activeTabText]}>All</Text></Pressable>
       <Pressable onPress={() => setTab('unread')} style={[styles.tab, tab === 'unread' && styles.activeTab]}>
-        <Text style={styles.tabText}>Unread ({unreadCount})</Text></Pressable>
+        <Text style={[styles.tabText, tab === 'unread' && styles.activeTabText]}>Unread ({unreadCount})</Text></Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="Mark all read" style={styles.markAll}
+        onPress={() => { if (notifications.length > 0) void markRead(notifications.map((item) => item.logId)); }}>
+        <Text style={styles.markAllText}>Mark all read</Text>
+      </Pressable>
     </View>
     <ScrollView contentContainerStyle={styles.content}>
       {isLoading && assignments.length === 0 ? <ActivityIndicator color={Colors.primary} /> : null}
@@ -58,15 +60,18 @@ export default function NotificationsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
-  tabs: { flexDirection: 'row', backgroundColor: Colors.surface },
-  tab: { flex: 1, padding: 14, alignItems: 'center' },
-  activeTab: { borderBottomWidth: 2, borderBottomColor: Colors.primary },
+  tabs: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
+  tab: { paddingHorizontal: 20, paddingVertical: 9, borderRadius: 20 },
+  activeTab: { backgroundColor: Colors.primary },
+  activeTabText: { color: Colors.white },
+  markAll: { marginLeft: 'auto', justifyContent: 'center' },
+  markAllText: { color: Colors.primaryDark, fontSize: 12, fontWeight: '800' },
   tabText: { color: Colors.textPrimary, fontWeight: '600' },
   content: { padding: 16, gap: 12, paddingBottom: 28 },
   card: { gap: 7 },
-  unread: { borderColor: Colors.primary },
+  unread: { backgroundColor: Colors.unreadBackground, borderColor: Colors.unreadBorder, borderWidth: 1 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 9 },
-  title: { color: Colors.textPrimary, fontWeight: '700', fontSize: 14 },
+  title: { color: Colors.textPrimary, fontWeight: '800', fontSize: 14 },
   body: { color: Colors.textSecondary, fontSize: 13 },
   time: { color: Colors.textMuted, fontSize: 11 },
   error: { color: Colors.danger },

@@ -1,3 +1,5 @@
+import { cardSurface, actionFooter } from '@/constants/design';
+import PrimaryButton from '@/components/ui/PrimaryButton';
 import { router } from 'expo-router';
 import {
   ScrollView,
@@ -181,9 +183,7 @@ export default function EditProfileScreen() {
           <Text style={styles.cancelBtnText}>Cancel</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.saveBtn} onPress={() => void handleSave()} disabled={isSaving}>
-          <Text style={styles.saveBtnText}>{isSaving ? 'Saving...' : 'Save Changes'}</Text>
-        </TouchableOpacity>
+        <PrimaryButton title="Save Changes" style={{ flex: 1 }} onPress={() => void handleSave()} loading={isSaving} />
       </View>
 
       {/* Photo Modal */}
@@ -303,10 +303,7 @@ const styles = StyleSheet.create({
   },
 
   formCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    ...cardSurface,
     padding: 16,
     gap: 16,
   },
@@ -325,31 +322,29 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: 10,
+    borderRadius: 16,
     padding: 12,
     fontSize: 15,
     color: Colors.textPrimary,
   },
 
   inputDisabled: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: Colors.surfaceMuted,
     color: Colors.textMuted,
   },
 
   bottomBar: {
+    ...actionFooter,
     flexDirection: 'row',
     padding: 16,
     paddingBottom: 24,
-    backgroundColor: Colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
     gap: 12,
   },
 
   cancelBtn: {
     flex: 1,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: Colors.border,
     alignItems: 'center',
@@ -364,7 +359,7 @@ const styles = StyleSheet.create({
   saveBtn: {
     flex: 1,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 16,
     backgroundColor: Colors.primaryDark,
     alignItems: 'center',
   },
@@ -416,7 +411,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.primaryWash,
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 16,
     gap: 12,
   },
 
@@ -432,7 +427,7 @@ const styles = StyleSheet.create({
 
   modalCloseBtn: {
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: Colors.border,
     alignItems: 'center',

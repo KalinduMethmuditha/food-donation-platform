@@ -38,7 +38,7 @@ export default function NgoDashboard() {
             <Text style={styles.headerTitle}>NGO Dashboard</Text>
             <Pressable accessibilityRole="button" accessibilityLabel="Notifications" style={styles.circleBtn} onPress={() => router.push('/ngo/notifications')}><Icon name="bell" size={20} color={C.white} />{unread ? <View style={styles.badge} /> : null}</Pressable>
           </View>
-          <View style={styles.welcomeRow}><View style={{ flex: 1 }}><Text style={styles.welcomeTitle}>Welcome back!</Text><Text style={styles.welcomeSub}>Here's what's happening today</Text></View><View style={styles.basketBox}><Text style={styles.basketEmoji}>🧺</Text></View></View>
+          <View style={styles.welcomeRow}><View style={{ flex: 1 }}><Text style={styles.welcomeTitle}>Welcome back!</Text><Text style={styles.welcomeSub}>Here&apos;s what&apos;s happening today</Text></View><View style={styles.basketBox}><Text style={styles.basketEmoji}>🧺</Text></View></View>
         </SafeAreaView>
       </LinearGradient>
       <View style={[styles.card, styles.donationCard]}>

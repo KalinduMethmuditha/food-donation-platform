@@ -1,6 +1,7 @@
+import { cardSurface, actionFooter } from '@/constants/design';
+import PrimaryButton from '@/components/ui/PrimaryButton';
 import { router } from 'expo-router';
 import {
-  Alert,
   Modal,
   Pressable,
   ScrollView,
@@ -12,7 +13,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import Icon from '@/components/ui/Icon';
 import { Colors } from '@/constants/colors';
@@ -104,11 +105,9 @@ export default function PickupPreferencesScreen() {
       pickupPreferences?.foodTypes ?? []
     );
 
-  const [availableToday, setAvailableToday] =
-    useState<boolean>(
-      pickupPreferences?.availableToday ?? false
-    );
-  useEffect(() => { if (!isLoading) setAvailableToday(isAvailable); }, [isAvailable, isLoading]);
+  const [availabilityDraft, setAvailableToday] = useState<boolean | null>(null);
+  const availableToday = availabilityDraft
+    ?? (isLoading ? pickupPreferences?.availableToday ?? false : isAvailable);
 
   const [availableDays, setAvailableDays] =
     useState<string[]>(
@@ -476,22 +475,7 @@ export default function PickupPreferencesScreen() {
       {/* Save Button */}
       {saveError ? <Text accessibilityRole="alert" style={{ color: Colors.danger, paddingHorizontal: 20 }}>{saveError}</Text> : null}
       <View style={styles.saveContainer}>
-        <TouchableOpacity
-          style={styles.saveBtn}
-          onPress={() => void handleSave()}
-          disabled={isSaving}
-          activeOpacity={0.85}
-        >
-          <Icon
-            name="check-circle"
-            size={20}
-            color={Colors.white}
-          />
-
-          <Text style={styles.saveBtnText}>
-            Save Preferences
-          </Text>
-        </TouchableOpacity>
+        <PrimaryButton title="Save Preferences" onPress={() => void handleSave()} loading={isSaving} />
       </View>
 
       {/* ── Start Time Picker Modal ── */}
@@ -765,10 +749,7 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    ...cardSurface,
     paddingHorizontal: 16,
     paddingVertical: 4,
     overflow: 'hidden',
@@ -829,7 +810,7 @@ const styles = StyleSheet.create({
   radiusBtn: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 16,
     borderWidth: 1.5,
     borderColor: Colors.border,
     backgroundColor: Colors.white,
@@ -945,11 +926,9 @@ const styles = StyleSheet.create({
   },
 
   saveContainer: {
+    ...actionFooter,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: Colors.background,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
   },
 
   saveBtn: {
@@ -957,7 +936,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.primary,
-    borderRadius: 14,
+    borderRadius: 16,
     paddingVertical: 16,
     gap: 8,
   },
@@ -995,7 +974,7 @@ const styles = StyleSheet.create({
 
   modalTitle: {
     fontSize: 17,
-    fontWeight: '700',
+    fontWeight: '800',
     color: Colors.textPrimary,
   },
 
@@ -1037,7 +1016,7 @@ const styles = StyleSheet.create({
   modalSaveBtn: {
     marginTop: 16,
     backgroundColor: Colors.primary,
-    borderRadius: 12,
+    borderRadius: 16,
     paddingVertical: 14,
     alignItems: 'center',
   },
@@ -1067,7 +1046,7 @@ const styles = StyleSheet.create({
   areaTextInput: {
     borderWidth: 1.5,
     borderColor: Colors.border,
-    borderRadius: 12,
+    borderRadius: 16,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
@@ -1076,12 +1055,12 @@ const styles = StyleSheet.create({
   },
 
   areaTextInputError: {
-    borderColor: '#EF4444',
+    borderColor: Colors.danger,
   },
 
   errorText: {
     fontSize: 12,
-    color: '#EF4444',
+    color: Colors.danger,
     marginTop: 6,
   },
 
@@ -1094,7 +1073,7 @@ const styles = StyleSheet.create({
   cancelBtn: {
     flex: 1,
     paddingVertical: 13,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1.5,
     borderColor: Colors.border,
     alignItems: 'center',

@@ -1,3 +1,6 @@
+import { cardSurface } from '@/constants/design';
+import { LinearGradient } from 'expo-linear-gradient';
+import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
 import { router } from 'expo-router';
 import {
   Image,
@@ -23,16 +26,6 @@ import { useVolunteerAssignments } from '@/store/volunteerAssignments.store';
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-type NavRoute =
-  | '/volunteer/dashboard'
-  | '/volunteer/edit-profile'
-  | '/volunteer/notification-preferences'
-  | '/volunteer/pickup-preferences'
-  | '/volunteer/help-support'
-  | '/volunteer/activity'
-  | '/volunteer/about'
-  | '/volunteer/privacy'
-  | '/volunteer/terms';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -188,26 +181,7 @@ export default function VolunteerProfileScreen() {
         edges={['top']}
         style={styles.headerSafe}
       >
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backBtn}
-            onPress={() =>
-              router.push('/volunteer/dashboard')
-            }
-            activeOpacity={0.7}
-          >
-            <Icon
-              name="arrow-left"
-              size={22}
-              color={Colors.textPrimary}
-            />
-          </TouchableOpacity>
-
-          <Text style={styles.headerTitle}>Profile</Text>
-
-          {/* Spacer to centre the title */}
-          <View style={styles.backBtn} />
-        </View>
+        <VolunteerScreenHeader title="Profile" onBack={() => router.replace('/volunteer/dashboard')} />
       </SafeAreaView>
 
       {/* ── Body ── */}
@@ -217,7 +191,7 @@ export default function VolunteerProfileScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* ── Profile Header Card ── */}
-        <View style={styles.profileCard}>
+        <LinearGradient colors={[Colors.gradientTop, Colors.gradientBottom]} style={styles.profileCard}>
           {/* Avatar */}
           <View style={styles.avatarContainer}>
             {profile.avatarUrl ? (
@@ -255,7 +229,7 @@ export default function VolunteerProfileScreen() {
           <Text style={styles.volunteerId}>
             ID: {profile.volunteerId}
           </Text>
-        </View>
+        </LinearGradient>
 
         {/* ── Personal Information ── */}
         <View style={styles.card}>
@@ -534,11 +508,7 @@ const styles = StyleSheet.create({
 
   /* Header */
 
-  headerSafe: {
-    backgroundColor: Colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
+  headerSafe: { backgroundColor: Colors.background },
 
   header: {
     flexDirection: 'row',
@@ -551,7 +521,7 @@ const styles = StyleSheet.create({
   backBtn: {
     width: 38,
     height: 38,
-    borderRadius: 10,
+    borderRadius: 16,
     backgroundColor: Colors.background,
     alignItems: 'center',
     justifyContent: 'center',
@@ -559,7 +529,7 @@ const styles = StyleSheet.create({
 
   headerTitle: {
     fontSize: 17,
-    fontWeight: '700',
+    fontWeight: '800',
     color: Colors.textPrimary,
     letterSpacing: 0.2,
   },
@@ -611,7 +581,7 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: '#047857',
+    backgroundColor: Colors.primaryDark,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
@@ -674,26 +644,14 @@ const styles = StyleSheet.create({
   /* Card */
 
   card: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
+    ...cardSurface,
     padding: 16,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
   },
 
   cardTitle: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '800',
     color: Colors.textPrimary,
     marginBottom: 14,
     letterSpacing: 0.1,
@@ -816,7 +774,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.danger,
-    borderRadius: 14,
+    borderRadius: 16,
     paddingVertical: 15,
     gap: 10,
     marginTop: 4,
@@ -853,20 +811,10 @@ const styles = StyleSheet.create({
   },
 
   modalCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 20,
+    ...cardSurface,
     padding: 28,
     width: '100%',
     alignItems: 'center',
-
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 10,
   },
 
   modalIconWrap: {
@@ -904,7 +852,7 @@ const styles = StyleSheet.create({
   modalCancelBtn: {
     flex: 1,
     paddingVertical: 13,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1.5,
     borderColor: Colors.border,
     alignItems: 'center',
@@ -920,7 +868,7 @@ const styles = StyleSheet.create({
   modalLogoutBtn: {
     flex: 1,
     paddingVertical: 13,
-    borderRadius: 12,
+    borderRadius: 16,
     backgroundColor: Colors.danger,
     alignItems: 'center',
 

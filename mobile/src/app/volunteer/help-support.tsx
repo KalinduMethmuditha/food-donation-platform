@@ -97,14 +97,14 @@ export default function HelpSupportScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
   content: { padding: 20, gap: 12, paddingBottom: 30 },
-  section: { color: Colors.textPrimary, fontSize: 17, fontWeight: '700', marginTop: 10 },
+  section: { color: Colors.textPrimary, fontSize: 17, fontWeight: '800', marginTop: 10 },
   card: { gap: 9 },
-  title: { color: Colors.textPrimary, fontSize: 14, fontWeight: '700' },
+  title: { color: Colors.textPrimary, fontSize: 14, fontWeight: '800' },
   body: { color: Colors.textSecondary, fontSize: 13, lineHeight: 20 },
   types: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
   type: { paddingHorizontal: 10, paddingVertical: 8, borderRadius: 9, borderWidth: 1, borderColor: Colors.border, color: Colors.textPrimary },
   selected: { borderColor: Colors.primary, backgroundColor: Colors.primaryLight },
-  input: { minHeight: 95, borderWidth: 1, borderColor: Colors.border, borderRadius: 10, padding: 12, textAlignVertical: 'top' },
+  input: { minHeight: 95, borderWidth: 1, borderColor: Colors.border, borderRadius: 16, padding: 12, textAlignVertical: 'top' },
   error: { color: Colors.danger },
   success: { color: Colors.primaryDark },
 });

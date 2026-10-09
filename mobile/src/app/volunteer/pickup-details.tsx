@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import VolunteerBottomNav from '@/components/volunteer/VolunteerBottomNav';
 import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
+import DonationBanner from '@/components/shared/DonationBanner';
 import Card from '@/components/ui/Card';
 import Icon from '@/components/ui/Icon';
 import PrimaryButton from '@/components/ui/PrimaryButton';
@@ -34,6 +35,7 @@ export default function PickupDetailsScreen() {
         <Text style={styles.body}>Assigned donations will appear here after an NGO selects you.</Text>
         <SecondaryButton title="Refresh" onPress={() => void refresh()} />
       </Card> : <>
+        <DonationBanner />
         <Card style={styles.card}>
           <View style={styles.row}><Icon name={assignment.donorRole === 'household' ? 'home' : 'building'} size={28} />
             <View style={styles.copy}><Text style={styles.title}>{assignment.donorName}</Text>
@@ -74,7 +76,7 @@ const styles = StyleSheet.create({
   card: { gap: 8 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   copy: { flex: 1 },
-  title: { fontSize: 17, fontWeight: '700', color: Colors.textPrimary },
+  title: { fontSize: 17, fontWeight: '800', color: Colors.textPrimary },
   body: { fontSize: 13, lineHeight: 20, color: Colors.textSecondary },
   label: { fontSize: 11, fontWeight: '700', color: Colors.textSecondary, marginTop: 10 },
   value: { fontSize: 14, color: Colors.textPrimary },

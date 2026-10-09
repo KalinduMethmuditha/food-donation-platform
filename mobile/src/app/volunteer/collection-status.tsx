@@ -1,3 +1,4 @@
+import DonationTimeline from '@/components/shared/DonationTimeline';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -61,11 +62,11 @@ export default function CollectionStatusScreen() {
         </Card>
         <Card style={styles.card}>
           <Text style={styles.title}>Pickup Progress</Text>
-          {stages.map((stage, index) => <View key={stage.status} style={styles.stage}>
-            <View style={[styles.dot, index <= currentIndex && styles.dotActive]} />
-            <Text style={[styles.body, index === currentIndex && styles.current]}>{stage.label}</Text>
-            <Text style={styles.time}>{formatDateTime(assignment.statusLogs.find((log) => log.status === stage.status)?.createdAt)}</Text>
-          </View>)}
+          <DonationTimeline items={stages.map((stage, index) => ({
+            title: stage.label,
+            status: index < currentIndex || assignment.status === 'delivered' ? 'completed' : index === currentIndex ? 'current' : 'pending',
+            time: formatDateTime(assignment.statusLogs.find((log) => log.status === stage.status)?.createdAt),
+          }))} />
         </Card>
         <Card style={styles.card}>
           <Text style={styles.title}>Add Update</Text>
@@ -97,14 +98,14 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
   content: { padding: 20, gap: 14, paddingBottom: 30 },
   card: { gap: 10 },
-  title: { fontSize: 17, fontWeight: '700', color: Colors.textPrimary },
+  title: { fontSize: 17, fontWeight: '800', color: Colors.textPrimary },
   body: { fontSize: 13, lineHeight: 20, color: Colors.textSecondary },
   current: { color: Colors.primaryDark, fontWeight: '700' },
   stage: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 40 },
   dot: { width: 16, height: 16, borderRadius: 8, borderWidth: 2, borderColor: Colors.border },
   dotActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   time: { flex: 1, textAlign: 'right', color: Colors.textMuted, fontSize: 11 },
-  input: { minHeight: 70, borderWidth: 1, borderColor: Colors.border, borderRadius: 10, padding: 12, backgroundColor: Colors.surface, textAlignVertical: 'top' },
+  input: { minHeight: 70, borderWidth: 1, borderColor: Colors.border, borderRadius: 16, padding: 12, backgroundColor: Colors.surface, textAlignVertical: 'top' },
   error: { color: Colors.danger },
   overlay: { flex: 1, backgroundColor: Colors.overlay, justifyContent: 'center', padding: 20 },
   modal: { maxHeight: '90%', gap: 8 },

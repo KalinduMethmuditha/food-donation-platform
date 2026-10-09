@@ -56,8 +56,8 @@ export default function HouseholdProfileScreen() {
     }
   };
 
-  return <Screen footer={<HouseholdBottomNav activeTab="profile" />}>
-    <AppHeader title="Profile" />
+  return <Screen navigation={<HouseholdBottomNav activeTab="profile" />}>
+    <AppHeader title="Profile" variant="plain" showBack onBackPress={() => router.replace('/household/dashboard')} />
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <Card style={styles.profile}>
         <View style={styles.avatar}><Icon name="leaf" size={38} /></View>

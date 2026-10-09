@@ -118,7 +118,7 @@ export default function PickupDeadlineField({ value, error, onChange }: {
 const styles = StyleSheet.create({
   field: { marginBottom: 18 },
   label: { fontSize: 13, fontWeight: '600', color: Colors.textPrimary, marginBottom: 7 },
-  input: { minHeight: 48, borderWidth: 1, borderColor: Colors.border, borderRadius: 12, padding: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  input: { minHeight: 52, borderWidth: 1, borderColor: Colors.border, borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   text: { color: Colors.textPrimary, fontSize: 14 },
   placeholder: { color: Colors.textMuted },
   hint: { color: Colors.textSecondary, fontSize: 12, marginTop: 6, lineHeight: 18 },

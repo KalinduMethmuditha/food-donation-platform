@@ -6,7 +6,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import VolunteerBottomNav from '@/components/volunteer/VolunteerBottomNav';
 import VolunteerQuickAction from '@/components/volunteer/VolunteerQuickAction';
 import Card from '@/components/ui/Card';
-import Icon from '@/components/ui/Icon';
+import AppHeader from '@/components/shared/AppHeader';
+import DashboardHero from '@/components/shared/DashboardHero';
+import StatCard from '@/components/shared/StatCard';
+import PrimaryButton from '@/components/ui/PrimaryButton';
 import SecondaryButton from '@/components/ui/SecondaryButton';
 import { Colors } from '@/constants/colors';
 import { useVolunteerAssignments } from '@/store/volunteerAssignments.store';
@@ -40,21 +43,23 @@ export default function VolunteerDashboard() {
   return <SafeAreaView style={styles.safe} edges={['top']}>
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <View style={styles.headerCopy}>
-            <Text style={styles.greeting}>Hi {profile.fullName.split(' ')[0] || 'Volunteer'} 👋</Text>
-            <Text style={styles.sub}>Here are your assigned collections</Text>
-          </View>
-          <Pressable accessibilityRole="button" accessibilityLabel="Notifications"
-            onPress={() => router.push('/volunteer/notifications')} style={styles.bell}>
-            <Icon name="bell" />
-          </Pressable>
-        </View>
+        <DashboardHero header={<AppHeader title="Volunteer Dashboard" variant="hero"
+          onMenuPress={() => router.push('/volunteer/profile')}
+          onNotificationPress={() => router.push('/volunteer/notifications')} />}
+          greeting={`Hi ${profile.fullName.split(' ')[0] || 'Volunteer'}!`}
+          subtitle="Here are your assigned collections" emoji="🚚" />
+        <View style={styles.main}>
         <Card style={styles.summary}>
           <Text style={styles.summaryLabel}>YOUR PICKUPS</Text>
           <Text style={styles.summaryCount}>{active.length} Active</Text>
           <Text style={styles.summaryText}>{assignments.length} total assigned donations</Text>
+          <PrimaryButton title="View Assigned Pickups" onPress={() => router.push('/volunteer/pickup-details')} />
         </Card>
+        <View style={styles.stats}>
+          <StatCard value={active.length} label="Active" />
+          <StatCard value={assignments.filter((item) => item.status === 'delivered').length} label="Delivered" />
+          <StatCard value={assignments.length} label="Total" />
+        </View>
         <Card style={styles.availabilityCard}>
           <View style={styles.availabilityRow}>
             <View style={styles.availabilityCopy}>
@@ -103,6 +108,7 @@ export default function VolunteerDashboard() {
             </Card>
           </Pressable>)}
         </> : null}
+        </View>
       </ScrollView>
       <VolunteerBottomNav activeTab="Home" onPress={(route) => router.push(route as any)} />
     </View>
@@ -112,24 +118,22 @@ export default function VolunteerDashboard() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
   screen: { flex: 1 },
-  content: { padding: 20, paddingBottom: 32, gap: 12 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 },
-  headerCopy: { flex: 1 },
-  greeting: { fontSize: 22, fontWeight: '800', color: Colors.textPrimary },
+  content: { paddingBottom: 32 },
+  main: { marginTop: -36, paddingHorizontal: 16, gap: 12 },
+  stats: { flexDirection: 'row', gap: 10, marginVertical: 4 },
   sub: { fontSize: 13, lineHeight: 20, color: Colors.textSecondary, marginTop: 4 },
-  bell: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface, borderRadius: 12 },
-  summary: { backgroundColor: Colors.primaryDark },
-  summaryLabel: { fontSize: 11, color: Colors.white, fontWeight: '700' },
-  summaryCount: { fontSize: 28, color: Colors.white, fontWeight: '800', marginTop: 4 },
-  summaryText: { fontSize: 13, color: Colors.white, marginTop: 5 },
+  summary: { gap: 8 },
+  summaryLabel: { fontSize: 11, color: Colors.textSecondary, fontWeight: '700' },
+  summaryCount: { fontSize: 22, color: Colors.textPrimary, fontWeight: '800' },
+  summaryText: { fontSize: 13, color: Colors.textSecondary },
   availabilityCard: { gap: 8 },
   availabilityRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   availabilityCopy: { flex: 1 },
-  section: { fontSize: 17, fontWeight: '700', color: Colors.textPrimary, marginTop: 12 },
+  section: { fontSize: 17, fontWeight: '800', color: Colors.textPrimary, marginTop: 12 },
   gap: { gap: 7 },
   error: { color: Colors.danger },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
-  cardTitle: { flex: 1, fontSize: 15, fontWeight: '700', color: Colors.textPrimary },
+  cardTitle: { flex: 1, fontSize: 15, fontWeight: '800', color: Colors.textPrimary },
   status: { fontSize: 11, fontWeight: '700', color: Colors.primaryDark },
   body: { color: Colors.textSecondary, fontSize: 13, lineHeight: 19 },
   link: { color: Colors.primaryDark, fontWeight: '700', fontSize: 13, marginTop: 5 },

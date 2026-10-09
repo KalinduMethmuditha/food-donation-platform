@@ -2,13 +2,7 @@ import type { IconName } from '@/components/ui/Icon';
 import type { NgoDonation, NgoRejection } from '@/services/ngoDonations';
 
 export const ngoCategories = ['All', 'Rice', 'Bread', 'Fruits', 'Vegetables'] as const;
-export function foodVisual(food: string) {
-  if (/rice|curry/i.test(food)) return { category: 'Rice', emoji: '🍛' };
-  if (/bread|pastr|bakery|cake|bun/i.test(food)) return { category: 'Bread', emoji: '🥐' };
-  if (/fruit|apple|banana|orange/i.test(food)) return { category: 'Fruits', emoji: '🍎' };
-  if (/vegetable|carrot|potato|salad/i.test(food)) return { category: 'Vegetables', emoji: '🥕' };
-  return { category: 'Food', emoji: '🍽️' };
-}
+export { foodVisual } from '@/utils/foodPresentation';
 export function initials(name: string) { return name.trim().split(/\s+/).map((part) => part[0] ?? '').join('').slice(0, 2).toUpperCase(); }
 export function relativeTime(date?: string) {
   if (!date || !Number.isFinite(Date.parse(date))) return 'Time unavailable';

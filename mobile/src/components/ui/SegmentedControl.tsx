@@ -16,10 +16,10 @@ export default function SegmentedControl<T extends string>({ options, value, onC
   </View>;
 }
 const styles = StyleSheet.create({
-  container: { flexDirection: 'row', borderRadius: 14, padding: 4, backgroundColor: Colors.surfaceMuted },
-  item: { flex: 1, minHeight: 44, padding: 10, borderRadius: 11, justifyContent: 'center', alignItems: 'center' },
-  active: { backgroundColor: Colors.surface },
+  container: { flexDirection: 'row', gap: 8 },
+  item: { flex: 1, minHeight: 40, padding: 10, borderRadius: 22, borderWidth: 1, borderColor: Colors.border, backgroundColor: Colors.surface, justifyContent: 'center', alignItems: 'center' },
+  active: { backgroundColor: Colors.primary, borderColor: Colors.primary },
   label: { fontSize: 14, fontWeight: '600', color: Colors.textSecondary },
-  activeLabel: { color: Colors.primaryDark, fontWeight: '700' },
+  activeLabel: { color: Colors.white, fontWeight: '700' },
   pressed: { opacity: 0.65 },
 });

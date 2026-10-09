@@ -1,4 +1,4 @@
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import AppHeader from '@/components/restaurant/AppHeader';
@@ -41,8 +41,8 @@ export default function NotificationsScreen() {
     time: formatDateTime(activity.createdAt),
   }));
 
-  return <Screen>
-    <AppHeader title="Notifications" />
+  return <Screen navigation={<BottomNavigation activeTab="Notifications" />}>
+    <AppHeader title="Notifications" variant="plain" showBack onBackPress={() => router.replace('/restaurant/dashboard')} />
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <Text style={styles.sectionTitle}>RECENT UPDATES</Text>
       {isLoading ? <ActivityIndicator color={Colors.primary} /> : null}
@@ -66,7 +66,6 @@ export default function NotificationsScreen() {
       {!isLoading && !loadError && visibleNotifications.length === 0 &&
         <EmptyState icon="bell" title="No updates yet" description="Donation updates will appear here." />}
     </ScrollView>
-    <BottomNavigation activeTab="Notifications" />
   </Screen>;
 }
 
@@ -74,7 +73,7 @@ const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 30, gap: 16 },
   sectionTitle: { fontSize: 11, fontWeight: '700', letterSpacing: 0.7, color: Colors.textSecondary, marginTop: 4 },
   list: { gap: 12 },
-  notification: { flexDirection: 'row', gap: 12, padding: 14 },
+  notification: { flexDirection: 'row', gap: 12, padding: 14, backgroundColor: Colors.primaryLight },
   icon: { width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.primaryLight, alignItems: 'center', justifyContent: 'center' },
   notificationContent: { flex: 1, gap: 7 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },

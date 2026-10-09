@@ -1,3 +1,4 @@
+import DonationBanner from '@/components/shared/DonationBanner';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -70,6 +71,7 @@ export default function HouseholdDonationDetails() {
         ) : null}
         {donation ? (
           <>
+            <DonationBanner />
             <Card>
               <View style={styles.summary}>
                 <View style={styles.icon}><Icon name="heart" size={28} /></View>

@@ -5,13 +5,14 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import { Colors } from '@/constants/colors';
 import type { Donation } from '@/types/donation';
 import { getDonationStatusLabel, getDonationTimeLabel } from '@/utils/donation';
+import { foodVisual } from '@/utils/foodPresentation';
 
 export default function DonationCard({ donation, onPress }: { donation: Donation; onPress: () => void }) {
   return <Pressable onPress={onPress} accessibilityRole="button"
     accessibilityLabel={`${donation.foodType}, ${donation.quantity} ${donation.unit}, ${getDonationStatusLabel(donation.status)}. View donation`}
     style={({ pressed }) => pressed && styles.pressed}>
     <Card style={styles.card}>
-      <View style={styles.illustration}><Icon name="gift" size={30} /></View>
+      <View style={styles.illustration}><Text style={{ fontSize: 30 }}>{foodVisual(donation.foodType).emoji}</Text></View>
       <View style={styles.content}>
         <Text style={styles.title}>{donation.foodType}</Text>
         <Text style={styles.quantity}>{donation.quantity} {donation.unit}</Text>
@@ -24,9 +25,9 @@ export default function DonationCard({ donation, onPress }: { donation: Donation
 }
 const styles = StyleSheet.create({
   card: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
-  illustration: { width: 58, height: 64, borderRadius: 12, backgroundColor: Colors.primaryLight, alignItems: 'center', justifyContent: 'center' },
+  illustration: { width: 64, height: 72, borderRadius: 16, backgroundColor: Colors.primaryLight, alignItems: 'center', justifyContent: 'center' },
   content: { flex: 1, gap: 6 },
-  title: { fontSize: 16, fontWeight: '700', color: Colors.textPrimary },
+  title: { fontSize: 16, fontWeight: '800', color: Colors.textPrimary },
   quantity: { fontSize: 13, color: Colors.textSecondary },
   time: { fontSize: 12, lineHeight: 17, color: Colors.textSecondary },
   pressed: { opacity: 0.7 },

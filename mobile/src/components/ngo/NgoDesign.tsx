@@ -5,12 +5,14 @@ import { ActivityIndicator, Linking, Pressable, StyleSheet, Text, View } from 'r
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon, { type IconName } from '@/components/ui/Icon';
 import type { NgoDonation } from '@/services/ngoDonations';
+import { Colors } from '@/constants/colors';
 
 export const C = {
-  gradientTop: '#2FB584', gradientBottom: '#14855A', primary: '#1E9E6A', primaryDark: '#14855A',
-  tint: '#E3F4EA', redTint: '#FDE4E4', red: '#E5484D', bg: '#F2F6F4', card: '#FFFFFF',
-  border: '#E6ECE8', text: '#1B2B24', muted: '#8A9A93', white: '#FFFFFF', pending: '#C9D3CE',
-  busy: '#B5BFBA', unreadBg: '#DFF2E7', unreadBorder: '#BFE3CF',
+  gradientTop: Colors.gradientTop, gradientBottom: Colors.gradientBottom,
+  primary: Colors.primary, primaryDark: Colors.primaryDark,
+  tint: Colors.primaryLight, redTint: '#FDE4E4', red: Colors.danger, bg: Colors.background, card: Colors.surface,
+  border: Colors.border, text: Colors.textPrimary, muted: Colors.textMuted, white: Colors.white, pending: '#C9D3CE',
+  busy: '#B5BFBA', unreadBg: Colors.unreadBackground, unreadBorder: Colors.unreadBorder,
 };
 
 export function NgoTitleBar({ title }: { title: string }) {
