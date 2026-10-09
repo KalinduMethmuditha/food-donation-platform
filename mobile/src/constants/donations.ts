@@ -7,7 +7,7 @@ export type Donation = {
   distance: string;
   category: 'Rice' | 'Bread' | 'Fruits' | 'Vegetables';
   emoji: string; // shown when no image is provided
-  image?: ImageSourcePropType; // e.g. require('@/assets/images/rice.png')
+  image?: ImageSourcePropType; // e.g. require('../../assets/images/rice.png')
   postedAgo: string;
   location: string;
   latitude: number;
@@ -18,7 +18,7 @@ export type Donation = {
   donorEmail: string;
   donorPhone: string;
   message: string;
-  donorImage?: ImageSourcePropType;
+  donorImage?: ImageSourcePropType; // e.g. require('../../assets/images/donor1.jpg')
 };
 
 export const donations: Donation[] = [
@@ -29,6 +29,7 @@ export const donations: Donation[] = [
     distance: '5 km away',
     category: 'Rice',
     emoji: '🍛',
+    image: require('../../assets/images/rice.jpg'),
     postedAgo: 'Posted 2 hours ago',
     location: 'Malabe, Sri Lanka',
     latitude: 6.9061,
@@ -48,6 +49,7 @@ export const donations: Donation[] = [
     distance: '8 km away',
     category: 'Bread',
     emoji: '🥐',
+    image: require('../../assets/images/bread.jpg'),
     postedAgo: 'Posted 4 hours ago',
     location: 'Kaduwela, Sri Lanka',
     latitude: 6.9337,
@@ -67,6 +69,7 @@ export const donations: Donation[] = [
     distance: '12 km away',
     category: 'Fruits',
     emoji: '🍎',
+    image: require('../../assets/images/fruits.jpg'),
     postedAgo: 'Posted 5 hours ago',
     location: 'Colombo 07, Sri Lanka',
     latitude: 6.9094,
@@ -86,6 +89,7 @@ export const donations: Donation[] = [
     distance: '3.5 km away',
     category: 'Vegetables',
     emoji: '🥕',
+    image: require('../../assets/images/vegetables.jpg'),
     postedAgo: 'Posted 1 day ago',
     location: 'Battaramulla, Sri Lanka',
     latitude: 6.8995,

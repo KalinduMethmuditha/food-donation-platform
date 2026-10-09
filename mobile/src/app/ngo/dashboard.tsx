@@ -1,7 +1,7 @@
 import { router, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '@/components/ui/Icon';
 import { C, NgoDesignNav, NgoGradientButton, NgoLoadState } from '@/components/ngo/NgoDesign';
@@ -38,7 +38,7 @@ export default function NgoDashboard() {
             <Text style={styles.headerTitle}>Serve With Purpose</Text>
             <Pressable accessibilityRole="button" accessibilityLabel="Notifications" style={styles.circleBtn} onPress={() => router.push('/ngo/notifications')}><Icon name="bell" size={20} color={C.white} />{unread ? <View style={styles.badge} /> : null}</Pressable>
           </View>
-          <View style={styles.welcomeRow}><View style={{ flex: 1 }}><Text style={styles.welcomeTitle}>{user?.name.trim() ? `Hi ${user.name.trim().split(/\s+/)[0]}!` : 'Welcome back!'}</Text><Text style={styles.welcomeSub}>Here&apos;s what&apos;s happening today</Text></View><View style={styles.basketBox}><Text style={styles.basketEmoji}>🧺</Text></View></View>
+          <View style={styles.welcomeRow}><View style={{ flex: 1 }}><Text style={styles.welcomeTitle}>{user?.name.trim() ? `Hi ${user.name.trim().split(/\s+/)[0]}!` : 'Welcome back!'}</Text><Text style={styles.welcomeSub}>Here&apos;s what&apos;s happening today</Text></View><View style={styles.basketBox}><Image source={require('../../../assets/images/food-basket.jpg')} style={styles.basketPhoto} resizeMode="contain" accessibilityLabel="Food donation basket" /></View></View>
         </SafeAreaView>
       </LinearGradient>
       <View style={[styles.card, styles.donationCard]}>
@@ -97,16 +97,16 @@ const styles = StyleSheet.create({
   welcomeTitle: { fontSize: 26, fontWeight: '800', color: C.white },
   welcomeSub: { fontSize: 13, color: 'rgba(255,255,255,0.85)', marginTop: 4 },
   basketBox: {
-    width: 84,
-    height: 84,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.95)',
+    width: 96,
+    height: 96,
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: C.white,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: -20,
   },
-  basketEmoji: { fontSize: 46 },
-  basketImg: { width: 90, height: 90, resizeMode: 'contain', marginBottom: -20 },
+  basketPhoto: { width: 92, height: 92 },
 
   // Shared card
   card: {
