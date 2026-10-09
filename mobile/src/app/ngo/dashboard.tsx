@@ -1,3 +1,4 @@
+import FoodThumbnail from '@/components/shared/FoodThumbnail';
 import { router, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useState } from 'react';
@@ -8,7 +9,7 @@ import { C, NgoDesignNav, NgoGradientButton, NgoLoadState } from '@/components/n
 import { useNgoSession } from '@/components/ngo/NgoSessionContext';
 import { useNgoDonations } from '@/store/ngoDonations.store';
 import { logoutUser } from '@/services/auth';
-import { foodVisual, ngoNotices, relativeTime } from '@/utils/ngoPresentation';
+import { ngoNotices, relativeTime } from '@/utils/ngoPresentation';
 
 export default function NgoDashboard() {
   const user = useNgoSession();
@@ -43,7 +44,7 @@ export default function NgoDashboard() {
       </LinearGradient>
       <View style={[styles.card, styles.donationCard]}>
         <View style={styles.donationTop}><View style={{ flex: 1 }}><Text style={styles.donationTitle}>New donations available</Text><Text style={styles.donationSub}>{available.length} published donations to review</Text></View>
-          <View style={styles.avatarRow}>{available.slice(0, 3).map((item, index) => <View key={item.id} style={[styles.avatar, index > 0 && { marginLeft: -10 }]}><Text>{foodVisual(item.foodType).emoji}</Text></View>)}{available.length > 3 ? <View style={styles.morePill}><Text style={styles.moreText}>+{available.length - 3}</Text></View> : null}</View>
+          <View style={styles.avatarRow}>{available.slice(0, 3).map((item, index) => <View key={item.id} style={[styles.avatar, index > 0 && { marginLeft: -10 }]}><FoodThumbnail food={item.foodType} emojiSize={14} borderRadius={15} /></View>)}{available.length > 3 ? <View style={styles.morePill}><Text style={styles.moreText}>+{available.length - 3}</Text></View> : null}</View>
         </View>
         <NgoGradientButton title="View Available Donations" icon="chevron-right" onPress={() => router.push('/ngo/donations')} />
       </View>

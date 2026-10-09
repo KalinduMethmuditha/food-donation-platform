@@ -1,3 +1,4 @@
+import FoodThumbnail from '@/components/shared/FoodThumbnail';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -6,7 +7,7 @@ import Icon from '@/components/ui/Icon';
 import { C, NgoDesignNav, NgoFooter, NgoGradientButton, NgoLoadState, NgoPickupPreview, NgoTitleBar } from '@/components/ngo/NgoDesign';
 import { useNgoDonation, useNgoDonations } from '@/store/ngoDonations.store';
 import type { NgoDonation } from '@/services/ngoDonations';
-import { foodVisual, initials } from '@/utils/ngoPresentation';
+import { initials } from '@/utils/ngoPresentation';
 import { formatDateTime } from '@/utils/dateTime';
 import { getDonationStatusLabel } from '@/utils/donation';
 
@@ -30,7 +31,7 @@ export default function ActiveCollection() {
   const currentIndex = stages.findIndex((stage) => stage.status === donation?.status);
   const notes = donation?.statusLogs?.filter((log) => log.note) ?? [];
   const summary = (item: NgoDonation) => <View style={[styles.card, styles.summary]}>
-    <View style={[styles.thumb, styles.thumbPlaceholder]}><Text style={{ fontSize: 30 }}>{foodVisual(item.foodType).emoji}</Text></View><View style={{ flex: 1, marginLeft: 12 }}><Text style={styles.summaryTitle}>{item.foodType} · {item.quantity} {item.unit}</Text><Text style={styles.summarySub}>Volunteer: {item.volunteerName ?? 'Awaiting assignment'}</Text>{!id ? <Text style={styles.summarySub}>{getDonationStatusLabel(item.status)}</Text> : null}</View>{item.volunteerName ? <View style={[styles.volAvatar, { backgroundColor: C.primary }]}><Text style={styles.volAvatarText}>{initials(item.volunteerName)}</Text></View> : <Icon name="chevron-right" size={18} color={C.primaryDark} />}
+    <View style={[styles.thumb, styles.thumbPlaceholder]}><FoodThumbnail food={item.foodType} /></View><View style={{ flex: 1, marginLeft: 12 }}><Text style={styles.summaryTitle}>{item.foodType} · {item.quantity} {item.unit}</Text><Text style={styles.summarySub}>Volunteer: {item.volunteerName ?? 'Awaiting assignment'}</Text>{!id ? <Text style={styles.summarySub}>{getDonationStatusLabel(item.status)}</Text> : null}</View>{item.volunteerName ? <View style={[styles.volAvatar, { backgroundColor: C.primary }]}><Text style={styles.volAvatarText}>{initials(item.volunteerName)}</Text></View> : <Icon name="chevron-right" size={18} color={C.primaryDark} />}
   </View>;
   return <View style={styles.root}><SafeAreaView edges={['top']} style={{ flex: 1 }}>
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 140 }}>

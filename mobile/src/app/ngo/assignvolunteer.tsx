@@ -1,3 +1,4 @@
+import FoodThumbnail from '@/components/shared/FoodThumbnail';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -5,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '@/components/ui/Icon';
 import { C, NgoFooter, NgoGradientButton, NgoLoadState, NgoTitleBar } from '@/components/ngo/NgoDesign';
 import { useNgoDonation, useNgoDonations } from '@/store/ngoDonations.store';
-import { foodVisual, initials } from '@/utils/ngoPresentation';
+import { initials } from '@/utils/ngoPresentation';
 
 export default function AssignVolunteer() {
   const { id } = useLocalSearchParams<{ id?: string }>();
@@ -44,7 +45,7 @@ export default function AssignVolunteer() {
   return <View style={styles.root}><SafeAreaView edges={['top']} style={{ flex: 1 }}>
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 200 }}>
       <NgoTitleBar title="Assign Volunteer" /><NgoLoadState loading={loading} error={error} />
-      {donation ? <View style={styles.banner}><View style={styles.bannerIcon}><Text style={{ fontSize: 26 }}>{foodVisual(donation.foodType).emoji}</Text></View><View style={{ flex: 1 }}><Text style={styles.bannerTitle}>{donation.foodType} · {donation.quantity} {donation.unit}</Text><Text style={styles.bannerSub}>{canAssign ? 'Ready for volunteer pickup' : 'Volunteer assigned'}</Text></View></View> : null}
+      {donation ? <View style={styles.banner}><View style={styles.bannerIcon}><FoodThumbnail food={donation.foodType} /></View><View style={{ flex: 1 }}><Text style={styles.bannerTitle}>{donation.foodType} · {donation.quantity} {donation.unit}</Text><Text style={styles.bannerSub}>{canAssign ? 'Ready for volunteer pickup' : 'Volunteer assigned'}</Text></View></View> : null}
       {canAssign ? <>
         <Text style={styles.label}>Choose a volunteer</Text>
         <Pressable accessibilityRole="button" accessibilityLabel="Choose a volunteer" accessibilityState={{ expanded: open }} onPress={() => setOpen(!open)} style={[styles.card, styles.dropdown, open && styles.dropdownOpen]}><Icon name="user" size={18} color={C.muted} /><Text style={[styles.dropdownText, selected && { color: C.text, fontWeight: '700' }]}>{selected?.name ?? 'Select Volunteer'}</Text><Text style={styles.dropdownArrow}>{open ? '⌃' : '⌄'}</Text></Pressable>
