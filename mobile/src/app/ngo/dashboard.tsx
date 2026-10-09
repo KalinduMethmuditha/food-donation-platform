@@ -1,7 +1,6 @@
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-// import { Image } from 'react-native'; // <- uncomment if you use a real basket image
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from '@/components/ui/Icon';
 
@@ -72,9 +71,12 @@ export default function NgoDashboard() {
                 <Text style={styles.welcomeSub}>Here's what's happening today</Text>
               </View>
 
-              {/* Replace with: <Image source={require('@/assets/images/food-basket.png')} style={styles.basketImg} /> */}
               <View style={styles.basketBox}>
-                <Text style={styles.basketEmoji}>🧺</Text>
+                <Image
+                  source={require('@/assets/images/food-basket.jpg')}
+                  style={styles.basketPhoto}
+                  resizeMode="contain"
+                />
               </View>
             </View>
           </SafeAreaView>
@@ -212,16 +214,16 @@ const styles = StyleSheet.create({
   welcomeTitle: { fontSize: 26, fontWeight: '800', color: C.white },
   welcomeSub: { fontSize: 13, color: 'rgba(255,255,255,0.85)', marginTop: 4 },
   basketBox: {
-    width: 84,
-    height: 84,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.95)',
+    width: 96,
+    height: 96,
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: C.white,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: -20,
   },
-  basketEmoji: { fontSize: 46 },
-  basketImg: { width: 90, height: 90, resizeMode: 'contain', marginBottom: -20 },
+  basketPhoto: { width: 92, height: 92 },
 
   // Shared card
   card: {
