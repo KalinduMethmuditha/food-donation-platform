@@ -104,9 +104,10 @@ export default function PickupDetailsScreen() {
 
           <Text style={formStyles.fieldLabel}>Pickup Point</Text>
           <PickupMap latitude={pickupLatitude} longitude={pickupLongitude}
-            onLocationChange={(latitude, longitude) => {
-              updatePickupDetails({ pickupLatitude: latitude, pickupLongitude: longitude });
-              setErrors((current) => ({ ...current, pickupCoordinates: undefined }));
+            onLocationChange={(latitude, longitude, address) => {
+              const fillAddress = address && useDonationDraftStore.getState().pickupLocation === pickupLocation;
+              updatePickupDetails({ pickupLatitude: latitude, pickupLongitude: longitude, ...(fillAddress ? { pickupLocation: address } : {}) });
+              setErrors((current) => ({ ...current, pickupCoordinates: undefined, ...(fillAddress ? { pickupLocation: undefined } : {}) }));
             }} />
           {errors.pickupCoordinates ? <Text accessibilityRole="alert" style={styles.coordinateError}>{errors.pickupCoordinates}</Text> : null}
 
