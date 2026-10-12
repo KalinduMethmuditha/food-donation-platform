@@ -1,8 +1,10 @@
 import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import VolunteerBottomNav from '@/components/volunteer/VolunteerBottomNav';
+import AssignmentControls from '@/components/volunteer/AssignmentControls';
 import VolunteerScreenHeader from '@/components/volunteer/VolunteerScreenHeader';
 import DonationBanner from '@/components/shared/DonationBanner';
 import Card from '@/components/ui/Card';
@@ -16,7 +18,14 @@ import { getDonationStatusLabel } from '@/utils/donation';
 
 export default function PickupDetailsScreen() {
   const assignment = useSelectedAssignment();
-  const { advance, isLoading, isSaving, error, refresh } = useVolunteerAssignments();
+  const { advance, accept, isLoading, isSaving, error, refresh } = useVolunteerAssignments();
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  const awaitingAcceptance = assignment?.status === 'assigned' && !!assignment.volunteerAcceptanceDeadline && !assignment.volunteerAcceptedAt;
+  const acceptanceExpired = !!assignment?.volunteerAcceptanceDeadline && Date.parse(assignment.volunteerAcceptanceDeadline) <= currentTime;
 
   const startRoute = async () => {
     if (!assignment) return;
@@ -48,13 +57,14 @@ export default function PickupDetailsScreen() {
           <Text style={styles.label}>Food</Text><Text style={styles.value}>{assignment.foodType}</Text>
           <Text style={styles.label}>Quantity</Text><Text style={styles.value}>{assignment.quantity} {assignment.unit}</Text>
           <Text style={styles.label}>Pickup deadline</Text><Text style={styles.value}>{formatDateTime(assignment.pickupDeadline)}</Text>
+          {assignment.volunteerAcceptanceDeadline ? <><Text style={styles.label}>Accept before</Text><Text style={styles.value}>{formatDateTime(assignment.volunteerAcceptanceDeadline)}</Text><Text style={styles.body}>{assignment.volunteerAcceptedAt ? `Accepted ${formatDateTime(assignment.volunteerAcceptedAt)}` : acceptanceExpired ? 'Acceptance deadline passed. Ask the NGO to extend it or reassign.' : 'Awaiting your acceptance'}</Text></> : null}
           <Text style={styles.label}>Status</Text><Text style={styles.value}>{getDonationStatusLabel(assignment.status)}</Text>
           <Text style={styles.label}>Partner NGO</Text><Text style={styles.value}>{assignment.ngoName || 'Not available'}</Text>
         </Card>
         {assignment.description ? <Card style={styles.card}>
           <Text style={styles.title}>Special Notes</Text><Text style={styles.body}>{assignment.description}</Text>
         </Card> : null}
-        {assignment.status === 'assigned' || assignment.status === 'pickup' ? (
+        {awaitingAcceptance ? <><PrimaryButton title="Accept Assignment" disabled={acceptanceExpired} loading={isSaving} onPress={() => { void accept(assignment.id).catch(() => undefined); }} /><SecondaryButton title="Refresh Assignment" onPress={() => void refresh()} /></> : assignment.status === 'assigned' || assignment.status === 'pickup' ? (
           <PrimaryButton title={assignment.status === 'assigned' ? 'Start Route' : 'View Route'}
             loading={isSaving} onPress={() => void startRoute()} />
         ) : assignment.status === 'arrived' ? (
@@ -64,6 +74,8 @@ export default function PickupDetailsScreen() {
         ) : (
           <PrimaryButton title="View Confirmation" onPress={() => router.push('/volunteer/confirmation')} />
         )}
+        <SecondaryButton title="View Pickup Progress" onPress={() => router.push('/volunteer/collection-status')} />
+        <AssignmentControls assignment={assignment} />
       </>}
     </ScrollView>
     <VolunteerBottomNav activeTab="Pickups" onPress={(route) => router.push(route as any)} />

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
@@ -12,6 +12,8 @@ const colombo = { latitude: 6.9271, longitude: 79.8612, latitudeDelta: 0.04, lon
 export default function PickupMap({ latitude, longitude, onLocationChange }: PickupMapProps) {
   const map = useRef<MapView>(null);
   const pendingLocation = useRef(false);
+  const locationRevision = useRef(0);
+  useEffect(() => () => { locationRevision.current += 1; }, []);
   const [isLocating, setIsLocating] = useState(false);
   const [error, setError] = useState('');
   const coordinate = isValidPickupCoordinates(latitude, longitude)
@@ -23,6 +25,7 @@ export default function PickupMap({ latitude, longitude, onLocationChange }: Pic
       return;
     }
     onLocationChange(point.latitude, point.longitude);
+    locationRevision.current += 1;
     setError('');
   };
 
@@ -31,17 +34,36 @@ export default function PickupMap({ latitude, longitude, onLocationChange }: Pic
     pendingLocation.current = true;
     setIsLocating(true);
     setError('');
+    const requestRevision = ++locationRevision.current;
     try {
       const permission = await Location.requestForegroundPermissionsAsync();
+      if (requestRevision !== locationRevision.current) return;
       if (!permission.granted) {
         setError('Location permission was not granted. You can select the pickup point manually on the map.');
         return;
       }
       const result = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      if (requestRevision !== locationRevision.current) return;
       const point = { latitude: result.coords.latitude, longitude: result.coords.longitude };
       selectPoint(point);
+      const selectedRevision = locationRevision.current;
       if (isValidPickupCoordinates(point.latitude, point.longitude)) {
         map.current?.animateToRegion({ ...point, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 500);
+        try {
+          const [place] = await Location.reverseGeocodeAsync(point);
+          if (selectedRevision !== locationRevision.current) return;
+          const street = [place?.streetNumber, place?.street].filter(Boolean).join(' ');
+          const address = [...new Set([
+            street || place?.name, place?.district, place?.city,
+            place?.region, place?.postalCode, place?.country,
+          ].filter((part): part is string => Boolean(part?.trim())))].join(', ').slice(0, 200);
+          if (address) onLocationChange(point.latitude, point.longitude, address);
+          else setError('Pickup point selected, but no address was found. Please enter the pickup address.');
+        } catch {
+          if (selectedRevision === locationRevision.current) {
+            setError('Pickup point selected. Could not fetch the address; please enter it manually.');
+          }
+        }
       }
     } catch {
       setError('Could not determine your current location. Select the pickup point manually.');

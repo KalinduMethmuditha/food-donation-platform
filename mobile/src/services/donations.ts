@@ -12,6 +12,8 @@ export type ApiDonation = {
   pickup_latitude?: number | string | null;
   pickup_longitude?: number | string | null;
   pickup_deadline: string;
+  volunteer_acceptance_deadline?: string | null;
+  volunteer_accepted_at?: string | null;
   status: DonationStatus;
   created_at?: string;
   accepted_by_ngo?: { id: number; name: string } | null;
@@ -35,6 +37,8 @@ export function mapApiDonationToDonation(donation: ApiDonation): Donation {
     pickupLatitude: parsePickupCoordinate(donation.pickup_latitude, 90),
     pickupLongitude: parsePickupCoordinate(donation.pickup_longitude, 180),
     pickupDeadline: donation.pickup_deadline,
+    volunteerAcceptanceDeadline: donation.volunteer_acceptance_deadline ?? undefined,
+    volunteerAcceptedAt: donation.volunteer_accepted_at ?? undefined,
     status: donation.status,
     createdAt: donation.created_at,
     statusLogs: donation.status_logs?.map((log) => ({
@@ -43,8 +47,8 @@ export function mapApiDonationToDonation(donation: ApiDonation): Donation {
       note: log.note ?? undefined,
       createdAt: log.created_at,
     })),
-    collectedAt: donation.status_logs?.find((log) => log.status === 'collected')?.created_at,
-    deliveredAt: donation.status_logs?.find((log) => log.status === 'delivered')?.created_at,
+    collectedAt: ['collected', 'delivered'].includes(donation.status) ? [...(donation.status_logs ?? [])].reverse().find((log) => log.status === 'collected')?.created_at : undefined,
+    deliveredAt: donation.status === 'delivered' ? [...(donation.status_logs ?? [])].reverse().find((log) => log.status === 'delivered')?.created_at : undefined,
     ngoName: donation.accepted_by_ngo?.name,
     volunteerName: donation.assigned_volunteer?.name,
   };

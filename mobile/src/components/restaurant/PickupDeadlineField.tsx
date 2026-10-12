@@ -9,10 +9,11 @@ import { formatDateTime } from '@/utils/dateTime';
 
 const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export default function PickupDeadlineField({ value, error, onChange }: {
+export default function PickupDeadlineField({ value, error, onChange, label = 'Collection / Pickup Deadline' }: {
   value: string;
   error?: string;
   onChange: (value: string) => void;
+  label?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(new Date());
@@ -50,7 +51,7 @@ export default function PickupDeadlineField({ value, error, onChange }: {
     const deadline = new Date(selected);
     deadline.setHours(Number(hour), Number(minute), 0, 0);
     if (deadline.getTime() <= Date.now()) {
-      setPickerError('Please select a future pickup date and time.');
+      setPickerError('Please select a future date and time.');
       return;
     }
     onChange(deadline.toISOString());
@@ -58,8 +59,8 @@ export default function PickupDeadlineField({ value, error, onChange }: {
   };
 
   return <View style={styles.field}>
-    <Text style={styles.label}>Collection / Pickup Deadline</Text>
-    <Pressable accessibilityRole="button" accessibilityLabel="Choose collection or pickup deadline"
+    <Text style={styles.label}>{label}</Text>
+    <Pressable accessibilityRole="button" accessibilityLabel={`Choose ${label.toLowerCase()}`}
       onPress={openPicker} style={[styles.input, error && styles.errorBorder]}>
       <Text style={value ? styles.text : styles.placeholder}>{value ? formatDateTime(value) : 'Select date and time'}</Text>
       <Icon name="clock" size={22} />
@@ -71,7 +72,7 @@ export default function PickupDeadlineField({ value, error, onChange }: {
       <View style={styles.overlay}>
         <ScrollView style={styles.dialog} contentContainerStyle={styles.dialogContent} keyboardShouldPersistTaps="handled">
           <View accessibilityViewIsModal>
-            <Text style={styles.title}>Pickup deadline</Text>
+            <Text style={styles.title}>{label}</Text>
             <View style={styles.monthRow}>
               <Pressable accessibilityRole="button" accessibilityLabel="Previous month" disabled={!canGoBack}
                 onPress={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}

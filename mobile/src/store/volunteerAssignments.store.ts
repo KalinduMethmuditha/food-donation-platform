@@ -5,6 +5,10 @@ import { create } from 'zustand';
 import { getApiErrorMessage } from '@/services/apiErrors';
 import {
   addVolunteerAssignmentUpdate,
+  acceptVolunteerAssignment,
+  cancelVolunteerAssignment,
+  correctVolunteerAssignmentStatus,
+  type CorrectionStatus,
   getVolunteerAssignments,
   markVolunteerNotificationsRead,
   updateVolunteerAssignmentStatus,
@@ -25,6 +29,9 @@ type State = {
   selectAssignment: (id: string) => void;
   refresh: () => Promise<void>;
   advance: (id: string, status: NextStatus) => Promise<VolunteerAssignment>;
+  accept: (id: string) => Promise<VolunteerAssignment>;
+  correct: (id: string, status: CorrectionStatus) => Promise<VolunteerAssignment>;
+  cancel: (id: string) => Promise<void>;
   addUpdate: (id: string, note: string) => Promise<VolunteerAssignment>;
   setAvailability: (value: boolean) => Promise<void>;
   markRead: (ids: number[]) => Promise<void>;
@@ -85,6 +92,52 @@ export const useVolunteerAssignments = create<State>((set, get) => ({
     } finally {
       if (requestId === refreshId) set({ isLoading: false });
     }
+  },
+  accept: async (id) => {
+    if (get().isSaving) throw new Error('Please wait for the current update.');
+    set({ isSaving: true, error: null });
+    try {
+      const updated = await acceptVolunteerAssignment(id);
+      mutationVersion += 1;
+      set((state) => ({ assignments: replaceAssignment(state.assignments, updated) }));
+      return updated;
+    } catch (error) {
+      set({ error: message(error) });
+      await handleAuthError(error);
+      throw error;
+    } finally { set({ isSaving: false }); }
+  },
+  cancel: async (id) => {
+    if (get().isSaving) throw new Error('Please wait for the current update.');
+    set({ isSaving: true, error: null });
+    try {
+      await cancelVolunteerAssignment(id);
+      mutationVersion += 1;
+      set((state) => {
+        const assignments = state.assignments.filter((item) => item.id !== id);
+        return { assignments, selectedId: state.selectedId === id ? assignments[0]?.id ?? null : state.selectedId };
+      });
+    } catch (error) {
+      set({ error: message(error) });
+      await handleAuthError(error);
+      throw error;
+    } finally { set({ isSaving: false }); }
+  },
+  correct: async (id, status) => {
+    if (get().isSaving) throw new Error('Please wait for the current update.');
+    const assignment = get().assignments.find((item) => item.id === id);
+    if (!assignment) throw new Error('Assignment not found.');
+    set({ isSaving: true, error: null });
+    try {
+      const updated = await correctVolunteerAssignmentStatus(id, status, assignment.status);
+      mutationVersion += 1;
+      set((state) => ({ assignments: replaceAssignment(state.assignments, updated) }));
+      return updated;
+    } catch (error) {
+      set({ error: message(error) });
+      await handleAuthError(error);
+      throw error;
+    } finally { set({ isSaving: false }); }
   },
   advance: async (id, status) => {
     if (get().isSaving) throw new Error('Please wait for the current update.');

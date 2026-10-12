@@ -1,4 +1,5 @@
 import FoodThumbnail from '@/components/shared/FoodThumbnail';
+import PendingAssignmentControls from '@/components/ngo/PendingAssignmentControls';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -38,11 +39,12 @@ export default function ActiveCollection() {
       <NgoTitleBar title={id ? 'Active Collection' : 'My Collections'} /><NgoLoadState loading={loading} error={error} retry={() => { void refreshStatus(); }} />
       {id ? donation ? <>
         {summary(donation)}<NgoPickupPreview donation={donation} />
+        <PendingAssignmentControls key={`${donation.id}:${donation.volunteerAcceptanceDeadline}:${donation.volunteerAcceptedAt}:${donation.status}`} donation={donation} />
         <View style={[styles.card, styles.progressCard]}><Text style={styles.progressTitle}>Collection Progress</Text>
           {stages.map((stage, index) => {
             const done = index < currentIndex || donation.status === 'delivered';
             const current = index === currentIndex && !done;
-            const log = donation.statusLogs?.find((item) => item.status === stage.status);
+            const log = index <= currentIndex ? [...(donation.statusLogs ?? [])].reverse().find((item) => item.status === stage.status) : undefined;
             return <View key={stage.status} style={styles.stepRow}><View style={styles.indCol}><View style={[styles.circle, done ? styles.circleDone : current ? styles.circleCurrent : styles.circlePending]}>{done ? <Text style={styles.tick}>✓</Text> : current ? <View style={styles.currentDot} /> : null}</View>{index < stages.length - 1 ? <View style={[styles.line, done && styles.lineDone]} /> : null}</View><View style={styles.stepText}><Text style={[styles.stepTitle, !done && !current && { color: C.muted }]}>{stage.title}</Text><Text style={[styles.stepSub, current && { color: C.primary, fontWeight: '700' }]}>{log ? formatDateTime(log.createdAt) : current ? 'In progress' : done ? 'Completed' : 'Pending'}</Text></View></View>;
           })}
           {donation.status === 'accepted' ? <NgoGradientButton title="Assign Volunteer" onPress={() => router.push({ pathname: '/ngo/assignvolunteer', params: { id: donation.id } })} /> : null}

@@ -45,7 +45,7 @@ class NotificationWorkflowTest extends TestCase
                 ->assertJsonPath('notifications.0.kind', 'published')
                 ->assertJsonPath('notifications.0.donation_id', $donation->id);
             $this->postJson("/api/ngo/donations/{$donation->id}/accept")->assertOk();
-            $this->postJson("/api/ngo/donations/{$donation->id}/assign", ['volunteer_id' => $volunteer->id])->assertOk();
+            $this->postJson("/api/ngo/donations/{$donation->id}/assign", ['volunteer_id' => $volunteer->id, 'volunteer_acceptance_deadline' => now()->addMinutes(30)->toIso8601String()])->assertOk();
             $this->getJson('/api/notifications')->assertOk()->assertJsonCount(0, 'notifications');
 
             $this->authenticate($otherVolunteer);
@@ -57,6 +57,7 @@ class NotificationWorkflowTest extends TestCase
             $this->authenticate($volunteer->fresh());
             $this->getJson('/api/notifications')->assertOk()->assertJsonCount(0, 'notifications');
 
+            $this->postJson("/api/volunteer/assignments/{$donation->id}/accept")->assertOk();
             foreach (['pickup', 'arrived', 'collected', 'delivered'] as $status) {
                 $this->patchJson("/api/volunteer/assignments/{$donation->id}/status", ['status' => $status])->assertOk();
             }

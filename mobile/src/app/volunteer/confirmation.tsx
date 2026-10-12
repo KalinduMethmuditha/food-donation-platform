@@ -16,8 +16,8 @@ export default function ConfirmationScreen() {
   const assignment = useSelectedAssignment();
   const { advance, isSaving, error } = useVolunteerAssignments();
   const profile = useVolunteerStore((state) => state.profile);
-  const collectedAt = assignment?.statusLogs.find((log) => log.status === 'collected')?.createdAt;
-  const deliveredAt = assignment?.statusLogs.find((log) => log.status === 'delivered')?.createdAt;
+  const collectedAt = [...(assignment?.statusLogs ?? [])].reverse().find((log) => log.status === 'collected')?.createdAt;
+  const deliveredAt = assignment?.status === 'delivered' ? [...assignment.statusLogs].reverse().find((log) => log.status === 'delivered')?.createdAt : undefined;
   const complete = assignment?.status === 'collected' || assignment?.status === 'delivered';
 
   const markDelivered = async () => {
@@ -57,6 +57,7 @@ export default function ConfirmationScreen() {
         ) : null}
         <PrimaryButton title="Back to Dashboard" onPress={() => router.replace('/volunteer/dashboard')} />
         <SecondaryButton title="View Activity" onPress={() => router.push('/volunteer/activity')} />
+        <SecondaryButton title="View Pickup Progress" onPress={() => router.push('/volunteer/collection-status')} />
       </>}
     </ScrollView>
   </SafeAreaView>;

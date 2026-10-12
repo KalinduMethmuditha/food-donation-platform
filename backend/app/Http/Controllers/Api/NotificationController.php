@@ -86,7 +86,7 @@ class NotificationController extends Controller
 
         if (in_array($user->role, ['restaurant', 'household'])) {
             return $query->where('status', 'delivered')
-                ->whereHas('donation', fn (Builder $donations) => $donations->where('user_id', $user->id));
+                ->whereHas('donation', fn (Builder $donations) => $donations->where('user_id', $user->id)->where('status', 'delivered'));
         }
 
         return $query->whereRaw('1 = 0');

@@ -30,7 +30,7 @@ type State = {
   loadVolunteers: () => Promise<void>;
   accept: (id: string) => Promise<NgoDonation>;
   reject: (id: string) => Promise<void>;
-  assign: (id: string, volunteerId: string) => Promise<NgoDonation>;
+  assign: (id: string, volunteerId: string, acceptanceDeadline: string) => Promise<NgoDonation>;
   markNoticesRead: (ids: string[]) => void;
   clear: () => void;
 };
@@ -167,11 +167,11 @@ export const useNgoDonations = create<State>((set, get) => ({
       set({ isSaving: false });
     }
   },
-  assign: async (id, volunteerId) => {
+  assign: async (id, volunteerId, acceptanceDeadline) => {
     if (get().isSaving) throw new Error('Please wait for the current update.');
     set({ isSaving: true, error: null });
     try {
-      const donation = await assignNgoVolunteer(id, volunteerId);
+      const donation = await assignNgoVolunteer(id, volunteerId, acceptanceDeadline);
       revision += 1;
       set((state) => ({ mine: upsertDonation(state.mine, donation) }));
       return donation;

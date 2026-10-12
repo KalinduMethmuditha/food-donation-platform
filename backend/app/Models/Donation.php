@@ -56,6 +56,8 @@ class Donation extends Model
             'pickup_latitude' => 'decimal:7',
             'pickup_longitude' => 'decimal:7',
             'pickup_deadline' => 'datetime',
+            'volunteer_acceptance_deadline' => 'datetime',
+            'volunteer_accepted_at' => 'datetime',
         ];
     }
 }
