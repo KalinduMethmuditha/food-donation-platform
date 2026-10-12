@@ -1,56 +1,47 @@
-# Welcome to your Expo app 👋
+# Food Donation Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+React Native + Expo SDK 57 + TypeScript, using Expo Router, Zustand, and React Native StyleSheet.
 
-## Get started
+## Run
 
-1. Install dependencies
+From this `mobile` directory, with an existing compatible Node installation available:
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```sh
+npm install
+npm run typecheck
+npm start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Use `npm run android`, `npm run ios`, or `npm run web` to start the corresponding Expo development target. Native testing requires a compatible emulator, simulator, or device.
 
-### Other setup steps
+`npm run lint` invokes Expo's ESLint setup when ESLint is not configured. The current project does not include ESLint or `eslint-config-expo`; accepting that setup installs additional development dependencies. Type checking is available independently through `npm run typecheck`.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Restaurant Donor module
 
-## Learn more
+Routes live in `src/app/restaurant/`. The app entry redirects to `/restaurant/dashboard`.
 
-To learn more about developing your project with Expo, look at the following resources:
+- Main navigation: Dashboard, Donations, Notifications, and Profile.
+- Donation creation: Food Details → Pickup Details → Preview.
+- Donation status: `/restaurant/donations/[id]`.
+- Active and Completed donations share one screen with local tab and search state.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Reusable presentation components live in `src/components/ui/` and `src/components/shared/`; restaurant-specific components live in `src/components/restaurant/`. Shared colors come from `src/constants/colors.ts`.
 
-## Join the community
+`src/stores/donationDraft.store.ts` holds wizard values across navigation. Search, selected tabs, filters, and validation belong to their respective screens.
 
-Join our community of developers creating universal apps.
+Restaurant donation data and publishing remain frontend demonstrations. No Laravel API, authentication, real map, or push notification service is connected. Mock data and simulated publishing should be replaced when the API is available.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Manual verification
+
+1. Open the dashboard, then select Create Donation.
+2. Submit empty Food Details and verify required-field errors.
+3. Enter `Rice & Curry`, `10`, and `Freshly prepared meals`; continue.
+4. Verify Pickup Details validates empty fields, then enter `Green Leaf Restaurant, Main Entrance` and `Today, 3:00 PM`.
+5. Continue to Preview and verify all entered values appear.
+6. Use Back and both Edit actions; confirm draft values remain populated.
+7. Confirm & Publish; verify donation details, quantity, pickup details, and timeline.
+8. Open My Donations; switch Active/Completed, search by name, and open cards. Verify a nonmatching search shows an empty state.
+9. Use Home, Donations, Notifications, and Profile in the bottom navigation; confirm selected states and destinations.
+10. Verify Notifications' All and Unread filters, scrolling on a small screen, keyboard access to form fields, and device safe areas.
+
+The original Expo starter components and reset-project script were removed after confirming no application imports depended on them.
