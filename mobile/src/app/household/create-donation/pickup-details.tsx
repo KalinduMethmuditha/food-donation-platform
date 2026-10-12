@@ -38,9 +38,10 @@ export default function HouseholdPickupDetails() {
       <Card>
         <FormField label="Pickup address" placeholder="123 Maple Street, Apartment 4B" value={pickupLocation} onChangeText={(value) => { updatePickupDetails({ pickupLocation: value }); setErrors((current) => ({ ...current, pickupLocation: undefined })); }} error={errors.pickupLocation} multiline maxLength={500} />
         <Text style={styles.label}>Pickup point (optional)</Text>
-        <PickupMap latitude={pickupLatitude} longitude={pickupLongitude} onLocationChange={(latitude, longitude) => {
-          updatePickupDetails({ pickupLatitude: latitude, pickupLongitude: longitude });
-          setErrors((current) => ({ ...current, pickupCoordinates: undefined }));
+        <PickupMap latitude={pickupLatitude} longitude={pickupLongitude} onLocationChange={(latitude, longitude, address) => {
+          const fillAddress = address && useDonationDraftStore.getState().pickupLocation === pickupLocation;
+          updatePickupDetails({ pickupLatitude: latitude, pickupLongitude: longitude, ...(fillAddress ? { pickupLocation: address } : {}) });
+          setErrors((current) => ({ ...current, pickupCoordinates: undefined, ...(fillAddress ? { pickupLocation: undefined } : {}) }));
         }} />
         {errors.pickupCoordinates ? <Text accessibilityRole="alert" style={styles.error}>{errors.pickupCoordinates}</Text> : null}
         <PickupDeadlineField value={pickupDeadline} onChange={(value) => {

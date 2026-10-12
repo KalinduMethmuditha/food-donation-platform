@@ -8,6 +8,7 @@ use App\Models\NgoDonationRejection;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -158,6 +159,7 @@ class NgoDonationController extends Controller
 
         $data = $request->validate([
             'volunteer_id' => ['required', 'integer', 'exists:users,id'],
+            'volunteer_acceptance_deadline' => ['required', 'date', 'after:now'],
         ]);
 
         return DB::transaction(function () use ($request, $donation, $data): JsonResponse {
@@ -175,6 +177,10 @@ class NgoDonationController extends Controller
                 return response()->json(['message' => 'The pickup deadline has passed.'], 409);
             }
 
+            if (Carbon::parse($data['volunteer_acceptance_deadline'])->greaterThan($lockedDonation->pickup_deadline)) {
+                throw ValidationException::withMessages(['volunteer_acceptance_deadline' => ['Accept-before time must be no later than the pickup deadline.']]);
+            }
+
             $volunteer = User::query()->whereKey($data['volunteer_id'])->lockForUpdate()->first();
             if (! $volunteer || $volunteer->role !== 'volunteer' || ! $volunteer->is_available) {
                 throw ValidationException::withMessages([
@@ -185,6 +191,8 @@ class NgoDonationController extends Controller
             $lockedDonation->forceFill([
                 'assigned_volunteer_id' => $volunteer->id,
                 'status' => 'assigned',
+                'volunteer_acceptance_deadline' => $data['volunteer_acceptance_deadline'],
+                'volunteer_accepted_at' => null,
             ])->save();
 
             $lockedDonation->statusLogs()->create([
@@ -202,6 +210,57 @@ class NgoDonationController extends Controller
                     'statusLogs',
                 ]),
             ]);
+        });
+    }
+
+    public function updateAssignment(Request $request, Donation $donation): JsonResponse
+    {
+        if ($request->user()->role !== 'ngo') {
+            return response()->json(['message' => 'Only NGOs can edit assignments.'], 403);
+        }
+        $data = $request->validate(['volunteer_acceptance_deadline' => ['required', 'date', 'after:now']]);
+
+        return DB::transaction(function () use ($request, $donation, $data): JsonResponse {
+            $locked = Donation::query()->whereKey($donation->id)->lockForUpdate()->firstOrFail();
+            if ($locked->accepted_by_ngo_id !== $request->user()->id) {
+                return response()->json(['message' => 'You cannot edit this assignment.'], 403);
+            }
+            if ($locked->status !== 'assigned' || $locked->volunteer_accepted_at !== null) {
+                return response()->json(['message' => 'Only assignments awaiting volunteer acceptance can be edited.'], 409);
+            }
+            if (Carbon::parse($data['volunteer_acceptance_deadline'])->greaterThan($locked->pickup_deadline)) {
+                throw ValidationException::withMessages(['volunteer_acceptance_deadline' => ['Accept-before time must be no later than the pickup deadline.']]);
+            }
+            $locked->forceFill($data)->save();
+
+            return response()->json(['donation' => $locked->load(['user:id,name,role', 'assignedVolunteer:id,name', 'statusLogs'])]);
+        });
+    }
+
+    public function cancelAssignment(Request $request, Donation $donation): JsonResponse
+    {
+        if ($request->user()->role !== 'ngo') {
+            return response()->json(['message' => 'Only NGOs can cancel assignments.'], 403);
+        }
+
+        return DB::transaction(function () use ($request, $donation): JsonResponse {
+            $locked = Donation::query()->whereKey($donation->id)->lockForUpdate()->firstOrFail();
+            if ($locked->accepted_by_ngo_id !== $request->user()->id) {
+                return response()->json(['message' => 'You cannot cancel this assignment.'], 403);
+            }
+            if ($locked->status !== 'assigned' || $locked->volunteer_accepted_at !== null) {
+                return response()->json(['message' => 'Only assignments awaiting volunteer acceptance can be cancelled.'], 409);
+            }
+            $locked->forceFill([
+                'assigned_volunteer_id' => null, 'volunteer_acceptance_deadline' => null,
+                'volunteer_accepted_at' => null, 'status' => 'accepted',
+            ])->save();
+            $locked->statusLogs()->create([
+                'status' => 'accepted', 'changed_by_user_id' => $request->user()->id,
+                'note' => 'NGO cancelled the unaccepted volunteer assignment. Ready for reassignment.',
+            ]);
+
+            return response()->json(['donation' => $locked->load(['user:id,name,role', 'assignedVolunteer:id,name', 'statusLogs'])]);
         });
     }
 }

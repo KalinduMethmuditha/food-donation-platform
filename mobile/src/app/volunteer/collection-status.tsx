@@ -1,4 +1,5 @@
 import DonationTimeline from '@/components/shared/DonationTimeline';
+import AssignmentControls from '@/components/volunteer/AssignmentControls';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
@@ -47,6 +48,7 @@ export default function CollectionStatusScreen() {
   };
 
   const currentIndex = stages.findIndex((item) => item.status === assignment?.status);
+  const awaitingAcceptance = !!assignment?.volunteerAcceptanceDeadline && !assignment.volunteerAcceptedAt;
   const next = stages[currentIndex + 1]?.status as 'pickup' | 'arrived' | 'collected' | 'delivered' | undefined;
 
   return <SafeAreaView style={styles.safe} edges={['top']}>
@@ -65,9 +67,10 @@ export default function CollectionStatusScreen() {
           <DonationTimeline items={stages.map((stage, index) => ({
             title: stage.label,
             status: index < currentIndex || assignment.status === 'delivered' ? 'completed' : index === currentIndex ? 'current' : 'pending',
-            time: formatDateTime(assignment.statusLogs.find((log) => log.status === stage.status)?.createdAt),
+            time: index <= currentIndex ? formatDateTime([...assignment.statusLogs].reverse().find((log) => log.status === stage.status)?.createdAt) : undefined,
           }))} />
         </Card>
+        <AssignmentControls assignment={assignment} />
         <Card style={styles.card}>
           <Text style={styles.title}>Add Update</Text>
           <TextInput style={styles.input} placeholder="Write an update about this pickup..."
@@ -75,7 +78,7 @@ export default function CollectionStatusScreen() {
           <PrimaryButton title="Add Update" disabled={!updateText.trim()} loading={isSaving}
             onPress={() => void saveNote(updateText)} />
         </Card>
-        {next ? <PrimaryButton title={next === 'pickup' ? 'Start Route' : next === 'arrived' ? 'Mark Arrived' : next === 'collected' ? 'Mark as Collected' : 'Mark as Delivered'}
+        {awaitingAcceptance ? <SecondaryButton title="Accept in Pickup Details" onPress={() => router.replace('/volunteer/pickup-details')} /> : next ? <PrimaryButton title={next === 'pickup' ? 'Start Route' : next === 'arrived' ? 'Mark Arrived' : next === 'collected' ? 'Mark as Collected' : 'Mark as Delivered'}
           loading={isSaving} onPress={() => void changeStatus(next)} /> : null}
         <SecondaryButton title="Report Issue" onPress={() => setReportVisible(true)} />
       </>}

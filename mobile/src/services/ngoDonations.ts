@@ -77,10 +77,18 @@ export async function rejectNgoDonation(id: string): Promise<NgoRejection> {
   return mapNgoRejection(data.rejection);
 }
 
-export async function assignNgoVolunteer(id: string, volunteerId: string): Promise<NgoDonation> {
+export async function assignNgoVolunteer(id: string, volunteerId: string, acceptanceDeadline: string): Promise<NgoDonation> {
   const { data } = await api.post<{ donation: ApiNgoDonation }>(
     `/ngo/donations/${encodeURIComponent(id)}/assign`,
-    { volunteer_id: Number(volunteerId) },
+    { volunteer_id: Number(volunteerId), volunteer_acceptance_deadline: acceptanceDeadline },
   );
   return mapNgoDonation(data.donation);
+}
+
+export async function updateNgoAssignmentDeadline(id: string, deadline: string) {
+  await api.patch(`/ngo/donations/${encodeURIComponent(id)}/assignment`, { volunteer_acceptance_deadline: deadline });
+}
+
+export async function cancelNgoAssignment(id: string) {
+  await api.delete(`/ngo/donations/${encodeURIComponent(id)}/assignment`);
 }

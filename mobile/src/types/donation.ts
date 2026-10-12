@@ -36,6 +36,8 @@ export type Donation = Omit<DonationDraft, 'quantity'> & {
   deliveredAt?: string;
   ngoName?: string;
   volunteerName?: string;
+  volunteerAcceptanceDeadline?: string;
+  volunteerAcceptedAt?: string;
 };
 
 export type DonationTimelineItem = {

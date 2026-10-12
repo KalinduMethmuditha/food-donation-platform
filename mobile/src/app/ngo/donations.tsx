@@ -1,3 +1,4 @@
+import FoodThumbnail from '@/components/shared/FoodThumbnail';
 import { router, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useState } from 'react';
@@ -29,7 +30,7 @@ export default function NgoDonations() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>{ngoCategories.map((item) => <Pressable key={item} accessibilityRole="button" accessibilityState={{ selected: category === item }} onPress={() => setCategory(item)} style={[styles.chip, category === item && styles.chipActive]}><Text style={[styles.chipText, category === item && styles.chipTextActive]}>{item}</Text></Pressable>)}</ScrollView>
       <NgoLoadState loading={isLoading && available.length === 0} error={error} retry={() => { void refresh(); }} />
       <View style={styles.list}>{filtered.map((item) => <Pressable key={item.id} style={[styles.card, styles.item]} accessibilityRole="button" onPress={() => router.push({ pathname: '/ngo/donationdetails', params: { id: item.id } })}>
-        <View style={[styles.thumb, styles.thumbPlaceholder]}><Text style={{ fontSize: 38 }}>{foodVisual(item.foodType).emoji}</Text></View>
+        <View style={[styles.thumb, styles.thumbPlaceholder]}><FoodThumbnail food={item.foodType} /></View>
         <View style={{ flex: 1, marginLeft: 12 }}><Text style={styles.itemTitle}>{item.foodType}</Text><Text style={styles.itemQty}>Quantity: {item.quantity} {item.unit}</Text><View style={styles.distRow}><Icon name="map" size={12} color={C.primary} /><Text numberOfLines={2} style={[styles.distText, { flex: 1 }]}>{item.pickupLocation}</Text></View><View style={styles.tag}><Text style={styles.tagText}>{foodVisual(item.foodType).category.toUpperCase()}</Text></View><Text style={styles.itemQty}>{item.donorRole === 'restaurant' ? 'Restaurant' : 'Household'} · {item.donorName}</Text></View>
         <View style={styles.arrowBtn}><Icon name="chevron-right" size={16} color={C.primaryDark} /></View>
       </Pressable>)}{!isLoading && !error && filtered.length === 0 ? <View style={styles.empty}><Text style={{ fontSize: 40 }}>🍽️</Text><Text style={styles.emptyText}>No donations found</Text></View> : null}</View>

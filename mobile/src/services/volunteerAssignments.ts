@@ -15,6 +15,8 @@ export type VolunteerAssignment = {
   pickupLatitude?: number;
   pickupLongitude?: number;
   pickupDeadline: string;
+  volunteerAcceptanceDeadline?: string;
+  volunteerAcceptedAt?: string;
   status: DonationStatus;
   createdAt: string;
   statusLogs: { id: string; status: DonationStatus; note?: string; createdAt: string }[];
@@ -32,6 +34,8 @@ type ApiAssignment = {
   pickup_latitude?: number | string | null;
   pickup_longitude?: number | string | null;
   pickup_deadline: string;
+  volunteer_acceptance_deadline?: string | null;
+  volunteer_accepted_at?: string | null;
   status: DonationStatus;
   created_at: string;
   status_logs?: { id: number; status: DonationStatus; note?: string | null; created_at: string }[];
@@ -51,6 +55,8 @@ function mapAssignment(item: ApiAssignment): VolunteerAssignment {
     pickupLatitude: parsePickupCoordinate(item.pickup_latitude, 90),
     pickupLongitude: parsePickupCoordinate(item.pickup_longitude, 180),
     pickupDeadline: item.pickup_deadline,
+    volunteerAcceptanceDeadline: item.volunteer_acceptance_deadline ?? undefined,
+    volunteerAcceptedAt: item.volunteer_accepted_at ?? undefined,
     status: item.status,
     createdAt: item.created_at,
     statusLogs: (item.status_logs ?? []).map((log) => ({
@@ -62,6 +68,22 @@ function mapAssignment(item: ApiAssignment): VolunteerAssignment {
 export async function getVolunteerAssignments() {
   const { data } = await api.get<{ is_available: boolean; read_notification_ids: number[]; donations: ApiAssignment[] }>('/volunteer/assignments');
   return { isAvailable: data.is_available, readNotificationIds: data.read_notification_ids ?? [], assignments: data.donations.map(mapAssignment) };
+}
+
+export async function acceptVolunteerAssignment(id: string) {
+  const { data } = await api.post<{ donation: ApiAssignment }>(`/volunteer/assignments/${encodeURIComponent(id)}/accept`);
+  return mapAssignment(data.donation);
+}
+
+export type CorrectionStatus = 'assigned' | 'pickup' | 'arrived' | 'collected';
+
+export async function correctVolunteerAssignmentStatus(id: string, status: CorrectionStatus, currentStatus: DonationStatus) {
+  const { data } = await api.patch<{ donation: ApiAssignment }>(`/volunteer/assignments/${encodeURIComponent(id)}/correction`, { status, current_status: currentStatus });
+  return mapAssignment(data.donation);
+}
+
+export async function cancelVolunteerAssignment(id: string): Promise<void> {
+  await api.delete(`/volunteer/assignments/${encodeURIComponent(id)}`);
 }
 
 export async function markVolunteerNotificationsRead(ids: number[]): Promise<number[]> {

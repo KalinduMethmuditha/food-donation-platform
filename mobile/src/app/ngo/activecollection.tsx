@@ -1,3 +1,5 @@
+import FoodThumbnail from '@/components/shared/FoodThumbnail';
+import PendingAssignmentControls from '@/components/ngo/PendingAssignmentControls';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -6,7 +8,7 @@ import Icon from '@/components/ui/Icon';
 import { C, NgoDesignNav, NgoFooter, NgoGradientButton, NgoLoadState, NgoPickupPreview, NgoTitleBar } from '@/components/ngo/NgoDesign';
 import { useNgoDonation, useNgoDonations } from '@/store/ngoDonations.store';
 import type { NgoDonation } from '@/services/ngoDonations';
-import { foodVisual, initials } from '@/utils/ngoPresentation';
+import { initials } from '@/utils/ngoPresentation';
 import { formatDateTime } from '@/utils/dateTime';
 import { getDonationStatusLabel } from '@/utils/donation';
 
@@ -30,18 +32,19 @@ export default function ActiveCollection() {
   const currentIndex = stages.findIndex((stage) => stage.status === donation?.status);
   const notes = donation?.statusLogs?.filter((log) => log.note) ?? [];
   const summary = (item: NgoDonation) => <View style={[styles.card, styles.summary]}>
-    <View style={[styles.thumb, styles.thumbPlaceholder]}><Text style={{ fontSize: 30 }}>{foodVisual(item.foodType).emoji}</Text></View><View style={{ flex: 1, marginLeft: 12 }}><Text style={styles.summaryTitle}>{item.foodType} · {item.quantity} {item.unit}</Text><Text style={styles.summarySub}>Volunteer: {item.volunteerName ?? 'Awaiting assignment'}</Text>{!id ? <Text style={styles.summarySub}>{getDonationStatusLabel(item.status)}</Text> : null}</View>{item.volunteerName ? <View style={[styles.volAvatar, { backgroundColor: C.primary }]}><Text style={styles.volAvatarText}>{initials(item.volunteerName)}</Text></View> : <Icon name="chevron-right" size={18} color={C.primaryDark} />}
+    <View style={[styles.thumb, styles.thumbPlaceholder]}><FoodThumbnail food={item.foodType} /></View><View style={{ flex: 1, marginLeft: 12 }}><Text style={styles.summaryTitle}>{item.foodType} · {item.quantity} {item.unit}</Text><Text style={styles.summarySub}>Volunteer: {item.volunteerName ?? 'Awaiting assignment'}</Text>{!id ? <Text style={styles.summarySub}>{getDonationStatusLabel(item.status)}</Text> : null}</View>{item.volunteerName ? <View style={[styles.volAvatar, { backgroundColor: C.primary }]}><Text style={styles.volAvatarText}>{initials(item.volunteerName)}</Text></View> : <Icon name="chevron-right" size={18} color={C.primaryDark} />}
   </View>;
   return <View style={styles.root}><SafeAreaView edges={['top']} style={{ flex: 1 }}>
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 140 }}>
       <NgoTitleBar title={id ? 'Active Collection' : 'My Collections'} /><NgoLoadState loading={loading} error={error} retry={() => { void refreshStatus(); }} />
       {id ? donation ? <>
         {summary(donation)}<NgoPickupPreview donation={donation} />
+        <PendingAssignmentControls key={`${donation.id}:${donation.volunteerAcceptanceDeadline}:${donation.volunteerAcceptedAt}:${donation.status}`} donation={donation} />
         <View style={[styles.card, styles.progressCard]}><Text style={styles.progressTitle}>Collection Progress</Text>
           {stages.map((stage, index) => {
             const done = index < currentIndex || donation.status === 'delivered';
             const current = index === currentIndex && !done;
-            const log = donation.statusLogs?.find((item) => item.status === stage.status);
+            const log = index <= currentIndex ? [...(donation.statusLogs ?? [])].reverse().find((item) => item.status === stage.status) : undefined;
             return <View key={stage.status} style={styles.stepRow}><View style={styles.indCol}><View style={[styles.circle, done ? styles.circleDone : current ? styles.circleCurrent : styles.circlePending]}>{done ? <Text style={styles.tick}>✓</Text> : current ? <View style={styles.currentDot} /> : null}</View>{index < stages.length - 1 ? <View style={[styles.line, done && styles.lineDone]} /> : null}</View><View style={styles.stepText}><Text style={[styles.stepTitle, !done && !current && { color: C.muted }]}>{stage.title}</Text><Text style={[styles.stepSub, current && { color: C.primary, fontWeight: '700' }]}>{log ? formatDateTime(log.createdAt) : current ? 'In progress' : done ? 'Completed' : 'Pending'}</Text></View></View>;
           })}
           {donation.status === 'accepted' ? <NgoGradientButton title="Assign Volunteer" onPress={() => router.push({ pathname: '/ngo/assignvolunteer', params: { id: donation.id } })} /> : null}

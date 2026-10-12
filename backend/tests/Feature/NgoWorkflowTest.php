@@ -160,10 +160,12 @@ class NgoWorkflowTest extends TestCase
             ->assertJsonPath('volunteers.0.id', $volunteer->id);
         $this->postJson("/api/ngo/donations/{$donation->id}/assign", [
             'volunteer_id' => $unavailableVolunteer->id,
+            'volunteer_acceptance_deadline' => now()->addMinutes(30)->toIso8601String(),
         ])->assertUnprocessable()->assertJsonValidationErrors('volunteer_id');
 
         $this->postJson("/api/ngo/donations/{$donation->id}/assign", [
             'volunteer_id' => $volunteer->id,
+            'volunteer_acceptance_deadline' => now()->addMinutes(30)->toIso8601String(),
         ])
             ->assertOk()
             ->assertJsonPath('donation.status', 'assigned')
@@ -171,6 +173,7 @@ class NgoWorkflowTest extends TestCase
 
         $this->postJson("/api/ngo/donations/{$donation->id}/assign", [
             'volunteer_id' => $volunteer->id,
+            'volunteer_acceptance_deadline' => now()->addMinutes(30)->toIso8601String(),
         ])->assertStatus(409);
 
         $this->authenticate($volunteer);
@@ -200,11 +203,13 @@ class NgoWorkflowTest extends TestCase
         $this->authenticate($otherNgo);
         $this->postJson("/api/ngo/donations/{$donation->id}/assign", [
             'volunteer_id' => $volunteer->id,
+            'volunteer_acceptance_deadline' => now()->addMinutes(30)->toIso8601String(),
         ])->assertForbidden();
 
         $this->authenticate($donor);
         $this->postJson("/api/ngo/donations/{$donation->id}/assign", [
             'volunteer_id' => $volunteer->id,
+            'volunteer_acceptance_deadline' => now()->addMinutes(30)->toIso8601String(),
         ])->assertForbidden();
         $this->patchJson('/api/volunteer/availability', ['is_available' => true])->assertForbidden();
 
@@ -231,6 +236,7 @@ class NgoWorkflowTest extends TestCase
         $this->postJson("/api/ngo/donations/{$published->id}/accept")->assertStatus(409);
         $this->postJson("/api/ngo/donations/{$accepted->id}/assign", [
             'volunteer_id' => $volunteer->id,
+            'volunteer_acceptance_deadline' => now()->addMinutes(30)->toIso8601String(),
         ])->assertStatus(409);
     }
 

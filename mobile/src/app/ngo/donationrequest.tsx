@@ -1,3 +1,4 @@
+import FoodThumbnail from '@/components/shared/FoodThumbnail';
 import { router, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
@@ -7,7 +8,7 @@ import Icon from '@/components/ui/Icon';
 import { C, NgoFooter, NgoGradientButton, NgoLoadState, NgoPickupPreview, NgoTitleBar } from '@/components/ngo/NgoDesign';
 import { useNgoDetail } from '@/hooks/useNgoDetail';
 import { useNgoDonations } from '@/store/ngoDonations.store';
-import { foodVisual, initials } from '@/utils/ngoPresentation';
+import { initials } from '@/utils/ngoPresentation';
 import { formatDateTime } from '@/utils/dateTime';
 
 export default function DonationRequest() {
@@ -34,7 +35,7 @@ export default function DonationRequest() {
         <View style={[styles.card, styles.donorCard]}><LinearGradient colors={[C.gradientTop, C.gradientBottom]} style={styles.avatar}><Text style={styles.avatarText}>{initials(donation.donorName)}</Text></LinearGradient>
           <View style={{ flex: 1, marginLeft: 14 }}><View style={styles.nameRow}><Text style={styles.donorName}>{donation.donorName}</Text><View style={styles.verified}><Text style={styles.verifiedText}>{donation.donorRole === 'restaurant' ? 'RESTAURANT' : 'HOUSEHOLD'}</Text></View></View><View style={styles.contactRow}><Icon name="user" size={13} color={C.muted} /><Text style={styles.contactText}>{donation.donorRole === 'restaurant' ? 'Restaurant donor' : 'Household donor'}</Text></View><View style={styles.contactRow}><Icon name="pin" size={13} color={C.muted} /><Text style={[styles.contactText, { flex: 1 }]}>{donation.pickupLocation}</Text></View></View>
         </View>
-        <Text style={styles.sectionTitle}>Item Details</Text><View style={[styles.card, styles.itemCard]}><View style={[styles.thumb, styles.thumbPlaceholder]}><Text style={{ fontSize: 44 }}>{foodVisual(donation.foodType).emoji}</Text></View><View style={{ flex: 1, marginLeft: 12 }}>{[
+        <Text style={styles.sectionTitle}>Item Details</Text><View style={[styles.card, styles.itemCard]}><View style={[styles.thumb, styles.thumbPlaceholder]}><FoodThumbnail food={donation.foodType} /></View><View style={{ flex: 1, marginLeft: 12 }}>{[
           { label: 'Item', value: donation.foodType }, { label: 'Quantity', value: `${donation.quantity} ${donation.unit}` }, { label: 'Pickup by', value: formatDateTime(donation.pickupDeadline) },
         ].map((row, index) => <View key={row.label} style={[styles.itemRow, index < 2 && styles.itemDivider]}><Text style={styles.itemLabel}>{row.label}</Text><Text style={styles.itemValue}>{row.value}</Text></View>)}</View></View>
         <Text style={styles.sectionTitle}>Message</Text><View style={styles.messageCard}><View style={styles.quoteCircle}><Text style={styles.quoteMark}>“</Text></View><Text style={styles.messageText}>{donation.description || 'No additional message provided.'}</Text></View>

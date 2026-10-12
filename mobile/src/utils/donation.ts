@@ -53,7 +53,7 @@ export function getDonationTimeline(status: DonationStatus, logs: DonationStatus
   const currentStage = stages.findIndex((stage) => stage.status === status);
 
   return stages.map((stage, index) => {
-    const logTime = logs.find((log) => log.status === stage.status)?.createdAt;
+    const logTime = index <= currentStage ? [...logs].reverse().find((log) => log.status === stage.status)?.createdAt : undefined;
     return {
       title: stage.title,
       time: logTime ? formatDateTime(logTime) : undefined,

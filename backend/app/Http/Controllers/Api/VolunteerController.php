@@ -46,6 +46,92 @@ class VolunteerController extends Controller
         ]);
     }
 
+    public function acceptAssignment(Request $request, Donation $donation): JsonResponse
+    {
+        if ($request->user()->role !== 'volunteer') {
+            return response()->json(['message' => 'Only volunteers can accept assignments.'], 403);
+        }
+
+        return DB::transaction(function () use ($request, $donation): JsonResponse {
+            $locked = Donation::query()->whereKey($donation->id)->lockForUpdate()->firstOrFail();
+            if ($locked->assigned_volunteer_id !== $request->user()->id) {
+                return response()->json(['message' => 'You are not assigned to this donation.'], 403);
+            }
+            if ($locked->status !== 'assigned' || $locked->volunteer_accepted_at !== null) {
+                return response()->json(['message' => 'This assignment is no longer awaiting acceptance.'], 409);
+            }
+            if ($locked->pickup_deadline->isPast() || ($locked->volunteer_acceptance_deadline && $locked->volunteer_acceptance_deadline->lessThanOrEqualTo(now()))) {
+                return response()->json(['message' => 'The acceptance deadline has passed. Ask the NGO to extend it or reassign the donation.'], 409);
+            }
+            $locked->forceFill(['volunteer_accepted_at' => now()])->save();
+            $locked->statusLogs()->create([
+                'status' => 'assigned', 'changed_by_user_id' => $request->user()->id,
+                'note' => 'Volunteer accepted the assignment.',
+            ]);
+
+            return response()->json(['donation' => $locked->load(['user:id,name,role', 'acceptedByNgo:id,name', 'statusLogs'])]);
+        });
+    }
+
+    public function cancelAssignment(Request $request, Donation $donation): JsonResponse
+    {
+        if ($request->user()->role !== 'volunteer') {
+            return response()->json(['message' => 'Only volunteers can cancel their assignments.'], 403);
+        }
+
+        return DB::transaction(function () use ($request, $donation): JsonResponse {
+            $locked = Donation::query()->whereKey($donation->id)->lockForUpdate()->firstOrFail();
+            if ($locked->assigned_volunteer_id !== $request->user()->id) {
+                return response()->json(['message' => 'You are not assigned to this donation.'], 403);
+            }
+            if (! in_array($locked->status, ['assigned', 'pickup', 'arrived', 'collected']) || ($locked->volunteer_acceptance_deadline && ! $locked->volunteer_accepted_at)) {
+                return response()->json(['message' => 'Only accepted, active assignments can be cancelled.'], 409);
+            }
+            $locked->forceFill([
+                'status' => 'accepted', 'assigned_volunteer_id' => null,
+                'volunteer_acceptance_deadline' => null, 'volunteer_accepted_at' => null,
+            ])->save();
+            $locked->statusLogs()->create([
+                'status' => 'accepted', 'changed_by_user_id' => $request->user()->id,
+                'note' => 'Volunteer cancelled the assignment. NGO reassignment required.',
+            ]);
+
+            return response()->json(['message' => 'Assignment cancelled. The donation remains with the NGO for reassignment.']);
+        });
+    }
+
+    public function correctStatus(Request $request, Donation $donation): JsonResponse
+    {
+        if ($request->user()->role !== 'volunteer') {
+            return response()->json(['message' => 'Only volunteers can correct their pickup progress.'], 403);
+        }
+        $data = $request->validate([
+            'status' => ['required', Rule::in(['assigned', 'pickup', 'arrived', 'collected'])],
+            'current_status' => ['required', Rule::in(['assigned', 'pickup', 'arrived', 'collected', 'delivered'])],
+        ]);
+
+        return DB::transaction(function () use ($request, $donation, $data): JsonResponse {
+            $locked = Donation::query()->whereKey($donation->id)->lockForUpdate()->firstOrFail();
+            if ($locked->assigned_volunteer_id !== $request->user()->id) {
+                return response()->json(['message' => 'You are not assigned to this donation.'], 403);
+            }
+            $stages = ['assigned', 'pickup', 'arrived', 'collected', 'delivered'];
+            $currentIndex = array_search($locked->status, $stages, true);
+            $targetIndex = array_search($data['status'], $stages, true);
+            if ($locked->status !== $data['current_status'] || $currentIndex === false || $targetIndex >= $currentIndex || ($locked->volunteer_acceptance_deadline && ! $locked->volunteer_accepted_at)) {
+                return response()->json(['message' => 'Corrections can only move current pickup progress backward. Refresh the assignment and choose an earlier step.'], 409);
+            }
+            $previous = $locked->status;
+            $locked->forceFill(['status' => $data['status']])->save();
+            $locked->statusLogs()->create([
+                'status' => $data['status'], 'changed_by_user_id' => $request->user()->id,
+                'note' => "Volunteer corrected pickup progress from {$previous} to {$data['status']}.",
+            ]);
+
+            return response()->json(['donation' => $locked->load(['user:id,name,role', 'acceptedByNgo:id,name', 'statusLogs'])]);
+        });
+    }
+
     public function updateStatus(Request $request, Donation $donation): JsonResponse
     {
         if ($request->user()->role !== 'volunteer' || $donation->assigned_volunteer_id !== $request->user()->id) {
@@ -58,6 +144,12 @@ class VolunteerController extends Controller
 
         return DB::transaction(function () use ($request, $donation, $data): JsonResponse {
             $locked = Donation::query()->whereKey($donation->id)->lockForUpdate()->firstOrFail();
+            if ($locked->assigned_volunteer_id !== $request->user()->id) {
+                return response()->json(['message' => 'You are not assigned to this donation.'], 403);
+            }
+            if ($locked->volunteer_acceptance_deadline && ! $locked->volunteer_accepted_at) {
+                return response()->json(['message' => 'Accept this assignment before starting pickup.'], 409);
+            }
             $transitions = [
                 'assigned' => 'pickup',
                 'pickup' => 'arrived',
